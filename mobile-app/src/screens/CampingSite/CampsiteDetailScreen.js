@@ -1,0 +1,243 @@
+import React from 'react';
+import { 
+  View, 
+  Text, 
+  Image, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  SafeAreaView,
+  Dimensions,
+  Platform
+} from 'react-native';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Colors } from '../../theme/colors';
+import { BASE_URL } from '../../api/apiClient';
+
+const { width } = Dimensions.get('window');
+
+const CampsiteDetailScreen = ({ route, navigation }) => {
+  const { item } = route.params;
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+      >
+        {/* Header Image */}
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: getImageUrl(item.image) || item.images?.[0] || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1000' }} 
+            style={styles.image} 
+            resizeMode="cover"
+          />
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.title}>{item.name}</Text>
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={16} color={Colors.gray} />
+                <Text style={styles.location}>{item.location}</Text>
+              </View>
+            </View>
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={16} color="#fbbf24" />
+              <Text style={styles.ratingText}>{item.averageRating?.toFixed(1) || '4.8'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Description */}
+          <Text style={styles.sectionTitle}>About this site</Text>
+          <Text style={styles.description}>
+            {item.description || 'Escape to the serenity of nature. This campsite offers a perfect blend of adventure and tranquility, featuring breathtaking views and premium amenities for an unforgettable outdoor experience.'}
+          </Text>
+
+          {/* Amenities */}
+          <Text style={styles.sectionTitle}>Amenities</Text>
+          <View style={styles.amenitiesGrid}>
+            {(item.amenities || ['Campfire', 'Water', 'WiFi', 'Parking']).map((amenity, index) => (
+              <View key={index} style={styles.amenityItem}>
+                <View style={styles.amenityIcon}>
+                  <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
+                </View>
+                <Text style={styles.amenityText}>{amenity}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Booking Summary Card */}
+          <View style={styles.priceCard}>
+            <View>
+              <Text style={styles.priceLabel}>Price per night</Text>
+              <Text style={styles.priceValue}>Rs. {item.pricePerNight}</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.bookButton}
+              onPress={() => navigation.navigate('Booking', { item, type: 'campsite' })}
+            >
+              <Text style={styles.bookButtonText}>Book Now</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 350,
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  content: {
+    padding: 24,
+    marginTop: -30,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  location: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginLeft: 4,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  ratingText: {
+    marginLeft: 4,
+    fontWeight: 'bold',
+    color: '#92400e',
+    fontSize: 14,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginVertical: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#64748b',
+    marginBottom: 24,
+  },
+  amenitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 30,
+  },
+  amenityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+    marginBottom: 12,
+  },
+  amenityIcon: {
+    marginRight: 8,
+  },
+  amenityText: {
+    fontSize: 14,
+    color: Colors.text,
+  },
+  priceCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 20,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: Colors.gray,
+  },
+  priceValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.primary,
+  },
+  bookButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 16,
+    ...Platform.select({
+      web: { boxShadow: '0px 4px 12px rgba(22, 101, 52, 0.3)' },
+      default: { elevation: 4 }
+    })
+  },
+  bookButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+});
+
+export default CampsiteDetailScreen;
