@@ -1,26 +1,19 @@
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
-const User = require('./src/models/user-model/userModel');
-require('dotenv').config({ path: './.env' });
+require('dotenv').config();
 
-async function checkUsers() {
+const checkUsers = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to MongoDB');
-    const users = await User.find({}, 'name email role createdAt');
-    console.log('\n=== REGISTERED USERS ===');
-    if (users.length === 0) {
-      console.log('No users found in the database.');
-    } else {
-      users.forEach(u => console.log(JSON.stringify(u, null, 2)));
-    }
-    console.log('========================\n');
+    const users = await mongoose.connection.db.collection('users').find().toArray();
+    console.log('Users found:', users.length);
+    users.forEach(u => {
+      console.log(`ID: ${u._id}, Name: ${u.name}, Role: ${u.role}`);
+    });
     process.exit(0);
   } catch (err) {
-    console.error('Error:', err.message);
+    console.error(err);
     process.exit(1);
   }
-}
+};
 
 checkUsers();

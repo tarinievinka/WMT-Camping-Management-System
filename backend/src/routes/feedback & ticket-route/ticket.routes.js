@@ -15,8 +15,9 @@ const { protect, adminOnly } = require('../../middleware/authMiddleware');
 router.post('/tickets/create', protect, createTicket);
 router.get('/tickets/my-tickets', protect, getMyTickets);
 router.get('/tickets/all', protect, adminOnly, getAllTickets);
-router.put('/tickets/update/:id', protect, adminOnly, updateTicket);
-router.delete('/tickets/delete/:id', protect, adminOnly, deleteTicket);
+router.put('/tickets/update/:id', protect, updateTicket);
+router.delete('/tickets/delete/:id', protect, deleteTicket);
+
 
 // Feedback Routes
 router.post('/feedback/create', protect, createFeedback);

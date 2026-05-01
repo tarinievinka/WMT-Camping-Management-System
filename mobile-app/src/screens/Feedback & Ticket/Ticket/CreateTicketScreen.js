@@ -55,7 +55,8 @@ const CreateTicketScreen = ({ route, navigation }) => {
       }
 
       Alert.alert('Success', `Ticket ${editTicket ? 'updated' : 'submitted'} successfully!`, [
-        { text: 'OK', onPress: () => navigation.navigate('MyTickets') }
+        { text: 'OK', onPress: () => navigation.navigate('Support', { activeTab: 'ticket' }) }
+
       ]);
 
     } catch (error) {

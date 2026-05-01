@@ -10,7 +10,8 @@ import { Colors } from '../../../theme/colors';
 import apiClient from '../../../api/apiClient';
 
 
-const FeedbackListScreen = ({ navigation }) => {
+const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
+
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,10 +46,25 @@ const FeedbackListScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Feedbacks</Text>
-        <Text style={styles.subtitle}>Your shared experiences</Text>
-      </View>
+      {!isEmbedded && (
+        <View style={styles.header}>
+          <Text style={styles.title}>My Feedbacks</Text>
+          <Text style={styles.subtitle}>Your shared experiences</Text>
+        </View>
+      )}
+
+      {isEmbedded && (
+        <View style={styles.embeddedHeader}>
+          <TouchableOpacity 
+            style={styles.submitBtn}
+            onPress={() => navigation.navigate('Guides')} // Redirect to guides to pick someone to feedback
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
+            <Text style={styles.submitBtnText}>Share New Feedback</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
 
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 50 }} />
@@ -70,8 +86,9 @@ const FeedbackListScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'transparent',
   },
+
   header: {
     padding: 24,
     backgroundColor: Colors.white,
@@ -144,7 +161,26 @@ const styles = StyleSheet.create({
     marginTop: 50,
     color: '#64748b',
     fontSize: 16,
+  },
+  embeddedHeader: {
+    padding: 15,
+  },
+  submitBtn: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    elevation: 2,
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   }
 });
+
 
 export default FeedbackListScreen;

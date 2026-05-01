@@ -50,7 +50,8 @@ const AddFeedbackScreen = ({ route, navigation }) => {
       await apiClient.post('/feedback/add', payload);
       
       Alert.alert('Success', 'Thank you for your feedback!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+        { text: 'OK', onPress: () => navigation.navigate('Support', { activeTab: 'feedback' }) }
+
       ]);
     } catch (error) {
       console.error('Error submitting feedback:', error);

@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import Header from '../../../components/Header';
@@ -17,7 +19,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../../context/AuthContext';
 
 
-const MyTicketsScreen = ({ navigation }) => {
+const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
+
   const { token } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -128,18 +131,31 @@ const MyTicketsScreen = ({ navigation }) => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header />
-      <View style={styles.content}>
-        <View style={styles.pageHeader}>
-          <Text style={styles.title}>My Support Tickets</Text>
+    <View style={styles.container}>
+      {!isEmbedded && <Header />}
+      <View style={[styles.content, isEmbedded && { padding: 15 }]}>
+        {!isEmbedded && (
+          <View style={styles.pageHeader}>
+            <Text style={styles.title}>My Support Tickets</Text>
+            <TouchableOpacity
+              style={styles.addBtn}
+              onPress={() => navigation.navigate('CreateTicket')}
+            >
+              <Ionicons name="add" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {isEmbedded && tickets.length > 0 && (
           <TouchableOpacity
-            style={styles.addBtn}
+            style={styles.embeddedAddBtn}
             onPress={() => navigation.navigate('CreateTicket')}
           >
-            <Ionicons name="add" size={24} color="#fff" />
+            <Ionicons name="add-circle" size={20} color={Colors.primary} />
+            <Text style={styles.embeddedAddText}>Raise New Ticket</Text>
           </TouchableOpacity>
-        </View>
+        )}
+
 
         {loading ? (
           <View style={styles.center}>
@@ -170,15 +186,17 @@ const MyTicketsScreen = ({ navigation }) => {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'transparent',
   },
+
   content: {
     flex: 1,
     padding: 20,
@@ -318,7 +336,25 @@ const styles = StyleSheet.create({
   createBtnText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  embeddedAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  embeddedAddText: {
+    color: Colors.primary,
+    fontWeight: '700',
+    fontSize: 14,
   }
 });
+
 
 export default MyTicketsScreen;

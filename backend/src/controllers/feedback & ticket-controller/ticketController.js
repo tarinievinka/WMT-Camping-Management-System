@@ -77,7 +77,11 @@ exports.deleteTicket = async (req, res) => {
     }
 
     // Check ownership
+    console.log('Ticket Creator (Delete):', ticket.createdBy ? ticket.createdBy.toString() : 'NULL');
+    console.log('Current User ID (Delete):', req.user.id);
+
     if (ticket.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+
       return res.status(403).json({ success: false, error: 'Not authorized to delete this ticket' });
     }
 

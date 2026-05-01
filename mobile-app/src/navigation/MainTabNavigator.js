@@ -9,7 +9,8 @@ import StoreScreen from '../screens/StoreScreen';
 import BlogListScreen from '../screens/Blog/BlogListScreen';
 import GuideListScreen from '../screens/Guide/GuideListScreen';
 import ProfileScreen from '../screens/Auth/ProfileScreen';
-import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen';
+import SupportPortalScreen from '../screens/Feedback & Ticket/SupportPortalScreen';
+
 
 
 
@@ -64,7 +65,8 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Equipment" component={StoreScreen} />
       <Tab.Screen name="Guides" component={GuideListScreen} />
       <Tab.Screen name="Blogs" component={BlogListScreen} />
-      <Tab.Screen name="Support" component={MyTicketsScreen} />
+      <Tab.Screen name="Support" component={SupportPortalScreen} />
+
       <Tab.Screen name="Profile" component={ProfileScreen} />
 
     </Tab.Navigator>
