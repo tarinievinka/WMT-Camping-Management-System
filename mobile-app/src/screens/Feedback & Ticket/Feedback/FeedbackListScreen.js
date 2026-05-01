@@ -1,28 +1,48 @@
-import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   FlatList, 
   StyleSheet, 
-  ActivityIndicator 
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { Colors } from '../../../theme/colors';
 import apiClient from '../../../api/apiClient';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../../context/AuthContext';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+
+import React, { useState, useCallback } from 'react';
+
 
 
 const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
 
+  const { user } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
-    fetchFeedbacks();
-  }, []);
+    if (isFocused) {
+      fetchFeedbacks();
+    }
+  }, [isFocused]);
+
+
 
   const fetchFeedbacks = async () => {
     try {
       const response = await apiClient.get('/feedback/display');
-      setFeedbacks(response.data.data || []);
+      // Filter feedbacks for current user if not admin
+      const allData = response.data.data || [];
+      if (user?.role === 'admin') {
+        setFeedbacks(allData);
+      } else {
+        setFeedbacks(allData.filter(f => f.userId === user?._id || f.userId?._id === user?._id));
+      }
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
     } finally {
@@ -30,19 +50,54 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
     }
   };
 
+  const handleDelete = (id) => {
+    Alert.alert('Delete Feedback', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiClient.delete(`/feedback/delete/${id}`);
+            fetchFeedbacks();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete');
+          }
+        }
+      }
+    ]);
+  };
+
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.row}>
-        <Text style={styles.target}>{item.targetName || 'Campsite'}</Text>
+        <View>
+          <Text style={styles.target}>{item.targetName || 'Campsite'}</Text>
+          <Text style={styles.targetType}>{item.targetType}</Text>
+        </View>
         <View style={styles.ratingContainer}>
           <Text style={styles.star}>⭐</Text>
           <Text style={styles.rating}>{item.rating}/5</Text>
         </View>
       </View>
       <Text style={styles.comment}>"{item.comment}"</Text>
-      <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+      <View style={styles.footerRow}>
+        <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        {user?.role !== 'admin' && (
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}>
+              <Ionicons name="create-outline" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDelete(item._id)}>
+              <Ionicons name="trash-outline" size={20} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </View>
   );
+
 
   return (
     <View style={styles.container}>
@@ -153,9 +208,23 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 11,
     color: '#94a3b8',
-    marginTop: 12,
-    textAlign: 'right',
   },
+  targetType: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginTop: 2,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+
   emptyText: {
     textAlign: 'center',
     marginTop: 50,

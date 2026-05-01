@@ -6,6 +6,7 @@ const {
   getAllTickets,
   updateTicket,
   deleteTicket,
+  adminReplyTicket,
   createFeedback,
   getAllFeedback
 } = require('../../controllers/feedback & ticket-controller/ticketController');
@@ -17,6 +18,8 @@ router.get('/tickets/my-tickets', protect, getMyTickets);
 router.get('/tickets/all', protect, adminOnly, getAllTickets);
 router.put('/tickets/update/:id', protect, updateTicket);
 router.delete('/tickets/delete/:id', protect, deleteTicket);
+router.put('/tickets/admin/reply/:id', protect, adminOnly, adminReplyTicket);
+
 
 
 // Feedback Routes

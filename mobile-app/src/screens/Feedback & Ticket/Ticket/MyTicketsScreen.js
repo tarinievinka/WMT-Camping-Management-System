@@ -15,8 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import Header from '../../../components/Header';
 import apiClient from '../../../api/apiClient';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useAuth } from '../../../context/AuthContext';
+
 
 
 const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
@@ -41,11 +42,14 @@ const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
       fetchTickets();
-    }, [])
-  );
+    }
+  }, [isFocused]);
+
 
   const onRefresh = () => {
     setRefreshing(true);

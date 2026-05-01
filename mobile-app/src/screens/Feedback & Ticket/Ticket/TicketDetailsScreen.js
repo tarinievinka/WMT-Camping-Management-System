@@ -117,6 +117,17 @@ const TicketDetailsScreen = ({ route, navigation }) => {
           <Text style={styles.sectionLabel}>Description</Text>
           <Text style={styles.description}>{ticket.description}</Text>
 
+          {ticket.adminReply && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.adminReplyCard}>
+                <Text style={styles.sectionLabel}>Admin Response</Text>
+                <Text style={styles.adminReplyText}>{ticket.adminReply}</Text>
+              </View>
+            </>
+          )}
+
+
           {ticket.createdBy && (
             <>
               <View style={styles.divider} />
@@ -126,6 +137,7 @@ const TicketDetailsScreen = ({ route, navigation }) => {
             </>
           )}
         </View>
+
 
         {user.role === 'admin' && (
           <View style={styles.adminActions}>
@@ -158,9 +170,13 @@ const TicketDetailsScreen = ({ route, navigation }) => {
 const getStatusColor = (status) => {
   switch (status) {
     case 'open': return '#10b981';
+    case 'approved': return '#84cc16';
+    case 'rejected': return '#ef4444';
     case 'in-progress': return '#fbbf24';
     case 'closed': return '#64748b';
+    case 'pending': return '#64748b';
     default: return Colors.gray;
+
   }
 };
 
@@ -265,7 +281,20 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     marginTop: 2,
   },
+  adminReplyCard: {
+    backgroundColor: '#f8fafc',
+    padding: 15,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#84cc16',
+  },
+  adminReplyText: {
+    fontSize: 15,
+    color: Colors.text,
+    fontStyle: 'italic',
+  },
   adminActions: {
+
     marginTop: 30,
   },
   statusButtons: {

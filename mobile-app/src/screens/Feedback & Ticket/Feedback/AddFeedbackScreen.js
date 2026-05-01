@@ -18,11 +18,12 @@ import { useAuth } from '../../../context/AuthContext';
 
 
 const AddFeedbackScreen = ({ route, navigation }) => {
-  const { booking } = route.params;
+  const { booking, editMode = false } = route.params;
   const { user } = useAuth();
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(editMode ? booking.rating : 5);
+  const [comment, setComment] = useState(editMode ? (booking.comment || booking.message) : '');
   const [loading, setLoading] = useState(false);
+
 
   const handleSubmit = async () => {
     if (!comment) {
@@ -47,7 +48,15 @@ const AddFeedbackScreen = ({ route, navigation }) => {
         comment
       };
 
-      await apiClient.post('/feedback/add', payload);
+      if (editMode) {
+        await apiClient.put(`/feedback/update/${booking._id}`, {
+          rating,
+          comment
+        });
+      } else {
+        await apiClient.post('/feedback/add', payload);
+      }
+
       
       Alert.alert('Success', 'Thank you for your feedback!', [
         { text: 'OK', onPress: () => navigation.navigate('Support', { activeTab: 'feedback' }) }
@@ -69,8 +78,9 @@ const AddFeedbackScreen = ({ route, navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Give Feedback</Text>
+          <Text style={styles.title}>{editMode ? 'Edit' : 'Give'} Feedback</Text>
         </View>
+
 
         <View style={styles.itemInfo}>
           <Text style={styles.itemLabel}>Reviewing for:</Text>
@@ -112,9 +122,10 @@ const AddFeedbackScreen = ({ route, navigation }) => {
           disabled={loading}
         >
           <Text style={styles.submitBtnText}>
-            {loading ? 'Submitting...' : 'Submit Review'}
+            {loading ? 'Submitting...' : editMode ? 'Update Feedback' : 'Submit Review'}
           </Text>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );

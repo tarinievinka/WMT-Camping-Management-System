@@ -65,6 +65,29 @@ exports.updateTicket = async (req, res) => {
   }
 };
 
+// @desc    Admin reply to ticket
+// @route   PUT /api/tickets/admin/reply/:id
+// @access  Private (Admin)
+exports.adminReplyTicket = async (req, res) => {
+  try {
+    const { status, adminReply } = req.body;
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { status, adminReply },
+      { new: true, runValidators: true }
+    );
+
+    if (!ticket) {
+      return res.status(404).json({ success: false, error: 'Ticket not found' });
+    }
+
+    res.status(200).json({ success: true, data: ticket });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+
 
 // @desc    Delete ticket
 // @route   DELETE /api/tickets/delete/:id
