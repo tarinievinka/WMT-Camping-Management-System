@@ -32,9 +32,11 @@ const RegisterScreen = ({ navigation }) => {
     setLoading(false);
 
     if (result.success) {
-      Alert.alert('Success', 'Account created successfully!');
+      Alert.alert('Registration Successful', 'Welcome! Your account has been created. You can now start exploring campsites.', [
+        { text: 'Great!', onPress: () => {} }
+      ]);
     } else {
-      Alert.alert('Error', result.error);
+      Alert.alert('Registration Failed', result.error || 'Could not create account. Please try again.');
     }
   };
 
@@ -102,6 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     padding: 24,
     paddingTop: 80,
+    paddingBottom: 60,
   },
   title: {
     fontSize: 28,

@@ -18,6 +18,22 @@ LogBox.ignoreLogs([
 
 // Aggressive suppression for Web console to hide library-level deprecations
 if (Platform.OS === 'web') {
+  const style = document.createElement('style');
+  style.textContent = `
+    html, body, #root, [data-reactroot] {
+      height: 100% !important;
+      overflow: auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    #root > div {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+  `;
+  document.head.appendChild(style);
+
   const originalWarn = console.warn;
   console.warn = (...args) => {
     if (

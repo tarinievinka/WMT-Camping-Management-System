@@ -10,6 +10,18 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Add an interceptor to handle 401 Unauthorized errors
+    const interceptor = apiClient.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        if (error.response?.status === 401) {
+          console.log('[AUTH] 401 Unauthorized detected, logging out...');
+          await logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+
     // Load stored user data on app start
     const loadUserData = async () => {
       try {

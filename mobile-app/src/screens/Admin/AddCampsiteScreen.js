@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingTop: 60,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
