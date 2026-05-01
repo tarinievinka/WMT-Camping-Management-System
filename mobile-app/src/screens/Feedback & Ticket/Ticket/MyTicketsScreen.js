@@ -58,12 +58,16 @@ const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      case 'pending': return '#64748b';
       case 'open': return '#10b981';
+      case 'approved': return '#059669';
+      case 'rejected': return '#dc2626';
       case 'in-progress': return '#fbbf24';
-      case 'closed': return '#64748b';
-      default: return Colors.gray;
+      case 'closed': return '#0f172a';
+      default: return '#64748b';
     }
   };
+
 
   const handleDelete = (id) => {
     Alert.alert('Delete Ticket', 'Are you sure you want to delete this ticket?', [
@@ -76,7 +80,9 @@ const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
             await apiClient.delete(`/tickets/delete/${id}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
+            Alert.alert('Deleted', 'Support ticket has been removed.');
             fetchTickets();
+
           } catch (error) {
             Alert.alert('Error', 'Failed to delete ticket');
           }

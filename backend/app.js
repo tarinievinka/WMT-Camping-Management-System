@@ -30,7 +30,8 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://localhost:8081' // Added for Expo Web
+    'http://localhost:8081',
+    'http://127.0.0.1:8081'
   ],
   credentials: true
 }));
@@ -50,6 +51,8 @@ app.get('/', (req, res) => {
   res.send('Server running with .env port!');
 });
 
+// Important: Mount ticketManagementRoutes early to avoid prefix conflicts with /api/feedback
+app.use('/api', ticketManagementRoutes);
 app.use('/api/payment', paymentRoute);
 app.use('/api/feedback', feedbackRoute);
 app.use('/api/equipment', equipmentRouter);
@@ -60,11 +63,8 @@ app.use('/api/guide-bookings', guideBookingRoute);
 app.use('/api/campsites', campsiteRoute);
 app.use('/api/reservations', reservationRoute);
 app.use('/api/customer-notifications', customerNotificationRoute);
-
-
 app.use('/api/blogs', blogRoute);
 app.use('/api/purchases', purchaseRoute);
-app.use('/api', ticketManagementRoutes);
 
 
 const start = async () => {

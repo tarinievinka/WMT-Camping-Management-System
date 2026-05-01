@@ -41,15 +41,28 @@ const ticketSchema = new mongoose.Schema({
 });
 
 const feedbackSchema = new mongoose.Schema({
-  message: {
+  targetName: {
     type: String,
-    required: [true, 'Please add a message']
+    required: [true, 'Please add a target name']
+  },
+  targetType: {
+    type: String,
+    enum: ['Campsite', 'Equipment', 'Guide'],
+    required: [true, 'Please add a target type']
   },
   rating: {
     type: Number,
     required: [true, 'Please add a rating'],
     min: 1,
     max: 5
+  },
+  comment: {
+    type: String,
+    required: [true, 'Please add a comment']
+  },
+  sessionDate: {
+    type: Date,
+    default: Date.now
   },
   userId: {
     type: mongoose.Schema.ObjectId,
@@ -61,6 +74,7 @@ const feedbackSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 const Feedback = mongoose.model('SupportFeedback', feedbackSchema);

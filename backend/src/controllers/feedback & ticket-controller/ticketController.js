@@ -1,5 +1,5 @@
 const ticketService = require('../../services/feedback & ticket-service/ticket.service');
-const { Ticket } = require('../../models/feedback & ticket-model/ticket.model');
+const { Ticket, Feedback } = require('../../models/feedback & ticket-model/ticket.model');
 
 // @desc    Create new ticket
 // @route   POST /api/tickets/create
@@ -48,13 +48,7 @@ exports.updateTicket = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
 
-    // Check ownership
-    console.log('Ticket Creator ID:', ticket.createdBy ? ticket.createdBy.toString() : 'NULL');
-    console.log('Current User ID:', req.user.id);
-    console.log('User Role:', req.user.role);
-
     if (ticket.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
-
       return res.status(403).json({ success: false, error: 'Not authorized to update this ticket' });
     }
 
@@ -87,8 +81,6 @@ exports.adminReplyTicket = async (req, res) => {
   }
 };
 
-
-
 // @desc    Delete ticket
 // @route   DELETE /api/tickets/delete/:id
 // @access  Private (Admin)
@@ -99,12 +91,7 @@ exports.deleteTicket = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
 
-    // Check ownership
-    console.log('Ticket Creator (Delete):', ticket.createdBy ? ticket.createdBy.toString() : 'NULL');
-    console.log('Current User ID (Delete):', req.user.id);
-
     if (ticket.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
-
       return res.status(403).json({ success: false, error: 'Not authorized to delete this ticket' });
     }
 
@@ -114,7 +101,6 @@ exports.deleteTicket = async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   }
 };
-
 
 // @desc    Create feedback
 // @route   POST /api/feedback/create
@@ -136,6 +122,60 @@ exports.getAllFeedback = async (req, res) => {
   try {
     const feedback = await ticketService.getAllFeedback();
     res.status(200).json({ success: true, count: feedback.length, data: feedback });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Get user feedback
+// @route   GET /api/feedback/my-feedback
+// @access  Private (User)
+exports.getMyFeedback = async (req, res) => {
+  try {
+    const feedback = await ticketService.getMyFeedback(req.user.id);
+    res.status(200).json({ success: true, count: feedback.length, data: feedback });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Update feedback
+// @route   PUT /api/feedback/update/:id
+// @access  Private (User)
+exports.updateFeedback = async (req, res) => {
+  try {
+    let feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, error: 'Feedback not found' });
+    }
+
+    if (feedback.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Not authorized' });
+    }
+
+    feedback = await ticketService.updateFeedback(req.params.id, req.body);
+    res.status(200).json({ success: true, data: feedback });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Delete feedback
+// @route   DELETE /api/feedback/delete/:id
+// @access  Private (User)
+exports.deleteFeedback = async (req, res) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, error: 'Feedback not found' });
+    }
+
+    if (feedback.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Not authorized' });
+    }
+
+    await ticketService.deleteFeedback(req.params.id);
+    res.status(200).json({ success: true, data: {} });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }

@@ -8,8 +8,12 @@ const {
   deleteTicket,
   adminReplyTicket,
   createFeedback,
-  getAllFeedback
+  getAllFeedback,
+  getMyFeedback,
+  updateFeedback,
+  deleteFeedback
 } = require('../../controllers/feedback & ticket-controller/ticketController');
+
 const { protect, adminOnly } = require('../../middleware/authMiddleware');
 
 // Ticket Routes
@@ -24,6 +28,10 @@ router.put('/tickets/admin/reply/:id', protect, adminOnly, adminReplyTicket);
 
 // Feedback Routes
 router.post('/feedback/create', protect, createFeedback);
+router.get('/feedback/my-feedback', protect, getMyFeedback);
 router.get('/feedback/all', protect, adminOnly, getAllFeedback);
+router.put('/feedback/update/:id', protect, updateFeedback);
+router.delete('/feedback/delete/:id', protect, deleteFeedback);
+
 
 module.exports = router;

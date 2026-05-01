@@ -7,23 +7,33 @@ import {
   TouchableOpacity,
   Alert
 } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useIsFocused } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import apiClient from '../../../api/apiClient';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../context/AuthContext';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
-
-import React, { useState, useCallback } from 'react';
-
-
 
 const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
-
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const isFocused = useIsFocused();
+
+  const fetchFeedbacks = async () => {
+    try {
+      const endpoint = user?.role === 'admin' ? '/feedback/all' : '/feedback/my-feedback';
+      const response = await apiClient.get(endpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFeedbacks(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching feedbacks:', error);
+      // Alert.alert('Error', 'Failed to fetch feedbacks');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -31,59 +41,43 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
     }
   }, [isFocused]);
 
-
-
-  const fetchFeedbacks = async () => {
-    try {
-      const response = await apiClient.get('/feedback/display');
-      // Filter feedbacks for current user if not admin
-      const allData = response.data.data || [];
-      if (user?.role === 'admin') {
-        setFeedbacks(allData);
-      } else {
-        setFeedbacks(allData.filter(f => f.userId === user?._id || f.userId?._id === user?._id));
-      }
-    } catch (error) {
-      console.error('Error fetching feedbacks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = (id) => {
-    Alert.alert('Delete Feedback', 'Are you sure?', [
+    Alert.alert('Delete Feedback', 'Are you sure you want to delete this feedback?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           try {
-            await apiClient.delete(`/feedback/delete/${id}`);
+            await apiClient.delete(`/feedback/delete/${id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
             fetchFeedbacks();
           } catch (error) {
-            Alert.alert('Error', 'Failed to delete');
+            Alert.alert('Error', 'Failed to delete feedback');
           }
         }
       }
     ]);
   };
 
-
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.row}>
         <View>
-          <Text style={styles.target}>{item.targetName || 'Campsite'}</Text>
+          <Text style={styles.target}>{item.targetName || 'General Feedback'}</Text>
           <Text style={styles.targetType}>{item.targetType}</Text>
         </View>
         <View style={styles.ratingContainer}>
-          <Text style={styles.star}>⭐</Text>
+          <Ionicons name="star" size={12} color="#854d0e" />
           <Text style={styles.rating}>{item.rating}/5</Text>
         </View>
       </View>
-      <Text style={styles.comment}>"{item.comment}"</Text>
+      <Text style={styles.comment}>"{item.comment || item.message}"</Text>
       <View style={styles.footerRow}>
-        <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        <Text style={styles.date}>
+          {item.sessionDate ? new Date(item.sessionDate).toLocaleDateString() : new Date(item.createdAt).toLocaleDateString()}
+        </Text>
         {user?.role !== 'admin' && (
           <View style={styles.actions}>
             <TouchableOpacity onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}>
@@ -98,13 +92,12 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
     </View>
   );
 
-
   return (
     <View style={styles.container}>
       {!isEmbedded && (
         <View style={styles.header}>
           <Text style={styles.title}>My Feedbacks</Text>
-          <Text style={styles.subtitle}>Your shared experiences</Text>
+          <Text style={styles.subtitle}>Your shared adventures and reviews</Text>
         </View>
       )}
 
@@ -112,14 +105,13 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
         <View style={styles.embeddedHeader}>
           <TouchableOpacity 
             style={styles.submitBtn}
-            onPress={() => navigation.navigate('Guides')} // Redirect to guides to pick someone to feedback
+            onPress={() => navigation.navigate('AddFeedback')} 
           >
             <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
             <Text style={styles.submitBtnText}>Share New Feedback</Text>
           </TouchableOpacity>
         </View>
       )}
-
 
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 50 }} />
@@ -130,7 +122,10 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
           keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No feedbacks yet.</Text>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbox-outline" size={48} color="#94a3b8" />
+              <Text style={styles.emptyText}>No feedbacks yet.</Text>
+            </View>
           }
         />
       )}
@@ -143,16 +138,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-
   header: {
     padding: 24,
-    backgroundColor: Colors.white,
+    backgroundColor: '#fff',
     paddingTop: 60,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text,
+    color: '#0f172a',
   },
   subtitle: {
     fontSize: 14,
@@ -161,15 +155,20 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 20,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
-    elevation: 1,
+    borderLeftColor: '#15803d',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   row: {
     flexDirection: 'row',
@@ -180,19 +179,21 @@ const styles = StyleSheet.create({
   target: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.text,
+    color: '#0f172a',
+  },
+  targetType: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fef9c3',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 6,
-  },
-  star: {
-    fontSize: 12,
-    marginRight: 4,
+    gap: 4,
   },
   rating: {
     fontSize: 12,
@@ -202,40 +203,30 @@ const styles = StyleSheet.create({
   comment: {
     fontSize: 14,
     color: '#475569',
-    fontStyle: 'italic',
     lineHeight: 20,
-  },
-  date: {
-    fontSize: 11,
-    color: '#94a3b8',
-  },
-  targetType: {
-    fontSize: 11,
-    color: Colors.gray,
-    marginTop: 2,
+    marginBottom: 12,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 12,
+  },
+  date: {
+    fontSize: 12,
+    color: '#94a3b8',
   },
   actions: {
     flexDirection: 'row',
     gap: 15,
   },
-
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 50,
-    color: '#64748b',
-    fontSize: 16,
-  },
   embeddedHeader: {
     padding: 15,
   },
   submitBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#15803d',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -248,8 +239,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  }
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  emptyText: {
+    marginTop: 12,
+    color: '#94a3b8',
+    fontSize: 16,
+  },
 });
-
 
 export default FeedbackListScreen;

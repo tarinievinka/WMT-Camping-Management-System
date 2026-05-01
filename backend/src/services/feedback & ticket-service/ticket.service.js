@@ -31,6 +31,22 @@ const getAllFeedback = async () => {
   return await Feedback.find().populate('userId', 'name email').sort('-createdAt');
 };
 
+const getMyFeedback = async (userId) => {
+  return await Feedback.find({ userId }).sort('-createdAt');
+};
+
+const updateFeedback = async (id, updateData) => {
+  return await Feedback.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true
+  });
+};
+
+const deleteFeedback = async (id) => {
+  return await Feedback.findByIdAndDelete(id);
+};
+
+
 module.exports = {
   createTicket,
   getMyTickets,
@@ -38,5 +54,9 @@ module.exports = {
   updateTicket,
   deleteTicket,
   createFeedback,
-  getAllFeedback
+  getAllFeedback,
+  getMyFeedback,
+  updateFeedback,
+  deleteFeedback
+
 };

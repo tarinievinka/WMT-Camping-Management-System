@@ -24,7 +24,8 @@ import PaymentSuccessScreen from '../screens/Payment/PaymentSuccessScreen';
 import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen';
 import CreateTicketScreen from '../screens/Feedback & Ticket/Ticket/CreateTicketScreen';
 import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
-import SubmitFeedbackScreen from '../screens/Feedback & Ticket/Ticket/SubmitFeedbackScreen';
+import SubmitFeedbackScreen from '../screens/Feedback & Ticket/Feedback/SubmitFeedbackScreen';
+
 import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
 
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
