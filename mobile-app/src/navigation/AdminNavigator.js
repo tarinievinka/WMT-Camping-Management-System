@@ -5,7 +5,9 @@ import ManageCampsitesScreen from '../screens/Admin/ManageCampsitesScreen';
 import ManageEquipmentScreen from '../screens/Admin/ManageEquipmentScreen';
 import ManageGuidesScreen from '../screens/Admin/ManageGuidesScreen';
 import ManageBlogsScreen from '../screens/Admin/ManageBlogsScreen';
-import ManageTicketsScreen from '../screens/Admin/ManageTicketsScreen';
+import AdminTicketsScreen from '../screens/Ticket/AdminTicketsScreen';
+
+
 import VerifyPaymentsScreen from '../screens/Admin/VerifyPaymentsScreen';
 import AddCampsiteScreen from '../screens/Admin/AddCampsiteScreen';
 import EditCampsiteScreen from '../screens/Admin/EditCampsiteScreen';
@@ -26,7 +28,8 @@ const AdminNavigator = () => {
       <Stack.Screen name="ManageEquipment" component={ManageEquipmentScreen} />
       <Stack.Screen name="ManageGuides" component={ManageGuidesScreen} />
       <Stack.Screen name="ManageBlogs" component={ManageBlogsScreen} />
-      <Stack.Screen name="ManageTickets" component={ManageTicketsScreen} />
+      <Stack.Screen name="ManageTickets" component={AdminTicketsScreen} />
+
       <Stack.Screen name="VerifyPayments" component={VerifyPaymentsScreen} />
       <Stack.Screen name="AddCampsite" component={AddCampsiteScreen} />
       <Stack.Screen name="EditCampsite" component={EditCampsiteScreen} />

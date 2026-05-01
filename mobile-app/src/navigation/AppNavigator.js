@@ -21,8 +21,14 @@ import PaymentScreen from '../screens/PaymentScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
 import AddFeedbackScreen from '../screens/Feedback/AddFeedbackScreen';
 import PaymentSuccessScreen from '../screens/Payment/PaymentSuccessScreen';
-import MyTicketsScreen from '../screens/MyTicketsScreen';
+import MyTicketsScreen from '../screens/Ticket/MyTicketsScreen';
+import CreateTicketScreen from '../screens/Ticket/CreateTicketScreen';
+import TicketDetailsScreen from '../screens/Ticket/TicketDetailsScreen';
+import SubmitFeedbackScreen from '../screens/Ticket/SubmitFeedbackScreen';
+import AdminTicketsScreen from '../screens/Ticket/AdminTicketsScreen';
+
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
+
 import CreateBlogScreen from '../screens/Blog/CreateBlogScreen';
 import CartScreen from '../screens/CartScreen';
 
@@ -70,7 +76,12 @@ const AppNavigator = () => {
             <Stack.Screen name="AddFeedback" component={AddFeedbackScreen} />
             <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
             <Stack.Screen name="MyTickets" component={MyTicketsScreen} />
+            <Stack.Screen name="CreateTicket" component={CreateTicketScreen} />
+            <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
+            <Stack.Screen name="SubmitFeedback" component={SubmitFeedbackScreen} />
+            <Stack.Screen name="AdminTickets" component={AdminTicketsScreen} />
             <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
+
             <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
           </>

@@ -9,6 +9,9 @@ import StoreScreen from '../screens/StoreScreen';
 import BlogListScreen from '../screens/Blog/BlogListScreen';
 import GuideListScreen from '../screens/Guide/GuideListScreen';
 import ProfileScreen from '../screens/Auth/ProfileScreen';
+import MyTicketsScreen from '../screens/Ticket/MyTicketsScreen';
+
+
 
 const Tab = createBottomTabNavigator();
 
@@ -34,7 +37,11 @@ const MainTabNavigator = () => {
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
             return <Ionicons name={iconName} size={size} color={color} />;
+          } else if (route.name === 'Support') {
+            iconName = focused ? 'help-circle' : 'help-circle-outline';
+            return <Ionicons name={iconName} size={size} color={color} />;
           }
+
         },
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray,
@@ -57,7 +64,9 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Equipment" component={StoreScreen} />
       <Tab.Screen name="Guides" component={GuideListScreen} />
       <Tab.Screen name="Blogs" component={BlogListScreen} />
+      <Tab.Screen name="Support" component={MyTicketsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+
     </Tab.Navigator>
   );
 };
