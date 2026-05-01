@@ -27,18 +27,55 @@ const BookingScreen = ({ route, navigation }) => {
   const [endDate, setEndDate] = useState('');
   const [markedDates, setMarkedDates] = useState({});
   const [guests, setGuests] = useState('1');
+  const [bookedDates, setBookedDates] = useState({});
+
+  React.useEffect(() => {
+    if (type === 'campsite') {
+      fetchBookedDates();
+    }
+  }, [item._id]);
+
+  const fetchBookedDates = async () => {
+    try {
+      const response = await apiClient.get(`/reservations/campsite/${item._id}/bookeddates`);
+      const bookings = response.data;
+      const disabled = {};
+      
+      bookings.forEach(booking => {
+        let start = new Date(booking.checkInDate);
+        let end = new Date(booking.checkOutDate);
+        while (start <= end) {
+          const dateStr = start.toISOString().split('T')[0];
+          disabled[dateStr] = { 
+            disabled: true, 
+            disableTouchEvent: true, 
+            textColor: '#d1d5db',
+            color: '#f1f5f9'
+          };
+          start.setDate(start.getDate() + 1);
+        }
+      });
+      setBookedDates(disabled);
+      setMarkedDates(disabled);
+    } catch (error) {
+      console.error('Error fetching booked dates:', error);
+    }
+  };
 
   const onDayPress = (day) => {
     if (!startDate || (startDate && endDate)) {
       setStartDate(day.dateString);
       setEndDate('');
       setMarkedDates({
+        ...bookedDates,
         [day.dateString]: { startingDay: true, color: Colors.primary, textColor: 'white' }
       });
     } else if (startDate && !endDate) {
-      if (day.dateString < startDate) {
+      if (day.dateString <= startDate) {
+        // Reset or update start date if user picks a date before or same as current start
         setStartDate(day.dateString);
         setMarkedDates({
+          ...bookedDates,
           [day.dateString]: { startingDay: true, color: Colors.primary, textColor: 'white' }
         });
       } else {
@@ -59,7 +96,7 @@ const BookingScreen = ({ route, navigation }) => {
           };
           start.setDate(start.getDate() + 1);
         }
-        setMarkedDates(range);
+        setMarkedDates({ ...bookedDates, ...range });
       }
     }
   };
@@ -99,9 +136,9 @@ const BookingScreen = ({ route, navigation }) => {
       let bookingData = {};
 
       if (type === 'campsite') {
-        endpoint = '/reservations/add';
+        endpoint = '/reservations';
         bookingData = { 
-          campsiteId: item._id, 
+          campsite: item._id, 
           checkInDate: startDate,
           checkOutDate: endDate,
           numberOfGuests: guests,
@@ -144,8 +181,8 @@ const BookingScreen = ({ route, navigation }) => {
           item, 
           type, 
           mode, 
-          startDate: startDate.toISOString().split('T')[0], 
-          endDate: endDate.toISOString().split('T')[0], 
+          startDate: startDate, 
+          endDate: endDate, 
           totalAmount: subtotal + serviceFee,
           guests,
           bookingId: response.data._id
@@ -153,8 +190,9 @@ const BookingScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       setLoading(false);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to process booking.';
       console.error('Booking error:', error.response?.data || error);
-      Alert.alert('Error', error.response?.data?.error || 'Failed to process booking.');
+      Alert.alert('Booking Failed', errorMsg);
     }
   };
 
@@ -168,7 +206,11 @@ const BookingScreen = ({ route, navigation }) => {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={true}
+      >
         <View style={styles.itemCard}>
           <Text style={styles.itemType}>{type.toUpperCase()}</Text>
           <Text style={styles.itemName}>{item.name}</Text>
@@ -260,6 +302,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollView: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -275,6 +320,8 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingBottom: 100,
+    flexGrow: 1,
   },
   itemCard: {
     backgroundColor: '#f8fafc',

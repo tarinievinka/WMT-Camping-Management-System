@@ -66,7 +66,11 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const user = await userService.updateUser(req.user.id, req.body);
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.profilePicture = `/uploads/${req.file.filename}`;
+    }
+    const user = await userService.updateUser(req.user.id, updateData);
     res.status(200).json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });

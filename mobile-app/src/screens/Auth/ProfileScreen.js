@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
+import { BASE_URL } from '../../api/apiClient';
 
 const ProfileScreen = ({ navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -11,7 +12,9 @@ const ProfileScreen = ({ navigation }) => {
   const user = {
     name: authUser?.name || 'Happy Camper',
     email: authUser?.email || 'camper@example.com',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+    avatar: authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
   };
 
   const menuItems = [
@@ -25,39 +28,51 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Header />
-
-      <View style={styles.profileSection}>
-        <Image source={{ uri: user.avatar }} style={styles.avatar} />
-        <Text style={styles.userName}>{user.name}</Text>
-        <Text style={styles.userEmail}>{user.email}</Text>
-      </View>
-
-      <View style={styles.menuContainer}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.menuItem}
-            onPress={item.action}
-          >
-            <View style={styles.menuItemLeft}>
-              <Ionicons name={item.icon} size={22} color={Colors.text} />
-              <Text style={styles.menuLabel}>{item.label}</Text>
-            </View>
-            <View style={styles.menuItemRight}>
-              {item.count && <Text style={styles.badge}>{item.count}</Text>}
-              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity 
-        style={styles.logoutButton}
-        onPress={logout}
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
-        <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+        <View style={styles.profileSection}>
+          <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+          
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Ionicons name="pencil-sharp" size={16} color="#fff" />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.menuItem}
+              onPress={item.action}
+            >
+              <View style={styles.menuItemLeft}>
+                <Ionicons name={item.icon} size={22} color={Colors.text} />
+                <Text style={styles.menuLabel}>{item.label}</Text>
+              </View>
+              <View style={styles.menuItemRight}>
+                {item.count && <Text style={styles.badge}>{item.count}</Text>}
+                <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={logout}
+        >
+          <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 };
@@ -99,6 +114,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.gray,
     marginTop: 4,
+    marginBottom: 20,
+  },
+  editButton: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   menuContainer: {
     marginTop: 20,
@@ -135,12 +165,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 'auto',
-    marginBottom: 40,
+    marginTop: 40,
+    marginBottom: 20,
     paddingVertical: 15,
   },
   logoutText: {
