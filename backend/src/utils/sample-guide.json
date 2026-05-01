@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Nimal Perera",
+    "email": "nimal@gmail.com",
+    "phone": "0712345678",
+    "experience": 5,
+    "language": "English",
+    "availability": true,
+    "description": "Experienced camping guide specialized in mountain trekking."
+  },
+  {
+    "name": "Kasun Silva",
+    "email": "kasun@gmail.com",
+    "phone": "0779876543",
+    "experience": 3,
+    "language": "Sinhala",
+    "availability": true,
+    "description": "Expert in forest survival and wildlife guidance."
+  },
+  {
+    "name": "Saman Kumara",
+    "email": "saman@gmail.com",
+    "phone": "0754567890",
+    "experience": 7,
+    "language": "Tamil",
+    "availability": false,
+    "description": "Senior guide with experience in river camping."
+  },
+  {
+    "name": "Dilshan Fernando",
+    "email": "dilshan@gmail.com",
+    "phone": "0701122334",
+    "experience": 2,
+    "language": "English",
+    "availability": true,
+    "description": "Beginner-friendly camping guide."
+  },
+  {
+    "name": "Ruwan Jayasinghe",
+    "email": "ruwan@gmail.com",
+    "phone": "0762233445",
+    "experience": 10,
+    "language": "Sinhala",
+    "availability": false,
+    "description": "Professional trekking and hiking guide."
+  }
+]
