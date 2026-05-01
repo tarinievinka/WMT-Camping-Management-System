@@ -1,0 +1,21 @@
+# 1. Block environment variables (Security)
+.env
+.env.test
+.env.local
+
+# 2. Block dependencies
+node_modules/
+
+# 3. Logs and runtime data
+logs
+*.log
+npm-debug.log*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 4. OS and IDE files
+.DS_Store
+.vscode/
+.idea/
