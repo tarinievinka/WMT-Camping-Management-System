@@ -1,0 +1,47 @@
+[
+  {
+    "name": "4-Season Dome Tent",
+    "category": "Tents",
+    "condition": "Good",
+    "rentalPrice": 1200,
+    "salePrice": 18900,
+    "stockQuantity": 7,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Mummy Sleeping Bag -15°C",
+    "category": "Sleeping Bags",
+    "condition": "New",
+    "rentalPrice": 800,
+    "salePrice": 8900,
+    "stockQuantity": 14,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "50L Trekking Backpack",
+    "category": "Backpacks",
+    "condition": "Fair",
+    "rentalPrice": 500,
+    "salePrice": 6900,
+    "stockQuantity": 3,
+    "availabilityStatus": "Available"
+  },
+  {
+    "name": "Portable Camping Stove",
+    "category": "Cooking Gear",
+    "condition": "Good",
+    "rentalPrice": 300,
+    "salePrice": 7900,
+    "stockQuantity": 0,
+    "availabilityStatus": "Out of Stock"
+  },
+  {
+    "name": "Rechargeable Headlamp LED",
+    "category": "Lighting",
+    "condition": "New",
+    "rentalPrice": 250,
+    "salePrice": 2900,
+    "stockQuantity": 18,
+    "availabilityStatus": "Available"
+  }
+]

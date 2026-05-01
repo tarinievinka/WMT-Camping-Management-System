@@ -1,0 +1,47 @@
+[
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "bookingType": "CampsiteBooking",
+    "bookingId": "507f1f77bcf86cd799439012",
+    "amount": 5000,
+    "paymentMethod": "card",
+    "transactionId": "TXN-ABC123XYZ",
+    "paymentStatus": "pending"
+  },
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "bookingType": "EquipmentBooking",
+    "bookingId": "507f1f77bcf86cd799439020",
+    "amount": 2000,
+    "paymentMethod": "online",
+    "transactionId": "TXN-EQP001",
+    "paymentStatus": "success"
+  },
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "bookingType": "GuideBooking",
+    "bookingId": "507f1f77bcf86cd799439030",
+    "amount": 1500,
+    "paymentMethod": "upi",
+    "transactionId": "TXN-GDE001",
+    "paymentStatus": "pending"
+  },
+  {
+    "userId": "507f1f77bcf86cd799439012",
+    "bookingType": "CampsiteBooking",
+    "bookingId": "507f1f77bcf86cd799439040",
+    "amount": 7500,
+    "paymentMethod": "card",
+    "transactionId": "TXN-ABC456DEF",
+    "paymentStatus": "failed"
+  },
+  {
+    "userId": "507f1f77bcf86cd799439012",
+    "bookingType": "EquipmentBooking",
+    "bookingId": "507f1f77bcf86cd799439050",
+    "amount": 3000,
+    "paymentMethod": "cash",
+    "transactionId": null,
+    "paymentStatus": "pending"
+  }
+]
