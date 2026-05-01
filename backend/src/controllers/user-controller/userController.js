@@ -48,7 +48,7 @@ const login = async (req, res) => {
     const result = await userService.loginUser(email, password);
     res.status(200).json(result);
   } catch (err) {
-    console.error(`[AUTH] Login error: ${err.message}`);
+    console.error(`[AUTH] Login error for ${req.body.email}: ${err.message}`);
     // Distinguish between credential errors and server errors
     const status = (err.message === 'User not found' || err.message === 'Invalid credentials') ? 401 : 400;
     res.status(status).json({ error: err.message });

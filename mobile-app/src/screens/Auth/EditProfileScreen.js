@@ -26,6 +26,12 @@ const EditProfileScreen = ({ navigation }) => {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+
+  const showStatus = (type, text) => {
+    setStatusMessage({ type, text });
+    setTimeout(() => setStatusMessage({ type: '', text: '' }), 4000);
+  };
 
   const getFullImageUrl = (path) => {
     if (!path) return 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
@@ -65,39 +71,54 @@ const EditProfileScreen = ({ navigation }) => {
       formData.append('email', email);
 
       if (image) {
-        const uri = Platform.OS === 'android' ? image.uri : image.uri.replace('file://', '');
-        const filename = image.uri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : `image`;
+        if (Platform.OS === 'web') {
+          // On Web, we need to fetch the blob from the URI
+          const response = await fetch(image.uri);
+          const blob = await response.blob();
+          formData.append('profilePicture', blob, image.fileName || 'profile.jpg');
+        } else {
+          // Mobile logic
+          const uri = Platform.OS === 'android' ? image.uri : image.uri.replace('file://', '');
+          const filename = image.uri.split('/').pop();
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image`;
 
-        formData.append('profilePicture', {
-          uri,
-          name: filename,
-          type,
-        });
+          formData.append('profilePicture', {
+            uri,
+            name: filename,
+            type,
+          });
+        }
       }
 
+      console.log('[PROFILE] Sending update request...');
       const response = await apiClient.put('/profile', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
+      console.log('[PROFILE] Update response received:', response.status);
       const updatedUser = response.data;
       
       // Update local storage and context
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       
-      Alert.alert('Success', 'Profile updated successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      setLoading(false); 
+      showStatus('success', 'Profile updated successfully!');
+      
+      Alert.alert(
+        'Success ✨', 
+        'Your profile has been updated successfully!',
+        [{ text: 'Great!', onPress: () => navigation.goBack() }]
+      );
     } catch (error) {
-      console.error('Update Profile Error:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to update profile';
-      Alert.alert('Update Failed', errorMsg);
-    } finally {
       setLoading(false);
+      console.error('Update Profile Error Details:', error);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Update failed. Please try again.';
+      showStatus('error', errorMsg);
+      Alert.alert('Update Failed ❌', errorMsg);
     }
   };
 
@@ -144,6 +165,25 @@ const EditProfileScreen = ({ navigation }) => {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {statusMessage.text ? (
+          <View style={[
+            styles.statusBanner, 
+            { backgroundColor: statusMessage.type === 'success' ? '#f0fdf4' : '#fff1f2' }
+          ]}>
+            <Ionicons 
+              name={statusMessage.type === 'success' ? 'checkmark-circle' : 'alert-circle'} 
+              size={20} 
+              color={statusMessage.type === 'success' ? '#166534' : '#991b1b'} 
+            />
+            <Text style={[
+              styles.statusText, 
+              { color: statusMessage.type === 'success' ? '#166534' : '#991b1b' }
+            ]}>
+              {statusMessage.text}
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.imageSection}>
           <View style={styles.imageContainer}>
             <Image 
@@ -242,6 +282,21 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingBottom: 60,
+  },
+  statusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 10,
+    flex: 1,
   },
   imageSection: {
     alignItems: 'center',
