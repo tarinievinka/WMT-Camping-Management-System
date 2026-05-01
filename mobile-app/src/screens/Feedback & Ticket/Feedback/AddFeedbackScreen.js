@@ -11,10 +11,11 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../theme/colors';
-import Header from '../../components/Header';
-import apiClient from '../../api/apiClient';
-import { useAuth } from '../../context/AuthContext';
+import { Colors } from '../../../theme/colors';
+import Header from '../../../components/Header';
+import apiClient from '../../../api/apiClient';
+import { useAuth } from '../../../context/AuthContext';
+
 
 const AddFeedbackScreen = ({ route, navigation }) => {
   const { booking } = route.params;

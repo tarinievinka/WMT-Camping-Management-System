@@ -6,8 +6,9 @@ import {
   StyleSheet, 
   ActivityIndicator 
 } from 'react-native';
-import { Colors } from '../../theme/colors';
-import apiClient from '../../api/apiClient';
+import { Colors } from '../../../theme/colors';
+import apiClient from '../../../api/apiClient';
+
 
 const FeedbackListScreen = ({ navigation }) => {
   const [feedbacks, setFeedbacks] = useState([]);

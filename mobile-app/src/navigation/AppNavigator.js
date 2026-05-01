@@ -19,7 +19,7 @@ import EquipmentDetailScreen from '../screens/Equipment/EquipmentDetailScreen';
 import BookingScreen from '../screens/BookingScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
-import AddFeedbackScreen from '../screens/Feedback/AddFeedbackScreen';
+import AddFeedbackScreen from '../screens/Feedback & Ticket/Feedback/AddFeedbackScreen';
 import PaymentSuccessScreen from '../screens/Payment/PaymentSuccessScreen';
 import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen';
 import CreateTicketScreen from '../screens/Feedback & Ticket/Ticket/CreateTicketScreen';

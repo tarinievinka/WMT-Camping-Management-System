@@ -125,10 +125,11 @@ const AdminTicketsScreen = ({ navigation }) => {
         <Text style={styles.title}>All Support Tickets</Text>
 
         {loading ? (
-          <div style={styles.center}>
+          <View style={styles.center}>
             <ActivityIndicator size="large" color={Colors.primary} />
-          </div>
+          </View>
         ) : (
+
           <FlatList
             data={tickets}
             keyExtractor={(item) => item._id}

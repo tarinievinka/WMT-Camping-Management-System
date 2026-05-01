@@ -8,7 +8,7 @@ const {
   deleteTicket,
   createFeedback,
   getAllFeedback
-} = require('../../modules/ticket/ticket.controller');
+} = require('../../controllers/feedback & ticket-controller/ticketController');
 const { protect, adminOnly } = require('../../middleware/authMiddleware');
 
 // Ticket Routes
