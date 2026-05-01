@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 const connectDB = require('./src/config/db');
 
-// Route Imports
+// Routes Imports
 const paymentRoute = require('./src/routes/payment-route/paymentRoute');
 const feedbackRoute = require('./src/routes/feedback-route/feedbackRoute');
 const equipmentRouter = require('./src/routes/Equipment-route/EquipmentRoute');
