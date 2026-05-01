@@ -62,9 +62,9 @@ const GuideListScreen = ({ navigation }) => {
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.expertise}>{item.description?.substring(0, 50)}...</Text>
           <View style={styles.langContainer}>
-            {item.languages?.map((lang, idx) => (
+            {item.specialties?.map((spec, idx) => (
               <View key={idx} style={styles.langBadge}>
-                <Text style={styles.langText}>{lang}</Text>
+                <Text style={styles.langText}>{spec}</Text>
               </View>
             ))}
           </View>

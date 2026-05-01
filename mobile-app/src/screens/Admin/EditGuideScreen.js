@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, Platform, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Platform } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -7,19 +7,20 @@ import { API_URL } from '../../api/config';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 
-const AddGuideScreen = ({ navigation }) => {
+const EditGuideScreen = ({ route, navigation }) => {
+  const { guide } = route.params;
   const { token } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    specialization: '',
-    dailyRate: '',
-    phone: '',
-    nic: '',
-    age: '',
-    description: '',
+    name: guide.name,
+    email: guide.email,
+    phone: guide.phone || '',
+    nic: guide.nic || '',
+    age: guide.age?.toString() || '',
+    dailyRate: guide.dailyRate?.toString() || '',
+    description: guide.description || '',
+    specialization: guide.specialties?.join(', ') || '',
   });
-  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(guide.profilePhoto);
   const [isLoading, setIsLoading] = useState(false);
 
   const pickImage = async () => {
@@ -31,21 +32,13 @@ const AddGuideScreen = ({ navigation }) => {
     });
 
     if (!result.canceled && result.assets) {
-      setProfilePicture(result.assets[0].uri);
+      setProfilePhoto(result.assets[0].uri);
     }
   };
 
-  const handleCreate = async () => {
-    console.log('Handle Create called with:', formData);
-    
-    const requiredFields = ['name', 'email', 'specialization', 'dailyRate', 'nic', 'age'];
-    const missingFields = requiredFields.filter(field => !formData[field]);
-    
-    if (missingFields.length > 0) {
-      const msg = `Please fill in: ${missingFields.join(', ')}`;
-      console.warn(msg);
-      if (Platform.OS === 'web') alert(msg);
-      Alert.alert('Error', msg);
+  const handleUpdate = async () => {
+    if (!formData.name || !formData.email || !formData.specialization || !formData.dailyRate) {
+      Alert.alert('Error', 'Please fill in required fields');
       return;
     }
 
@@ -59,25 +52,23 @@ const AddGuideScreen = ({ navigation }) => {
         age: parseInt(formData.age),
         dailyRate: parseFloat(formData.dailyRate),
         description: formData.description,
-        specialties: formData.specialization.split(',').map(s => s.trim()),
-        profilePhoto: profilePicture || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=60'
+        specialties: formData.specialization.split(',').map(s => s.trim()).filter(s => s),
+        profilePhoto
       };
 
-      console.log('Sending request to:', `${API_URL}/api/guides/add`);
-      const response = await axios.post(`${API_URL}/api/guides/add`, guideData, {
+      await axios.put(`${API_URL}/api/guides/update/${guide._id}`, guideData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
-      console.log('Response:', response.data);
-      if (Platform.OS === 'web') alert('Guide added successfully!');
-      Alert.alert('Success', 'Guide added successfully!', [
+      if (Platform.OS === 'web') alert('Guide updated successfully!');
+      Alert.alert('Success', 'Guide updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (err) {
-      console.error('Create error:', err.response?.data || err.message);
-      const errorMsg = err.response?.data?.message || 'Failed to add guide';
+      console.error('[EDIT_GUIDE] Update failed:', err.response?.data || err.message);
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to update guide';
       if (Platform.OS === 'web') alert(errorMsg);
       Alert.alert('Error', errorMsg);
     } finally {
@@ -88,16 +79,16 @@ const AddGuideScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Guide</Text>
+        <Text style={styles.headerTitle}>Edit Guide</Text>
         <TouchableOpacity 
           style={[styles.headerSubmitBtn, isLoading && { opacity: 0.5 }]} 
-          onPress={handleCreate}
+          onPress={handleUpdate}
           disabled={isLoading}
         >
-          <Text style={styles.headerSubmitText}>{isLoading ? '...' : 'Create'}</Text>
+          <Text style={styles.headerSubmitText}>{isLoading ? '...' : 'Save'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -105,11 +96,10 @@ const AddGuideScreen = ({ navigation }) => {
         style={styles.scrollView} 
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={true}
       >
         <TouchableOpacity style={styles.avatarPicker} onPress={pickImage}>
-          {profilePicture ? (
-            <Image source={{ uri: profilePicture }} style={styles.avatar} />
+          {profilePhoto ? (
+            <Image source={{ uri: profilePhoto }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
               <Ionicons name="person-add" size={30} color="#94a3b8" />
@@ -122,7 +112,6 @@ const AddGuideScreen = ({ navigation }) => {
           <Text style={styles.label}>Full Name *</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. John Doe"
             value={formData.name}
             onChangeText={(val) => setFormData({ ...formData, name: val })}
           />
@@ -132,7 +121,6 @@ const AddGuideScreen = ({ navigation }) => {
           <Text style={styles.label}>Email Address *</Text>
           <TextInput
             style={styles.input}
-            placeholder="guide@example.com"
             value={formData.email}
             onChangeText={(val) => setFormData({ ...formData, email: val })}
             keyboardType="email-address"
@@ -145,7 +133,6 @@ const AddGuideScreen = ({ navigation }) => {
             <Text style={styles.label}>NIC *</Text>
             <TextInput
               style={styles.input}
-              placeholder="991234567V"
               value={formData.nic}
               onChangeText={(val) => setFormData({ ...formData, nic: val })}
             />
@@ -154,7 +141,6 @@ const AddGuideScreen = ({ navigation }) => {
             <Text style={styles.label}>Age *</Text>
             <TextInput
               style={styles.input}
-              placeholder="25"
               value={formData.age}
               onChangeText={(val) => setFormData({ ...formData, age: val })}
               keyboardType="numeric"
@@ -163,10 +149,9 @@ const AddGuideScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Specialization *</Text>
+          <Text style={styles.label}>Specialization * (comma separated)</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. Mountain Hiking, Bird Watching"
             value={formData.specialization}
             onChangeText={(val) => setFormData({ ...formData, specialization: val })}
           />
@@ -176,7 +161,6 @@ const AddGuideScreen = ({ navigation }) => {
           <Text style={styles.label}>Daily Rate (LKR) *</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. 3000"
             value={formData.dailyRate}
             onChangeText={(val) => setFormData({ ...formData, dailyRate: val })}
             keyboardType="numeric"
@@ -187,7 +171,6 @@ const AddGuideScreen = ({ navigation }) => {
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. 0771234567"
             value={formData.phone}
             onChangeText={(val) => setFormData({ ...formData, phone: val })}
             keyboardType="phone-pad"
@@ -198,21 +181,21 @@ const AddGuideScreen = ({ navigation }) => {
           <Text style={styles.label}>Description / Bio</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Write a brief bio..."
             value={formData.description}
             onChangeText={(val) => setFormData({ ...formData, description: val })}
             multiline
           />
         </View>
+
         <TouchableOpacity 
           style={[styles.submitButton, isLoading && styles.disabledButton]}
-          onPress={handleCreate}
+          onPress={handleUpdate}
           disabled={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.submitText}>Create Guide</Text>
+            <Text style={styles.submitText}>Update Guide Profile</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -226,13 +209,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     paddingTop: Platform.OS === 'android' ? 40 : (Platform.OS === 'ios' ? 50 : 10),
   },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 100,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -241,10 +217,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
-    backgroundColor: Colors.white,
   },
-  headerBtn: {
-    padding: 5,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
   },
   headerSubmitBtn: {
     backgroundColor: Colors.primary,
@@ -257,24 +234,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 40,
   },
   avatarPicker: {
     alignSelf: 'center',
     marginVertical: 15,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
@@ -308,18 +287,15 @@ const styles = StyleSheet.create({
     height: 120,
     textAlignVertical: 'top',
   },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    backgroundColor: Colors.white,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+  row: {
+    flexDirection: 'row',
   },
   submitButton: {
     backgroundColor: Colors.primary,
     paddingVertical: 18,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop: 20,
   },
   submitText: {
     color: Colors.white,
@@ -331,4 +307,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddGuideScreen;
+export default EditGuideScreen;

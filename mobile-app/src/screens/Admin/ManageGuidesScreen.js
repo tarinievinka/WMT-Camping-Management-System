@@ -23,7 +23,7 @@ const ManageGuidesScreen = ({ navigation }) => {
       const response = await axios.get(`${API_URL}/api/guides/display`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setGuides(response.data);
+      setGuides(response.data.data || []);
     } catch (err) {
       Alert.alert('Error', 'Failed to fetch guides');
     } finally {
@@ -58,16 +58,16 @@ const ManageGuidesScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={{ uri: item.profilePicture || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=60' }} style={styles.cardImage} />
+      <Image source={{ uri: item.profilePhoto || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=60' }} style={styles.cardImage} />
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.name}</Text>
-        <Text style={styles.cardSubtitle}>{item.specialization}</Text>
-        <Text style={styles.cardPrice}>LKR {item.pricePerDay}/day</Text>
+        <Text style={styles.cardSubtitle}>{Array.isArray(item.specialties) ? item.specialties.join(', ') : item.specialties}</Text>
+        <Text style={styles.cardPrice}>LKR {item.dailyRate}/day</Text>
       </View>
       <View style={styles.actions}>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => alert('Edit feature coming soon!')}
+          onPress={() => navigation.navigate('EditGuide', { guide: item })}
         >
           <Ionicons name="pencil" size={20} color={Colors.primary} />
         </TouchableOpacity>
