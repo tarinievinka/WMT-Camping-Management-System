@@ -17,7 +17,8 @@ import apiClient from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 
 const SupportScreen = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,11 +31,13 @@ const SupportScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await apiClient.post('/tickets/add', {
-        subject,
-        message,
-        userName: user?.name
+      await apiClient.post('/tickets/create', {
+        title: subject,
+        description: message,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+
       
       Alert.alert(
         'Success', 
