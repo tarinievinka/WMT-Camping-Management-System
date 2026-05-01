@@ -1,4 +1,4 @@
-const { Ticket, Feedback } = require('../../modules/ticket/ticket.model');
+const { Ticket, Feedback } = require('../../models/feedback & ticket-model/ticket.model');
 
 const createTicket = async (ticketData) => {
   return await Ticket.create(ticketData);

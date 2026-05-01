@@ -13,7 +13,7 @@ const getAllEquipment = async () => {
   const equipments = await Equipment.find().lean();
 
   // Aggregate feedback to get average rating per equipment
-  const Feedback = require('../../models/feedback-model/FeedbackModel');
+  const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
   const feedbacks = await Feedback.find({ targetType: 'Equipment' }).lean();
 
   return equipments.map(eq => {

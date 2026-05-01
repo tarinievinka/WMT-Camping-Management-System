@@ -5,7 +5,7 @@ import ManageCampsitesScreen from '../screens/Admin/ManageCampsitesScreen';
 import ManageEquipmentScreen from '../screens/Admin/ManageEquipmentScreen';
 import ManageGuidesScreen from '../screens/Admin/ManageGuidesScreen';
 import ManageBlogsScreen from '../screens/Admin/ManageBlogsScreen';
-import AdminTicketsScreen from '../screens/Ticket/AdminTicketsScreen';
+import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
 
 
 import VerifyPaymentsScreen from '../screens/Admin/VerifyPaymentsScreen';

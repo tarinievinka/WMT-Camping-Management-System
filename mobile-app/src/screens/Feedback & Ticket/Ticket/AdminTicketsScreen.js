@@ -1,23 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../theme/colors';
-import Header from '../../components/Header';
-import apiClient from '../../api/apiClient';
+import { Colors } from '../../../theme/colors';
+import Header from '../../../components/Header';
+import apiClient from '../../../api/apiClient';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 
 
-const MyTicketsScreen = ({ navigation }) => {
+const AdminTicketsScreen = ({ navigation }) => {
   const { token } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ const MyTicketsScreen = ({ navigation }) => {
 
   const fetchTickets = async () => {
     try {
-      const response = await apiClient.get('/tickets/my-tickets', {
+      const response = await apiClient.get('/tickets/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTickets(response.data.data);
@@ -58,52 +59,75 @@ const MyTicketsScreen = ({ navigation }) => {
     }
   };
 
+  const handleDelete = (id) => {
+    Alert.alert('Delete Ticket', 'Are you sure you want to delete this ticket?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiClient.delete(`/tickets/delete/${id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchTickets();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete ticket');
+          }
+        }
+
+      }
+    ]);
+  };
+
   const renderTicket = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.ticketCard}
-      onPress={() => navigation.navigate('TicketDetails', { ticketId: item._id })}
-    >
-      <View style={styles.ticketHeader}>
-        <Text style={styles.ticketTitle} numberOfLines={1}>{item.title}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-            {item.status.toUpperCase()}
+    <View style={styles.ticketCard}>
+      <TouchableOpacity
+        style={styles.ticketContent}
+        onPress={() => navigation.navigate('TicketDetails', { ticketId: item._id })}
+      >
+        <View style={styles.ticketHeader}>
+          <Text style={styles.ticketTitle} numberOfLines={1}>{item.title}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+              {item.status.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.userText}>By: {item.createdBy?.name || 'Unknown'}</Text>
+        <Text style={styles.ticketDesc} numberOfLines={2}>{item.description}</Text>
+
+        <View style={styles.ticketFooter}>
+          <View style={styles.priorityGroup}>
+            <Ionicons name="flag" size={14} color={item.priority === 'high' ? '#ef4444' : '#64748b'} />
+            <Text style={styles.footerText}>{item.priority.toUpperCase()}</Text>
+          </View>
+          <Text style={styles.footerText}>
+            {new Date(item.createdAt).toLocaleDateString()}
           </Text>
         </View>
-      </View>
-      
-      <Text style={styles.ticketDesc} numberOfLines={2}>{item.description}</Text>
-      
-      <View style={styles.ticketFooter}>
-        <View style={styles.priorityGroup}>
-          <Ionicons name="flag" size={14} color={item.priority === 'high' ? '#ef4444' : '#64748b'} />
-          <Text style={styles.footerText}>{item.priority.toUpperCase()} PRIORITY</Text>
-        </View>
-        <Text style={styles.footerText}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.deleteBtn}
+        onPress={() => handleDelete(item._id)}
+      >
+        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <View style={styles.content}>
-        <View style={styles.pageHeader}>
-          <Text style={styles.title}>My Support Tickets</Text>
-          <TouchableOpacity 
-            style={styles.addBtn}
-            onPress={() => navigation.navigate('CreateTicket')}
-          >
-            <Ionicons name="add" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.title}>All Support Tickets</Text>
 
         {loading ? (
-          <View style={styles.center}>
+          <div style={styles.center}>
             <ActivityIndicator size="large" color={Colors.primary} />
-          </View>
+          </div>
         ) : (
           <FlatList
             data={tickets}
@@ -116,14 +140,7 @@ const MyTicketsScreen = ({ navigation }) => {
             ListEmptyComponent={
               <View style={styles.emptyState}>
                 <Ionicons name="ticket-outline" size={64} color="#e2e8f0" />
-                <Text style={styles.emptyTitle}>No tickets found</Text>
-                <Text style={styles.emptyText}>Need help? Create a support ticket and we'll get back to you.</Text>
-                <TouchableOpacity 
-                  style={styles.createBtn}
-                  onPress={() => navigation.navigate('CreateTicket')}
-                >
-                  <Text style={styles.createBtnText}>Create Ticket</Text>
-                </TouchableOpacity>
+                <Text style={styles.emptyTitle}>No tickets to manage</Text>
               </View>
             }
           />
@@ -142,24 +159,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  pageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: Colors.text,
-  },
-  addBtn: {
-    backgroundColor: Colors.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 20,
   },
   list: {
     paddingBottom: 20,
@@ -167,8 +171,8 @@ const styles = StyleSheet.create({
   ticketCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 16,
     marginBottom: 16,
+    flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#f1f5f9',
     elevation: 2,
@@ -177,11 +181,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
+  ticketContent: {
+    flex: 1,
+    padding: 16,
+  },
+  deleteBtn: {
+    padding: 16,
+    justifyContent: 'center',
+    borderLeftWidth: 1,
+    borderLeftColor: '#f1f5f9',
+  },
   ticketHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   ticketTitle: {
     fontSize: 16,
@@ -189,6 +203,12 @@ const styles = StyleSheet.create({
     color: Colors.text,
     flex: 1,
     marginRight: 10,
+  },
+  userText: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -231,32 +251,13 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     marginTop: 60,
-    paddingHorizontal: 40,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text,
     marginTop: 20,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: Colors.gray,
-    textAlign: 'center',
-    marginTop: 10,
-    lineHeight: 20,
-  },
-  createBtn: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 24,
-  },
-  createBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
   }
 });
 
-export default MyTicketsScreen;
+export default AdminTicketsScreen;

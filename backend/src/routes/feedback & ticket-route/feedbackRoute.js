@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const feedbackController = require('../../controllers/feedback-controller/feedbackController');
+const feedbackController = require('../../controllers/feedback & ticket-controller/feedbackController');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');

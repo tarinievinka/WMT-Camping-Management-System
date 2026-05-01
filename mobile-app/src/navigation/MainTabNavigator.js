@@ -9,7 +9,7 @@ import StoreScreen from '../screens/StoreScreen';
 import BlogListScreen from '../screens/Blog/BlogListScreen';
 import GuideListScreen from '../screens/Guide/GuideListScreen';
 import ProfileScreen from '../screens/Auth/ProfileScreen';
-import MyTicketsScreen from '../screens/Ticket/MyTicketsScreen';
+import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen';
 
 
 

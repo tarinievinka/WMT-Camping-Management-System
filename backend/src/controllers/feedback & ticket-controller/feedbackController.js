@@ -1,4 +1,4 @@
-const feedbackService = require('../../services/feedback-service/feedbackService');
+const feedbackService = require('../../services/feedback & ticket-service/feedbackService');
 const {
   isValidRating,
   isValidTargetType,

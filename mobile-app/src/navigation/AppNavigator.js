@@ -21,11 +21,11 @@ import PaymentScreen from '../screens/PaymentScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
 import AddFeedbackScreen from '../screens/Feedback/AddFeedbackScreen';
 import PaymentSuccessScreen from '../screens/Payment/PaymentSuccessScreen';
-import MyTicketsScreen from '../screens/Ticket/MyTicketsScreen';
-import CreateTicketScreen from '../screens/Ticket/CreateTicketScreen';
-import TicketDetailsScreen from '../screens/Ticket/TicketDetailsScreen';
-import SubmitFeedbackScreen from '../screens/Ticket/SubmitFeedbackScreen';
-import AdminTicketsScreen from '../screens/Ticket/AdminTicketsScreen';
+import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen';
+import CreateTicketScreen from '../screens/Feedback & Ticket/Ticket/CreateTicketScreen';
+import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
+import SubmitFeedbackScreen from '../screens/Feedback & Ticket/Ticket/SubmitFeedbackScreen';
+import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
 
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
 
@@ -47,7 +47,7 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         screenOptions={{
           headerShown: false
         }}

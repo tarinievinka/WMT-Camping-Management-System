@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
-  RefreshControl,
-  Alert
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
@@ -18,7 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../../context/AuthContext';
 
 
-const AdminTicketsScreen = ({ navigation }) => {
+const MyTicketsScreen = ({ navigation }) => {
   const { token } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +25,7 @@ const AdminTicketsScreen = ({ navigation }) => {
 
   const fetchTickets = async () => {
     try {
-      const response = await apiClient.get('/tickets/all', {
+      const response = await apiClient.get('/tickets/my-tickets', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTickets(response.data.data);
@@ -75,7 +74,6 @@ const AdminTicketsScreen = ({ navigation }) => {
             Alert.alert('Error', 'Failed to delete ticket');
           }
         }
-
       }
     ]);
   };
@@ -83,7 +81,7 @@ const AdminTicketsScreen = ({ navigation }) => {
   const renderTicket = ({ item }) => (
     <View style={styles.ticketCard}>
       <TouchableOpacity
-        style={styles.ticketContent}
+        style={styles.cardContent}
         onPress={() => navigation.navigate('TicketDetails', { ticketId: item._id })}
       >
         <View style={styles.ticketHeader}>
@@ -95,13 +93,12 @@ const AdminTicketsScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <Text style={styles.userText}>By: {item.createdBy?.name || 'Unknown'}</Text>
         <Text style={styles.ticketDesc} numberOfLines={2}>{item.description}</Text>
 
         <View style={styles.ticketFooter}>
           <View style={styles.priorityGroup}>
             <Ionicons name="flag" size={14} color={item.priority === 'high' ? '#ef4444' : '#64748b'} />
-            <Text style={styles.footerText}>{item.priority.toUpperCase()}</Text>
+            <Text style={styles.footerText}>{item.priority.toUpperCase()} PRIORITY</Text>
           </View>
           <Text style={styles.footerText}>
             {new Date(item.createdAt).toLocaleDateString()}
@@ -109,25 +106,45 @@ const AdminTicketsScreen = ({ navigation }) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => handleDelete(item._id)}
-      >
-        <Ionicons name="trash-outline" size={20} color="#ef4444" />
-      </TouchableOpacity>
+      <View style={styles.actionRow}>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('CreateTicket', { editTicket: item })}
+        >
+          <Ionicons name="create-outline" size={18} color={Colors.primary} />
+          <Text style={[styles.actionText, { color: Colors.primary }]}>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => handleDelete(item._id)}
+        >
+          <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          <Text style={[styles.actionText, { color: '#ef4444' }]}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
+
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <View style={styles.content}>
-        <Text style={styles.title}>All Support Tickets</Text>
+        <View style={styles.pageHeader}>
+          <Text style={styles.title}>My Support Tickets</Text>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => navigation.navigate('CreateTicket')}
+          >
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
         {loading ? (
-          <div style={styles.center}>
+          <View style={styles.center}>
             <ActivityIndicator size="large" color={Colors.primary} />
-          </div>
+          </View>
         ) : (
           <FlatList
             data={tickets}
@@ -140,7 +157,14 @@ const AdminTicketsScreen = ({ navigation }) => {
             ListEmptyComponent={
               <View style={styles.emptyState}>
                 <Ionicons name="ticket-outline" size={64} color="#e2e8f0" />
-                <Text style={styles.emptyTitle}>No tickets to manage</Text>
+                <Text style={styles.emptyTitle}>No tickets found</Text>
+                <Text style={styles.emptyText}>Need help? Create a support ticket and we'll get back to you.</Text>
+                <TouchableOpacity
+                  style={styles.createBtn}
+                  onPress={() => navigation.navigate('CreateTicket')}
+                >
+                  <Text style={styles.createBtnText}>Create Ticket</Text>
+                </TouchableOpacity>
               </View>
             }
           />
@@ -159,11 +183,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  pageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 20,
+  },
+  addBtn: {
+    backgroundColor: Colors.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   list: {
     paddingBottom: 20,
@@ -171,8 +208,8 @@ const styles = StyleSheet.create({
   ticketCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
-    flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#f1f5f9',
     elevation: 2,
@@ -181,21 +218,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
-  ticketContent: {
-    flex: 1,
-    padding: 16,
-  },
-  deleteBtn: {
-    padding: 16,
-    justifyContent: 'center',
-    borderLeftWidth: 1,
-    borderLeftColor: '#f1f5f9',
-  },
   ticketHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   ticketTitle: {
     fontSize: 16,
@@ -203,12 +230,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     flex: 1,
     marginRight: 10,
-  },
-  userText: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -243,6 +264,27 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     fontWeight: '500',
   },
+  priorityTextActive: {
+    color: '#fff',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 12,
+    marginTop: 12,
+    justifyContent: 'flex-end',
+    gap: 20,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -251,13 +293,32 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     marginTop: 60,
+    paddingHorizontal: 40,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text,
     marginTop: 20,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 20,
+  },
+  createBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 24,
+  },
+  createBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
   }
 });
 
-export default AdminTicketsScreen;
+export default MyTicketsScreen;

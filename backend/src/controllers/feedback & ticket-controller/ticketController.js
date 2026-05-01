@@ -1,6 +1,8 @@
-const ticketService = require('./ticket.service');
+const ticketService = require('../../services/feedback & ticket-service/ticket.service');
 
 // @desc    Create new ticket
+// @route   POST /api/tickets/create
+// @access  Private (User)
 exports.createTicket = async (req, res) => {
   try {
     req.body.createdBy = req.user.id;
@@ -12,6 +14,8 @@ exports.createTicket = async (req, res) => {
 };
 
 // @desc    Get user tickets
+// @route   GET /api/tickets/my-tickets
+// @access  Private (User)
 exports.getMyTickets = async (req, res) => {
   try {
     const tickets = await ticketService.getMyTickets(req.user.id);
@@ -22,6 +26,8 @@ exports.getMyTickets = async (req, res) => {
 };
 
 // @desc    Get all tickets
+// @route   GET /api/tickets/all
+// @access  Private (Admin)
 exports.getAllTickets = async (req, res) => {
   try {
     const tickets = await ticketService.getAllTickets();
@@ -32,6 +38,8 @@ exports.getAllTickets = async (req, res) => {
 };
 
 // @desc    Update ticket
+// @route   PUT /api/tickets/update/:id
+// @access  Private (Admin)
 exports.updateTicket = async (req, res) => {
   try {
     const ticket = await ticketService.updateTicket(req.params.id, req.body);
@@ -45,6 +53,8 @@ exports.updateTicket = async (req, res) => {
 };
 
 // @desc    Delete ticket
+// @route   DELETE /api/tickets/delete/:id
+// @access  Private (Admin)
 exports.deleteTicket = async (req, res) => {
   try {
     const ticket = await ticketService.deleteTicket(req.params.id);
@@ -58,6 +68,8 @@ exports.deleteTicket = async (req, res) => {
 };
 
 // @desc    Create feedback
+// @route   POST /api/feedback/create
+// @access  Private (User)
 exports.createFeedback = async (req, res) => {
   try {
     req.body.userId = req.user.id;
@@ -69,6 +81,8 @@ exports.createFeedback = async (req, res) => {
 };
 
 // @desc    Get all feedback
+// @route   GET /api/feedback/all
+// @access  Private (Admin)
 exports.getAllFeedback = async (req, res) => {
   try {
     const feedback = await ticketService.getAllFeedback();
