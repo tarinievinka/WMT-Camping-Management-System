@@ -28,6 +28,11 @@ router.post('/create', authMiddleware.protect, upload.array('files', 5), feedbac
 // Get all
 router.get('/display', feedbackController.getAllFeedbacks);
 
+// Analytics
+router.get('/analytics/average', feedbackController.getAverageRating);
+router.get('/analytics/top', feedbackController.getTopRated);
+router.get('/check-eligibility', feedbackController.checkEligibility);
+
 // Get by ID
 router.get('/:id', feedbackController.getFeedbackById);
 
@@ -37,10 +42,5 @@ router.put('/update/:id', authMiddleware.protect, upload.array('files', 5), feed
 
 // Delete
 router.delete('/delete/:id', authMiddleware.protect, feedbackController.deleteFeedback);
-
-// Analytics
-router.get('/analytics/average', feedbackController.getAverageRating);
-router.get('/analytics/top', feedbackController.getTopRated);
-router.get('/check-eligibility', feedbackController.checkEligibility);
 
 module.exports = router;

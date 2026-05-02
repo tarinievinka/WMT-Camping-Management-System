@@ -163,7 +163,6 @@ const EditProfileScreen = ({ navigation }) => {
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
       >
         {statusMessage.text ? (
           <View style={[

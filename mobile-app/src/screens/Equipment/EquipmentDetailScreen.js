@@ -12,7 +12,8 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { BASE_URL } from '../../api/apiClient';
+import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
+import { useAuth } from '../../context/AuthContext';
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
@@ -26,7 +27,7 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         {/* Product Image */}
         <View style={styles.imageSection}>
           <Image

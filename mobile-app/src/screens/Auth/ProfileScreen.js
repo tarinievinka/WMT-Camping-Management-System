@@ -27,6 +27,14 @@ const ProfileScreen = ({ route, navigation }) => {
   const [userBlogs, setUserBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const user = {
+    name: authUser?.name || 'Happy Camper',
+    email: authUser?.email || 'camper@example.com',
+    avatar: authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
+
   useEffect(() => {
     fetchProfileData();
   }, [authorId, authUser]);
@@ -97,12 +105,34 @@ const ProfileScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-      <Header />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      {isOwnProfile ? (
+          <Header />
+      ) : (
+          <View style={styles.greenHeader}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
+                  <Ionicons name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Ionicons name="leaf" size={20} color="#fff" />
+                <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+              </View>
+              <View style={styles.headerRight}>
+                <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
+                <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
+              </View>
+            </View>
+          </View>
+      )}
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.profileSection}>
-          <Image source={{ uri: userAvatar }} style={styles.avatar} />
-          <Text style={styles.userName}>{userDisplayName}</Text>
-          <Text style={styles.userEmail}>{userEmail}</Text>
+          <Image source={{ uri: isOwnProfile ? user.avatar : userAvatar }} style={styles.avatar} />
+          <Text style={styles.userName}>{isOwnProfile ? user.name : userDisplayName}</Text>
+          <Text style={styles.userEmail}>{isOwnProfile ? user.email : userEmail}</Text>
           
           {isOwnProfile && (
             <TouchableOpacity 
@@ -124,6 +154,7 @@ const ProfileScreen = ({ route, navigation }) => {
                   <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
                 <View style={styles.menuItemRight}>
+                  {item.count && <Text style={styles.badge}>{item.count}</Text>}
                   <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
                 </View>
               </TouchableOpacity>
@@ -145,7 +176,10 @@ const ProfileScreen = ({ route, navigation }) => {
         </View>
 
         {isOwnProfile && (
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={logout}
+          >
             <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
@@ -157,6 +191,35 @@ const ProfileScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  greenHeader: {
+    backgroundColor: '#065f46',
+    paddingTop: Platform.OS === 'ios' ? 50 : (StatusBar.currentHeight || 40) + 10,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerBrand: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+    letterSpacing: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    marginLeft: 15,
+  },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { paddingBottom: 100 },
   profileSection: { alignItems: 'center', paddingVertical: 30 },
@@ -170,6 +233,16 @@ const styles = StyleSheet.create({
   menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
   menuLabel: { fontSize: 16, marginLeft: 15, color: '#334155' },
   menuItemRight: { flexDirection: 'row', alignItems: 'center' },
+  badge: {
+    backgroundColor: '#065f46',
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 10,
+  },
   blogsSection: { padding: 20, marginTop: 10 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 15 },
   blogCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#f1f5f9' },

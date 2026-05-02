@@ -3,7 +3,8 @@ const Payment = require('../../models/payement-model/PaymentModel');
 const GuideBooking = require('../../models/guide-booking-model/guideBookingModel');
 const Reservation = require('../../models/reservation-models/Reservation');
 const CustomerNotification = require('../../models/customer-notification-model/customerNotificationModel');
-const User = require('../../models/user-models/User'); // Correcting based on directory structure seen earlier
+const User = require('../../models/user-models/User');
+const EquipmentPurchase = require('../../models/Equipment-model/EquipmentPurchase');
 
 const createPayment = async (data) => {
   const payment = new Payment(data);
@@ -16,6 +17,8 @@ const createPayment = async (data) => {
         await GuideBooking.findByIdAndUpdate(data.bookingId, { status: 'Payment Confirmed' });
       } else if (data.bookingType === 'CampsiteBooking') {
         await Reservation.findByIdAndUpdate(data.bookingId, { status: 'Payment Confirmed' });
+      } else if (data.bookingType === 'EquipmentBooking') {
+        await EquipmentPurchase.findByIdAndUpdate(data.bookingId, { status: 'paid' });
       }
       
       const user = await User.findById(data.userId);
@@ -81,6 +84,8 @@ const updatePaymentStatus = async (id, status) => {
         await GuideBooking.findByIdAndUpdate(payment.bookingId, { status: 'Payment Confirmed' });
       } else if (payment.bookingType === 'CampsiteBooking') {
         await Reservation.findByIdAndUpdate(payment.bookingId, { status: 'Payment Confirmed' });
+      } else if (payment.bookingType === 'EquipmentBooking') {
+        await EquipmentPurchase.findByIdAndUpdate(payment.bookingId, { status: 'paid' });
       }
 
       // 2. Notify User
