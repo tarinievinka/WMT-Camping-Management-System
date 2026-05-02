@@ -54,7 +54,12 @@ const loginUser = async (emailRaw, password) => {
   console.log(`[USER_SERVICE] Login successful for: ${email} (Role: ${user.role})`);
 
   const token = jwt.sign(
-    { id: user._id, role: user.role },
+    { 
+      id: user._id, 
+      role: user.role, 
+      name: user.name, 
+      username: user.username 
+    },
     process.env.JWT_SECRET,
     { expiresIn: '7d' } 
   );
@@ -82,7 +87,12 @@ const refreshAccessToken = async (token) => {
   }
 
   const accessToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { 
+      id: user._id, 
+      role: user.role, 
+      name: user.name, 
+      username: user.username 
+    },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
   );

@@ -1,5 +1,16 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  ScrollView, 
+  Image, 
+  TouchableOpacity, 
+  TextInput, 
+  Alert, 
+  ActivityIndicator, 
+  SafeAreaView 
+} from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -11,11 +22,17 @@ const BlogDetailScreen = ({ route, navigation }) => {
   const [blog, setBlog] = useState(initialBlog);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const handleLike = async () => {
+    if (!user) {
+      Alert.alert('Login Required', 'Please login to like this post');
+      return;
+    }
     try {
-      const response = await axios.post(`${API_URL}/api/blogs/${blog._id}/like`);
+      const response = await axios.post(`${API_URL}/api/blogs/${blog._id}/like`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setBlog(response.data);
     } catch (err) {
       console.error(err);
@@ -23,10 +40,17 @@ const BlogDetailScreen = ({ route, navigation }) => {
   };
 
   const handleComment = async () => {
+    if (!user) {
+      Alert.alert('Login Required', 'Please login to comment');
+      return;
+    }
     if (!comment.trim()) return;
     setIsSubmitting(true);
     try {
-      const response = await axios.post(`${API_URL}/api/blogs/${blog._id}/comment`, { text: comment });
+      const response = await axios.post(`${API_URL}/api/blogs/${blog._id}/comment`,
+        { text: comment },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setBlog(response.data);
       setComment('');
     } catch (err) {
@@ -36,89 +60,119 @@ const BlogDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          <Image source={{ uri: blog.image }} style={styles.headerImage} />
-        </View>
+  const handleDelete = async () => {
+    Alert.alert(
+      'Delete Blog',
+      'Are you sure you want to delete this blog post?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/api/blogs/${blog._id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              Alert.alert('Success', 'Blog deleted successfully');
+              navigation.goBack();
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete blog');
+            }
+          }
+        }
+      ]
+    );
+  };
 
+  const canEdit = user && (user._id === blog.author || user.role === 'admin');
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Blog Details</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Image source={{ uri: blog.image }} style={styles.image} />
+        
         <View style={styles.content}>
-          <View style={styles.authorSection}>
-            <View style={styles.authorInfo}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{blog.authorName?.charAt(0)}</Text>
-              </View>
-              <View>
-                <Text style={styles.authorName}>{blog.authorName}</Text>
-                <Text style={styles.date}>{new Date(blog.createdAt).toLocaleDateString()}</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={handleLike} style={styles.likeButton}>
+          <Text style={styles.category}>{blog.category || 'General'}</Text>
+          <Text style={styles.title}>{blog.title}</Text>
+          
+          <View style={styles.authorRow}>
+            <Text style={styles.authorName}>By {blog.authorName}</Text>
+            <Text style={styles.date}>{new Date(blog.createdAt).toLocaleDateString()}</Text>
+          </View>
+
+          <View style={styles.actionRow}>
+            <TouchableOpacity onPress={handleLike} style={styles.actionBtn}>
               <Ionicons 
                 name={blog.likes?.includes(user?._id) ? "heart" : "heart-outline"} 
                 size={24} 
-                color={blog.likes?.includes(user?._id) ? "#ef4444" : "#64748b"} 
+                color={blog.likes?.includes(user?._id) ? Colors.danger : Colors.text} 
               />
-              <Text style={styles.likeCount}>{blog.likes?.length || 0}</Text>
+              <Text style={styles.actionText}>{blog.likes?.length || 0} Likes</Text>
             </TouchableOpacity>
-          </View>
 
-          <Text style={styles.title}>{blog.title}</Text>
-          
-          <View style={styles.tagRow}>
-            {blog.tags?.map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>#{tag}</Text>
+            {canEdit && (
+              <View style={{ flexDirection: 'row' }}>
+                <TouchableOpacity 
+                  onPress={() => navigation.navigate('CreateBlog', { blog })}
+                  style={styles.actionBtn}
+                >
+                  <Ionicons name="create-outline" size={24} color={Colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleDelete} style={styles.actionBtn}>
+                  <Ionicons name="trash-outline" size={24} color={Colors.danger} />
+                </TouchableOpacity>
               </View>
-            ))}
+            )}
           </View>
 
-          <Text style={styles.blogText}>{blog.content}</Text>
+          <Text style={styles.blogContent}>{blog.content}</Text>
 
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Comments ({blog.comments?.length || 0})</Text>
-
+          
           {blog.comments?.map((c, index) => (
             <View key={index} style={styles.commentCard}>
-              <View style={styles.commentHeader}>
-                <Text style={styles.commentUser}>{c.name}</Text>
-                <Text style={styles.commentDate}>{new Date(c.date).toLocaleDateString()}</Text>
-              </View>
+              <Text style={styles.commentUser}>{c.name}</Text>
               <Text style={styles.commentText}>{c.text}</Text>
+              <Text style={styles.commentDate}>{new Date(c.date).toLocaleDateString()}</Text>
             </View>
           ))}
 
-          <View style={styles.commentInputContainer}>
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Write a comment..."
-              value={comment}
-              onChangeText={setComment}
-              multiline
-            />
-            <TouchableOpacity 
-              style={[styles.sendButton, !comment.trim() && styles.disabledButton]}
-              onPress={handleComment}
-              disabled={isSubmitting || !comment.trim()}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color={Colors.white} />
-              ) : (
-                <Ionicons name="send" size={20} color={Colors.white} />
-              )}
-            </TouchableOpacity>
-          </View>
+          {user?.role !== 'admin' && (
+            <View style={styles.commentInputContainer}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Add a comment..."
+                value={comment}
+                onChangeText={setComment}
+                multiline
+              />
+              <TouchableOpacity 
+                style={[styles.commentBtn, !comment.trim() && styles.disabledBtn]}
+                onPress={handleComment}
+                disabled={isSubmitting || !comment.trim()}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <Text style={styles.commentBtnText}>Post</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -128,107 +182,79 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   header: {
-    height: 300,
-    position: 'relative',
-  },
-  headerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    padding: 20,
-    marginTop: -20,
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-  },
-  authorSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  authorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    color: Colors.white,
+  headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  authorName: {
-    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text,
   },
-  date: {
-    fontSize: 12,
-    color: '#94a3b8',
+  image: {
+    width: '100%',
+    height: 250,
   },
-  likeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+  content: {
+    padding: 20,
   },
-  likeCount: {
-    marginLeft: 6,
+  category: {
+    color: Colors.primary,
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: 15,
-    lineHeight: 32,
   },
-  tagRow: {
+  authorRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
-  tag: {
-    marginRight: 10,
+  authorName: {
+    color: '#666',
+    fontStyle: 'italic',
   },
-  tagText: {
-    color: Colors.primary,
+  date: {
+    color: '#999',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 25,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  actionText: {
+    marginLeft: 8,
+    color: Colors.text,
     fontWeight: '600',
   },
-  blogText: {
+  blogContent: {
     fontSize: 16,
-    color: '#475569',
-    lineHeight: 26,
+    lineHeight: 24,
+    color: '#444',
     marginBottom: 30,
   },
   divider: {
     height: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f0f0f0',
     marginBottom: 25,
   },
   sectionTitle: {
@@ -238,56 +264,48 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   commentCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f9f9f9',
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     marginBottom: 15,
-  },
-  commentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
   },
   commentUser: {
     fontWeight: 'bold',
-    fontSize: 14,
+    marginBottom: 5,
     color: Colors.text,
+  },
+  commentText: {
+    color: '#555',
+    marginBottom: 5,
   },
   commentDate: {
     fontSize: 10,
-    color: '#94a3b8',
-  },
-  commentText: {
-    fontSize: 14,
-    color: '#475569',
-    lineHeight: 20,
+    color: '#999',
   },
   commentInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginTop: 20,
     marginBottom: 40,
   },
   commentInput: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    maxHeight: 100,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 10,
   },
-  sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  commentBtn: {
     backgroundColor: Colors.primary,
-    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    marginLeft: 10,
   },
-  disabledButton: {
+  commentBtnText: {
+    color: Colors.white,
+    fontWeight: 'bold',
+  },
+  disabledBtn: {
     opacity: 0.5,
   },
 });

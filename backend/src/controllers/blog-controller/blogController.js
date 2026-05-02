@@ -3,8 +3,38 @@ const Blog = require('../../models/blog-model/Blog');
 // Get all blogs
 exports.getAllBlogs = async (req, res) => {
     try {
-        const blogs = await Blog.find().sort({ createdAt: -1 });
-        res.status(200).json(blogs);
+        console.log('GET /api/blogs - Params:', req.query);
+        let query = {};
+        
+        // Category filter
+        if (req.query.category && req.query.category !== 'All') {
+            query.category = req.query.category;
+        }
+
+        // Search functionality (title, authorName, or category)
+        if (req.query.search) {
+            const searchRegex = new RegExp(req.query.search, 'i');
+            query.$or = [
+                { title: searchRegex },
+                { authorName: searchRegex },
+                { category: searchRegex }
+            ];
+        }
+
+        const blogs = await Blog.find(query).sort({ createdAt: -1 }).populate('author', 'role');
+        const formattedBlogs = blogs.map(blog => {
+            const blogObj = blog.toObject();
+            if (blogObj.author && blogObj.author.role) {
+                if (blogObj.author.role === 'admin') {
+                    blogObj.authorRole = 'admin';
+                }
+            }
+            if (blogObj.authorRole === 'admin') {
+                blogObj.authorName = 'Admin';
+            }
+            return blogObj;
+        });
+        res.status(200).json(formattedBlogs);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -13,9 +43,20 @@ exports.getAllBlogs = async (req, res) => {
 // Get single blog
 exports.getBlogById = async (req, res) => {
     try {
-        const blog = await Blog.findById(req.params.id);
+        const blog = await Blog.findById(req.params.id).populate('author', 'role');
         if (!blog) return res.status(404).json({ error: 'Blog not found' });
-        res.status(200).json(blog);
+        
+        const blogObj = blog.toObject();
+        if (blogObj.author && blogObj.author.role) {
+            if (blogObj.author.role === 'admin') {
+                blogObj.authorRole = 'admin';
+            }
+        }
+        if (blogObj.authorRole === 'admin') {
+            blogObj.authorName = 'Admin';
+        }
+
+        res.status(200).json(blogObj);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -24,12 +65,14 @@ exports.getBlogById = async (req, res) => {
 // Create blog
 exports.createBlog = async (req, res) => {
     try {
-        const { title, content, image, tags } = req.body;
+        const { title, content, image, tags, category } = req.body;
         const blog = new Blog({
             title,
             content,
             author: req.user.id,
-            authorName: req.user.name || 'Anonymous',
+            authorName: req.user.role === 'admin' ? 'Admin' : (req.user.name || req.user.username || 'Anonymous'),
+            authorRole: req.user.role || 'user',
+            category: category || 'General',
             image,
             tags
         });

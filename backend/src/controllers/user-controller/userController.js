@@ -9,7 +9,12 @@ const register = async (req, res) => {
     
     // Generate token for auto-login
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { 
+        id: user._id, 
+        role: user.role,
+        name: user.name,
+        username: user.username
+      },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
