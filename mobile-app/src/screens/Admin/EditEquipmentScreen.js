@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Modal, FlatList, Keyboard } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons, Feather } from '@expo/vector-icons';
@@ -46,32 +46,35 @@ const CustomDropdown = ({ label, value, options, onSelect }) => {
   );
 };
 
-const AddEquipmentScreen = ({ navigation }) => {
+const EditEquipmentScreen = ({ navigation, route }) => {
   const { token } = useAuth();
+  const { item } = route.params;
+  
   const [formData, setFormData] = useState({
-    name: '',
-    category: CATEGORIES[0],
-    condition: CONDITIONS[0],
-    rentalPrice: '',
-    salePrice: '',
-    stockQuantity: 1,
-    availabilityStatus: STATUSES[0],
-    description: '',
+    name: item.name || '',
+    category: item.category || CATEGORIES[0],
+    condition: item.condition || CONDITIONS[0],
+    rentalPrice: item.rentalPrice?.toString() || '',
+    salePrice: item.salePrice?.toString() || '',
+    stockQuantity: item.stockQuantity || 1,
+    availabilityStatus: item.availabilityStatus || STATUSES[0],
+    description: item.description || '',
   });
+  
   const [images, setImages] = useState([]);
+  const [currentImageUrl, setCurrentImageUrl] = useState(item.imageUrl || '');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
-      allowsMultipleSelection: true,
+      allowsMultipleSelection: false,
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets) {
-      const newImages = result.assets.map(asset => asset.uri);
-      setImages([...images, ...newImages]);
+      setImages([result.assets[0].uri]);
     }
   };
 
@@ -84,7 +87,7 @@ const AddEquipmentScreen = ({ navigation }) => {
     });
   };
 
-  const handleCreate = async () => {
+  const handleUpdate = async () => {
     if (!formData.name || !formData.rentalPrice || !formData.salePrice || formData.stockQuantity < 0) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -121,7 +124,7 @@ const AddEquipmentScreen = ({ navigation }) => {
         }
       }
 
-      await axios.post(`${API_URL}/api/equipment/add`, formDataToSend, {
+      await axios.put(`${API_URL}/api/equipment/update/${item._id}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
@@ -134,8 +137,8 @@ const AddEquipmentScreen = ({ navigation }) => {
         navigation.navigate('ManageEquipment');
       }, 2000);
     } catch (err) {
-      console.error("Add Equipment Error:", err.response?.data || err.message);
-      Alert.alert('Error', err.response?.data?.error || 'Failed to add equipment');
+      console.error("Update Equipment Error:", err.response?.data || err.message);
+      Alert.alert('Error', err.response?.data?.error || 'Failed to update equipment');
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +158,7 @@ const AddEquipmentScreen = ({ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Equipment</Text>
+          <Text style={styles.headerTitle}>Edit Equipment</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -226,7 +229,7 @@ const AddEquipmentScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>INITIAL STOCK</Text>
+          <Text style={styles.label}>STOCK QUANTITY</Text>
           <View style={styles.quantityContainer}>
             <TouchableOpacity style={styles.qtyBtn} onPress={() => handleQuantityChange('dec')}>
               <Feather name="minus" size={20} color={Colors.text} />
@@ -265,35 +268,37 @@ const AddEquipmentScreen = ({ navigation }) => {
         </View>
 
         <Text style={styles.label}>EQUIPMENT PHOTO</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+        <View style={styles.photoSection}>
           <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
             <Ionicons name="camera" size={30} color={Colors.primary} />
-            <Text style={styles.addImageText}>Add</Text>
+            <Text style={styles.addImageText}>Change</Text>
           </TouchableOpacity>
-          {images.map((img, index) => (
-            <View key={index} style={styles.imageContainer}>
-              <Image source={{ uri: img }} style={styles.previewImage} />
-              <TouchableOpacity 
-                style={styles.removeImage}
-                onPress={() => setImages(images.filter((_, i) => i !== index))}
-              >
-                <Ionicons name="close-circle" size={24} color="#ef4444" />
-              </TouchableOpacity>
+          {(images.length > 0 || currentImageUrl) ? (
+            <View style={styles.imageContainer}>
+              <Image 
+                source={{ uri: images.length > 0 ? images[0] : (currentImageUrl.startsWith('http') ? currentImageUrl : `${API_URL}${currentImageUrl}`) }} 
+                style={styles.previewImage} 
+              />
             </View>
-          ))}
-        </ScrollView>
+          ) : (
+            <View style={[styles.imageContainer, styles.noImageContainer]}>
+               <Feather name="image" size={30} color="#cbd5e1" />
+               <Text style={styles.noImageText}>No photo</Text>
+            </View>
+          )}
+        </View>
 
         <TouchableOpacity 
           style={[styles.submitButton, isLoading && styles.disabledButton]}
-          onPress={handleCreate}
+          onPress={handleUpdate}
           disabled={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
             <>
-              <Feather name="plus-square" size={20} color={Colors.white} style={{ marginRight: 8 }} />
-              <Text style={styles.submitText}>Add Equipment</Text>
+              <Feather name="save" size={20} color={Colors.white} style={{ marginRight: 8 }} />
+              <Text style={styles.submitText}>Save Changes</Text>
             </>
           )}
         </TouchableOpacity>
@@ -310,8 +315,8 @@ const AddEquipmentScreen = ({ navigation }) => {
             <View style={styles.successIconBg}>
               <Ionicons name="checkmark" size={40} color={Colors.white} />
             </View>
-            <Text style={styles.successTitle}>Equipment Added!</Text>
-            <Text style={styles.successSubtitle}>The new item is now available in your management list.</Text>
+            <Text style={styles.successTitle}>Changes Saved!</Text>
+            <Text style={styles.successSubtitle}>The equipment details have been successfully updated.</Text>
           </View>
         </View>
       </Modal>
@@ -489,7 +494,7 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  imageScroll: {
+  photoSection: {
     flexDirection: 'row',
     marginBottom: 30,
   },
@@ -513,19 +518,26 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    marginRight: 10,
   },
   previewImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
   },
-  removeImage: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
+  noImageContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  noImageText: {
+    fontSize: 10,
+    color: '#94a3b8',
+    marginTop: 4,
   },
   submitButton: {
     backgroundColor: Colors.primary,
@@ -569,7 +581,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#10b981',
+    backgroundColor: '#10b981', // Emerald 500
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -588,4 +600,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddEquipmentScreen;
+export default EditEquipmentScreen;

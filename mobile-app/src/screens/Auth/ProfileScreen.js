@@ -1,11 +1,12 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
+import Header from '../../components/Header';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+import { BASE_URL } from '../../api/apiClient';
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout, token } = useAuth();
@@ -15,6 +16,14 @@ const ProfileScreen = ({ route, navigation }) => {
   const [profileData, setProfileData] = useState(null);
   const [userBlogs, setUserBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const user = {
+    name: authUser?.name || 'Happy Camper',
+    email: authUser?.email || 'camper@example.com',
+    avatar: authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
 
   useEffect(() => {
     fetchProfileData();
@@ -48,25 +57,6 @@ const ProfileScreen = ({ route, navigation }) => {
     } finally {
       setIsLoading(false);
     }
-=======
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { Colors } from '../../theme/colors';
-import { useAuth } from '../../context/AuthContext';
-import Header from '../../components/Header';
-import { BASE_URL } from '../../api/apiClient';
-
-const ProfileScreen = ({ navigation }) => {
-  const { user: authUser, logout } = useAuth();
-  
-  const user = {
-    name: authUser?.name || 'Happy Camper',
-    email: authUser?.email || 'camper@example.com',
-    avatar: authUser?.profilePicture 
-      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
-      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
->>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
   };
 
   const menuItems = [
@@ -96,35 +86,45 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-<<<<<<< HEAD
-      {/* Camptrail 360 Green Header */}
-      <View style={styles.greenHeader}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            {!isOwnProfile && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
-                <Ionicons name="arrow-back" size={24} color="#fff" />
-              </TouchableOpacity>
-            )}
-            <Ionicons name="leaf" size={20} color="#fff" />
-            <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+      {isOwnProfile ? (
+          <Header />
+      ) : (
+          <View style={styles.greenHeader}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
+                  <Ionicons name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Ionicons name="leaf" size={20} color="#fff" />
+                <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+              </View>
+              <View style={styles.headerRight}>
+                <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
+                <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      )}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Profile Info Section */}
         <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} 
-            style={styles.avatar} 
-          />
-          <Text style={styles.userName}>{profileData?.name || 'Happy Camper'}</Text>
-          <Text style={styles.userEmail}>{profileData?.email || 'camper@example.com'}</Text>
+          <Image source={{ uri: isOwnProfile ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} style={styles.avatar} />
+          <Text style={styles.userName}>{isOwnProfile ? user.name : (profileData?.name || 'Happy Camper')}</Text>
+          <Text style={styles.userEmail}>{isOwnProfile ? user.email : (profileData?.email || 'camper@example.com')}</Text>
+          
+          {isOwnProfile && (
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => navigation.navigate('EditProfile')}
+            >
+              <Ionicons name="pencil-sharp" size={16} color="#fff" />
+              <Text style={styles.editButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Menu Options (Only for own profile) */}
@@ -133,12 +133,12 @@ const ProfileScreen = ({ navigation }) => {
             {menuItems.map((item, index) => (
               <TouchableOpacity key={index} style={styles.menuItem} onPress={item.action}>
                 <View style={styles.menuItemLeft}>
-                  <Ionicons name={item.icon} size={22} color="#334155" />
+                  <Ionicons name={item.icon} size={22} color={Colors.text} />
                   <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
                 <View style={styles.menuItemRight}>
                   {item.count && <Text style={styles.badge}>{item.count}</Text>}
-                  <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                  <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
                 </View>
               </TouchableOpacity>
             ))}
@@ -158,58 +158,14 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         {isOwnProfile && (
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={logout}
+          >
+            <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         )}
-=======
-      <Header />
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View style={styles.profileSection}>
-          <Image source={{ uri: user.avatar }} style={styles.avatar} />
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <Ionicons name="pencil-sharp" size={16} color="#fff" />
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.menuContainer}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.menuItem}
-              onPress={item.action}
-            >
-              <View style={styles.menuItemLeft}>
-                <Ionicons name={item.icon} size={22} color={Colors.text} />
-                <Text style={styles.menuLabel}>{item.label}</Text>
-              </View>
-              <View style={styles.menuItemRight}>
-                {item.count && <Text style={styles.badge}>{item.count}</Text>}
-                <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity 
-          style={styles.logoutButton}
-          onPress={logout}
-        >
-          <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
->>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
       </ScrollView>
     </View>
   );
@@ -325,7 +281,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10,
   },
-<<<<<<< HEAD
   blogsSection: {
     padding: 20,
     marginTop: 10,
@@ -365,21 +320,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
-=======
+  },
   scrollContent: {
     paddingBottom: 100,
->>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-<<<<<<< HEAD
-    marginTop: 20,
-=======
     marginTop: 40,
     marginBottom: 20,
->>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
     paddingVertical: 15,
   },
   logoutText: {

@@ -79,7 +79,7 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.weatherText}>☀️ Sunny, 24°C</Text>
               </View>
 
-              <TouchableOpacity style={styles.planButton} onPress={() => navigation.navigate('Store')}>
+              <TouchableOpacity style={styles.planButton} onPress={() => navigation.navigate('Equipment')}>
                 <Text style={styles.planButtonText}>Plan Adventure</Text>
               </TouchableOpacity>
             </View>
@@ -93,7 +93,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Discover Sites</Text>
               <Text style={styles.sectionSubtitle}>Real-time availability</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Store')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Equipment')}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -124,7 +124,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Top Guides</Text>
               <Text style={styles.sectionSubtitle}>Professional wilderness experts</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Store')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Equipment')}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -155,7 +155,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Camping Gear</Text>
               <Text style={styles.sectionSubtitle}>Premium rental equipment</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Store')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Equipment', { activeTab: 'gear' })}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -169,10 +169,13 @@ const HomeScreen = ({ navigation }) => {
               showsHorizontalScrollIndicator={false}
               keyExtractor={item => item._id}
               renderItem={({ item }) => (
-                <EquipmentCard 
-                  item={item} 
-                  onPress={() => navigation.navigate('EquipmentDetail', { item })} 
-                />
+                <View style={{ width: 220, marginRight: 16 }}>
+                  <EquipmentCard 
+                    item={item} 
+                    onPress={() => navigation.navigate('EquipmentDetail', { item })} 
+                    onAddToCart={(gear) => console.log('Added to cart:', gear.name)}
+                  />
+                </View>
               )}
               contentContainerStyle={styles.horizontalList}
             />
