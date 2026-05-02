@@ -13,10 +13,8 @@ import {
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
-import { apiClient } from '../../api/apiClient';
-import EquipmentCard from '../../components/EquipmentCard';
-
-const CATEGORIES = ['All Gear', 'Tents', 'Sleeping Bags', 'Backpacks', 'Cooking Gear', 'Lighting', 'Other'];
+import { Shadows } from '../../theme/shadows';
+import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const EquipmentListScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
@@ -39,15 +37,35 @@ const EquipmentListScreen = ({ navigation }) => {
     }
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name?.toLowerCase().includes(search.toLowerCase()) ||
-                         item.category?.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategory === 'All Gear' || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredItems = items.filter(item => 
+    item.name?.toLowerCase().includes(search.toLowerCase()) ||
+    item.category?.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const renderHeader = () => (
-    <View style={styles.header}>
+  const renderItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.card}
+      onPress={() => navigation.navigate('EquipmentDetail', { item })}
+    >
+      <Image 
+        source={{ uri: getImageUrl(item.imageUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'E')}&background=166534&color=fff&size=256` }} 
+        style={styles.image} 
+      />
+      <View style={styles.content}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.category}>{item.category}</Text>
+        <View style={styles.footer}>
+          <Text style={styles.price}>Rs. {item.rentalPrice}<Text style={styles.unit}>/day</Text></Text>
+          <View style={styles.rentButton}>
+            <Text style={styles.rentText}>Details</Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
       <View style={styles.searchContainer}>
         <Feather name="search" size={20} color={Colors.gray} style={styles.searchIcon} />
         <TextInput 

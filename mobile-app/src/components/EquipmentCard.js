@@ -2,17 +2,9 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
-import { BASE_URL } from '../api/config';
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { BASE_URL, getImageUrl } from '../api/apiClient';
 
-const EquipmentCard = ({ item, onPress, onAddToCart }) => {
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    // Ensure no double slashes and correct base URL
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    return `${BASE_URL}/${cleanPath}`;
-  };
+const EquipmentCard = ({ item, onPress }) => {
 
   const isLowStock = item.stockQuantity <= 5 && item.stockQuantity > 0;
   const isOutOfStock = item.stockQuantity === 0;

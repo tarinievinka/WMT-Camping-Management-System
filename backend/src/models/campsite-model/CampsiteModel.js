@@ -47,6 +47,14 @@ const campsiteSchema = new mongoose.Schema(
       ref: 'user',
       required: false,
     },
+    ownerName: {
+      type: String,
+      trim: true,
+    },
+    ownerPhone: {
+      type: String,
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

@@ -40,7 +40,6 @@ const LoginScreen = ({ navigation }) => {
     <ScrollView 
       style={{ flex: 1, backgroundColor: Colors.white }}
       contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Welcome Back</Text>
       <Text style={styles.subtitle}>Login to your account</Text>

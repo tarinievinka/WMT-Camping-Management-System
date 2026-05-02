@@ -9,9 +9,9 @@ import { API_URL } from '../../api/config';
 import { BASE_URL } from '../../api/apiClient';
 
 const ProfileScreen = ({ route, navigation }) => {
-  const { user: authUser, logout, token } = useAuth();
+  const { user: authUser, logout } = useAuth();
   const authorId = route?.params?.authorId;
-  const isOwnProfile = !authorId || authorId === authUser?._id;
+  const isOwnProfile = !authorId || authorId === (authUser?._id || authUser?.id);
 
   const [profileData, setProfileData] = useState(null);
   const [userBlogs, setUserBlogs] = useState([]);
@@ -32,37 +32,46 @@ const ProfileScreen = ({ route, navigation }) => {
   const fetchProfileData = async () => {
     setIsLoading(true);
     try {
-      // 1. Set the user basic info
       if (isOwnProfile) {
         setProfileData(authUser);
       } else {
-        // In a real app, fetch user by ID. For now, we find them from the blogs list
-        const blogRes = await axios.get(`${API_URL}/api/blogs`);
-        const authorBlog = blogRes.data.find(b => b.author === authorId);
+        const response = await apiClient.get('/blogs');
+        const blogs = response.data.data || response.data;
+        const authorBlog = blogs.find(b => (b.author?._id || b.author) === authorId);
         if (authorBlog) {
           setProfileData({
-            name: authorBlog.authorName,
-            role: authorBlog.authorRole,
-            email: 'author@camptrail360.com' // Placeholder for privacy
+            _id: authorId,
+            name: authorBlog.authorName || (authorBlog.author?.name),
+            role: authorBlog.authorRole || (authorBlog.author?.role),
+            email: 'author@camptrail360.com',
+            profilePicture: authorBlog.authorAvatar
           });
         }
       }
 
-      // 2. Fetch all blogs by this user
-      const response = await axios.get(`${API_URL}/api/blogs`);
-      const filtered = response.data.filter(b => b.author === (authorId || authUser?._id));
+      const response = await apiClient.get('/blogs');
+      const blogs = response.data.data || response.data;
+      const filtered = blogs.filter(b => (b.author?._id || b.author) === (authorId || authUser?._id || authUser?.id));
       setUserBlogs(filtered);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching profile data:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const userDisplayName = profileData?.name || authUser?.name || 'Happy Camper';
+  const userEmail = profileData?.email || authUser?.email || 'camper@example.com';
+  const userAvatar = profileData?.profilePicture 
+    ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
+    : authUser?.profilePicture 
+    ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+
   const menuItems = [
-    { icon: 'bookmark-outline', label: 'My Bookings', count: isOwnProfile ? 2 : null, action: () => navigation.navigate('MyBookings') },
-    { icon: 'heart-outline', label: 'Favorites', count: isOwnProfile ? 5 : null, action: () => Alert.alert('Favorites', 'Feature coming soon!') },
-    { icon: 'card-outline', label: 'Payment Methods', action: () => Alert.alert('Payments', 'Feature coming soon!') },
+    { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
+    { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Favorites', 'Feature coming soon!') },
+    { icon: 'card-outline', label: 'Payment History', action: () => navigation.navigate('PaymentHistory') },
     { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Settings', 'Feature coming soon!') },
     { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Help Center', 'Feature coming soon!') },
   ];
@@ -72,7 +81,10 @@ const ProfileScreen = ({ route, navigation }) => {
       style={styles.blogCard}
       onPress={() => navigation.navigate('BlogDetail', { blog: item })}
     >
-      <Image source={{ uri: item.image }} style={styles.blogThumb} />
+      <Image 
+        source={{ uri: item.image?.startsWith('http') ? item.image : `${BASE_URL}${item.image}` }} 
+        style={styles.blogThumb} 
+      />
       <View style={styles.blogInfo}>
         <Text style={styles.blogCategory}>{item.category?.toUpperCase()}</Text>
         <Text style={styles.blogTitle} numberOfLines={1}>{item.title}</Text>
@@ -81,7 +93,7 @@ const ProfileScreen = ({ route, navigation }) => {
   );
 
   if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#065f46" /></View>;
+    return <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>;
   }
 
   return (
@@ -127,7 +139,6 @@ const ProfileScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Menu Options (Only for own profile) */}
         {isOwnProfile && (
           <View style={styles.menuContainer}>
             {menuItems.map((item, index) => (
@@ -145,16 +156,17 @@ const ProfileScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Author's Blogs Section */}
         <View style={styles.blogsSection}>
-          <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${profileData?.name}`}</Text>
-          <FlatList
-            data={userBlogs}
-            renderItem={renderBlogItem}
-            keyExtractor={item => item._id}
-            scrollEnabled={false}
-            ListEmptyComponent={<Text style={styles.emptyText}>No blogs found.</Text>}
-          />
+          <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
+          {userBlogs.length > 0 ? (
+            userBlogs.map(item => (
+              <React.Fragment key={item._id || Math.random().toString()}>
+                {renderBlogItem({ item })}
+              </React.Fragment>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No blogs found.</Text>
+          )}
         </View>
 
         {isOwnProfile && (
@@ -176,15 +188,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   greenHeader: {
     backgroundColor: '#065f46',
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : (StatusBar.currentHeight || 40) + 10,
+    paddingBottom: 15,
     paddingHorizontal: 20,
   },
   headerRow: {
@@ -201,7 +208,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   headerRight: {
     flexDirection: 'row',
@@ -209,6 +216,14 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginLeft: 15,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   profileSection: {
     alignItems: 'center',

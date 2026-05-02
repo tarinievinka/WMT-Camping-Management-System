@@ -13,7 +13,7 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { apiClient, BASE_URL } from '../../api/apiClient';
+import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const GuideListScreen = ({ navigation }) => {
   const [guides, setGuides] = useState([]);
@@ -40,13 +40,6 @@ const GuideListScreen = ({ navigation }) => {
     guide.name?.toLowerCase().includes(search.toLowerCase()) ||
     guide.languages?.some(lang => lang.toLowerCase().includes(search.toLowerCase()))
   );
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    if (path.startsWith('file:') || path.startsWith('content:')) return null;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 

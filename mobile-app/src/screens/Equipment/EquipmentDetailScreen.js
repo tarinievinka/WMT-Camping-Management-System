@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,26 +7,56 @@ import {
   ScrollView, 
   TouchableOpacity, 
   SafeAreaView,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { BASE_URL } from '../../api/apiClient';
+<<<<<<< HEAD
+import apiClient, { BASE_URL } from '../../api/apiClient';
+import { useAuth } from '../../context/AuthContext';
+=======
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> 3eb4e86a2a0af9444a66a2bdce741440182578ef
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
+  const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
+  const [reviews, setReviews] = useState([]);
+  const [isEligible, setIsEligible] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  useEffect(() => {
+    fetchReviews();
+    checkEligibility();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      const response = await apiClient.get(`/feedback/display?targetId=${item._id}&targetType=Equipment`);
+      setReviews(response.data);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const checkEligibility = async () => {
+    if (!user) return;
+    try {
+      const response = await apiClient.get(`/feedback/check-eligibility?targetId=${item._id}&targetType=Equipment&userId=${user._id || user.id}`);
+      setIsEligible(response.data.eligible);
+    } catch (error) {
+      console.error('Error checking eligibility:', error);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         {/* Product Image */}
         <View style={styles.imageSection}>
           <Image 
@@ -76,6 +106,58 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
+
+          <View style={styles.divider} />
+
+          {/* Reviews Section */}
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.sectionTitle}>User Reviews</Text>
+            {isEligible && (
+              <TouchableOpacity 
+                style={styles.addReviewBtn}
+                onPress={() => navigation.navigate('AddFeedback', { 
+                  booking: { 
+                    targetId: item._id, 
+                    targetName: item.name, 
+                    targetType: 'Equipment' 
+                  } 
+                })}
+              >
+                <Text style={styles.addReviewText}>Add Review</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {loadingReviews ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <View key={index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewerInfo}>
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarText}>
+                        {(review.userId?.name || review.userName || 'A')[0].toUpperCase()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous User'}</Text>
+                      <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.reviewRating}>
+                    <Ionicons name="star" size={12} color="#fbbf24" />
+                    <Text style={styles.ratingValue}>{review.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.reviewComment}>"{review.comment}"</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noReviews}>No reviews yet. {isEligible ? 'Be the first to review!' : 'Purchase or rent this item to share your feedback.'}</Text>
+          )}
+
+          <View style={styles.divider} />
 
           <View style={styles.footer}>
             <View style={styles.totalSection}>
@@ -266,6 +348,96 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  addReviewBtn: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dcfce7',
+  },
+  addReviewText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  reviewCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginTop: 1,
+  },
+  reviewRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  ratingValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#92400e',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  noReviews: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: 20,
+  }
 });
 
 export default EquipmentDetailScreen;

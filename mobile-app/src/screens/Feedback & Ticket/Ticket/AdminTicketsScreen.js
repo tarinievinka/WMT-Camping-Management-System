@@ -26,10 +26,7 @@ const AdminTicketsScreen = ({ navigation }) => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [replyModalVisible, setReplyModalVisible] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [adminReply, setAdminReply] = useState('');
-  const [newStatus, setNewStatus] = useState('');
+
 
 
   const fetchTickets = async () => {
@@ -70,61 +67,10 @@ const AdminTicketsScreen = ({ navigation }) => {
     }
   };
 
-  const handleAdminAction = async () => {
-    if (!adminReply) {
-      Alert.alert('Error', 'Please provide a reply/note');
-      return;
-    }
-
-    try {
-      const response = await apiClient.put(`/tickets/admin/reply/${selectedTicket._id}`, {
-        status: newStatus,
-        adminReply
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setTickets((prev) =>
-        prev.map((ticket) => (ticket._id === selectedTicket._id ? response.data.data : ticket))
-      );
-      Alert.alert('Success', `Ticket ${newStatus} successfully`);
-      setReplyModalVisible(false);
-      setAdminReply('');
-    } catch (error) {
-      const message = error?.response?.data?.error || 'Failed to update ticket';
-      Alert.alert('Error', message);
-    }
-  };
-
-  const openReplyModal = (ticket, status) => {
-    setSelectedTicket(ticket);
-    setNewStatus(status);
-    setAdminReply(ticket.adminReply || '');
-    setReplyModalVisible(true);
-  };
 
 
-  const handleDelete = (id) => {
-    Alert.alert('Delete Ticket', 'Are you sure you want to delete this ticket?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/tickets/delete/${id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
-          } catch (error) {
-            const message = error?.response?.data?.error || 'Failed to delete ticket';
-            Alert.alert('Error', message);
-          }
-        }
 
-      }
-    ]);
-  };
+
 
   const renderTicket = ({ item }) => (
     <View style={styles.ticketCard}>
@@ -154,29 +100,11 @@ const AdminTicketsScreen = ({ navigation }) => {
           </Text>
         </View>
 
-        <View style={styles.adminActionRow}>
-          <TouchableOpacity 
-            style={[styles.adminBtn, { backgroundColor: '#84cc16' }]}
-            onPress={() => openReplyModal(item, 'approved')}
-          >
-            <Text style={styles.adminBtnText}>Approve</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.adminBtn, { backgroundColor: '#ef4444' }]}
-            onPress={() => openReplyModal(item, 'rejected')}
-          >
-            <Text style={styles.adminBtnText}>Reject</Text>
-          </TouchableOpacity>
-        </View>
+
       </TouchableOpacity>
 
 
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => handleDelete(item._id)}
-      >
-        <Ionicons name="trash-outline" size={20} color="#ef4444" />
-      </TouchableOpacity>
+
     </View>
   );
 
@@ -184,7 +112,15 @@ const AdminTicketsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <Header />
       <View style={styles.content}>
-        <Text style={styles.title}>All Support Tickets</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity 
+            style={styles.backBtn} 
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>All Support Tickets</Text>
+        </View>
 
         {loading ? (
           <View style={styles.center}>
@@ -210,42 +146,7 @@ const AdminTicketsScreen = ({ navigation }) => {
         )}
       </View>
 
-      <Modal
-        visible={replyModalVisible}
-        transparent={true}
-        animationType="slide"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Admin Reply & {newStatus.toUpperCase()}</Text>
-            <Text style={styles.modalSubtitle}>Ticket: {selectedTicket?.title}</Text>
-            
-            <TextInput
-              style={styles.replyInput}
-              placeholder="Enter your reply or reason..."
-              multiline
-              numberOfLines={4}
-              value={adminReply}
-              onChangeText={setAdminReply}
-            />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={styles.cancelBtn}
-                onPress={() => setReplyModalVisible(false)}
-              >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.confirmBtn, { backgroundColor: newStatus === 'approved' ? '#84cc16' : '#ef4444' }]}
-                onPress={handleAdminAction}
-              >
-                <Text style={styles.confirmBtnText}>Submit</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
 
   );
@@ -260,11 +161,19 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 15,
+  },
+  backBtn: {
+    padding: 5,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 20,
   },
   list: {
     paddingBottom: 20,
@@ -286,12 +195,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  deleteBtn: {
-    padding: 16,
-    justifyContent: 'center',
-    borderLeftWidth: 1,
-    borderLeftColor: '#f1f5f9',
-  },
+
   ticketHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -359,84 +263,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginTop: 20,
   },
-  adminActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    paddingTop: 12,
-  },
-  adminBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  adminBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: Colors.gray,
-    marginBottom: 20,
-  },
-  replyInput: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    height: 120,
-    textAlignVertical: 'top',
-    fontSize: 15,
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    color: Colors.gray,
-    fontWeight: '600',
-  },
-  confirmBtn: {
-    flex: 2,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  confirmBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  }
+
 });
 
 

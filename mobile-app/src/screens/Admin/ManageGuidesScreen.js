@@ -34,28 +34,40 @@ const ManageGuidesScreen = ({ navigation }) => {
   };
 
   const deleteGuide = (id) => {
-    Alert.alert(
-      'Delete Guide',
-      'Are you sure you want to remove this guide?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await axios.delete(`${API_URL}/api/guides/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              setGuides(guides.filter(g => g._id !== id));
-              Alert.alert('Success', 'Guide removed successfully');
-            } catch (err) {
-              Alert.alert('Error', 'Failed to remove guide');
-            }
-          }
+    const performDelete = async () => {
+      try {
+        await axios.delete(`${API_URL}/api/guides/delete/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setGuides(prev => prev.filter(g => g._id !== id));
+        if (Platform.OS === 'web') {
+          alert('Guide removed successfully');
+        } else {
+          Alert.alert('Success', 'Guide removed successfully');
         }
-      ]
-    );
+      } catch (err) {
+        if (Platform.OS === 'web') {
+          alert('Failed to remove guide');
+        } else {
+          Alert.alert('Error', 'Failed to remove guide');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (confirm('Are you sure you want to remove this guide?')) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Guide',
+        'Are you sure you want to remove this guide?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: performDelete }
+        ]
+      );
+    }
   };
 
   const renderItem = ({ item }) => (
