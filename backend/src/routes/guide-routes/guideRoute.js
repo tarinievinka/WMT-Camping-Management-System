@@ -30,7 +30,7 @@ router.post("/upload-cv", (req, res, next) => {
   });
 }, cvUploadController.uploadGuideCV);
 
-const { protect } = require("../../middleware/authMiddleware");
+const { protect, adminOnly } = require("../../middleware/authMiddleware");
 
 // Get guides
 router.get("/", guideController.getAllGuides);
@@ -49,6 +49,6 @@ router.put("/update/:id", guideController.updateGuide);
 router.patch("/:id/approve", guideController.approveGuide);
 
 // Delete guide
-router.delete("/:id", guideController.deleteGuide);
+router.delete("/delete/:id", protect, adminOnly, guideController.deleteGuide);
 
 module.exports = router;

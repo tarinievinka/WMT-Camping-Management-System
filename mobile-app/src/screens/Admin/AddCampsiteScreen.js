@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -19,6 +19,7 @@ const AddCampsiteScreen = ({ navigation }) => {
   });
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -39,26 +40,61 @@ const AddCampsiteScreen = ({ navigation }) => {
       return;
     }
 
+    Keyboard.dismiss();
     setIsLoading(true);
     try {
-      const campsiteData = {
-        ...formData,
-        pricePerNight: parseFloat(formData.pricePerNight),
-        capacity: parseInt(formData.capacity),
-        amenities: formData.amenities.split(',').map(a => a.trim()).filter(a => a),
-        images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800&q=80']
-      };
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('pricePerNight', formData.pricePerNight);
+      formDataToSend.append('capacity', formData.capacity);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('amenities', JSON.stringify(formData.amenities.split(',').map(a => a.trim()).filter(a => a)));
 
-      await axios.post(`${API_URL}/api/campsites/add`, campsiteData, {
+      if (images.length > 0) {
+        const uri = images[0];
+        
+        if (Platform.OS === 'web') {
+          const res = await fetch(uri);
+          const rawBlob = await res.blob();
+          
+          const ext = rawBlob.type === 'image/png' ? 'png' : rawBlob.type === 'image/webp' ? 'webp' : 'jpg';
+          const fileType = rawBlob.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+          
+          const blob = new Blob([rawBlob], { type: fileType });
+          formDataToSend.append('image', blob, `campsite.${ext}`);
+        } else {
+          const filename = uri.split('/').pop() || 'image.jpg';
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image/jpeg`;
+          
+          formDataToSend.append('image', {
+            uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+            name: filename,
+            type,
+          });
+        }
+      }
+
+      await axios.post(`${API_URL}/api/campsites/add`, formDataToSend, {
         headers: {
+          ...(Platform.OS !== 'web' && { 'Content-Type': 'multipart/form-data' }),
           Authorization: `Bearer ${token}`
         }
       });
-      Alert.alert('Success', 'Campsite added successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      
+      setSuccessMessage('Campsite added successfully!');
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to add campsite');
+      console.error('Error adding campsite:', err);
+      const errorMsg = err.response?.data?.error || 'Failed to add campsite';
+      if (Platform.OS === 'web') {
+        alert('Error: ' + errorMsg);
+      } else {
+        Alert.alert('Error', errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -164,6 +200,13 @@ const AddCampsiteScreen = ({ navigation }) => {
             </View>
           ))}
         </ScrollView>
+
+        {successMessage ? (
+          <View style={styles.successMessageContainer}>
+            <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+            <Text style={styles.successMessageText}>{successMessage}</Text>
+          </View>
+        ) : null}
 
         <TouchableOpacity 
           style={[styles.submitButton, isLoading && styles.disabledButton]}
@@ -284,6 +327,21 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.7,
+  },
+  successMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d1fae5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    justifyContent: 'center',
+  },
+  successMessageText: {
+    color: '#065f46',
+    marginLeft: 8,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

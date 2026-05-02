@@ -13,8 +13,12 @@ import {
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
+<<<<<<< HEAD
 import apiClient, { BASE_URL } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
+=======
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> 3eb4e86a2a0af9444a66a2bdce741440182578ef
 
 const GuideDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
@@ -49,13 +53,6 @@ const GuideDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    if (path.startsWith('file:') || path.startsWith('content:')) return null;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
@@ -81,21 +78,22 @@ const GuideDetailScreen = ({ route, navigation }) => {
             resizeMode="cover"
           />
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.expertise}>{item.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
+          <Text style={styles.username}>{item.email?.split('@')[0] || 'guide'}</Text>
+          <Text style={styles.expertise}>{item.tagline || 'Expert Wilderness Guide'}</Text>
           
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>4.9</Text>
+              <Text style={styles.statValue}>{item.rating || '4.8'}</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
             <View style={statDividerStyles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>120+</Text>
+              <Text style={styles.statValue}>{item.pastTours?.length || '10+'}</Text>
               <Text style={styles.statLabel}>Tours</Text>
             </View>
             <View style={statDividerStyles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>5 yrs</Text>
+              <Text style={styles.statValue}>{item.experience ? `${item.experience} yrs` : 'New'}</Text>
               <Text style={styles.statLabel}>Exp.</Text>
             </View>
           </View>
@@ -106,7 +104,6 @@ const GuideDetailScreen = ({ route, navigation }) => {
           <Text style={styles.bio}>
             {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
           </Text>
-
           <Text style={styles.sectionTitle}>Specialties</Text>
           <View style={styles.langContainer}>
             {(item.specialties || ['General Camping']).map((spec, idx) => (
@@ -115,6 +112,25 @@ const GuideDetailScreen = ({ route, navigation }) => {
               </View>
             ))}
           </View>
+
+          {item.gallery && item.gallery.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Past Tours Gallery</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                contentContainerStyle={styles.galleryContainer}
+              >
+                {item.gallery.map((img, idx) => (
+                  <Image 
+                    key={idx} 
+                    source={{ uri: getImageUrl(img) }} 
+                    style={styles.galleryImage} 
+                  />
+                ))}
+              </ScrollView>
+            </>
+          )}
 
           <View style={styles.divider} />
 
@@ -242,10 +258,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
   },
+  username: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginBottom: 8,
+  },
   expertise: {
     fontSize: 14,
     color: Colors.gray,
     marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   statsRow: {
     flexDirection: 'row',
@@ -306,9 +329,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   langText: {
-    fontSize: 12,
-    color: Colors.primary,
     fontWeight: 'bold',
+  },
+  galleryContainer: {
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  galleryImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 15,
+    marginRight: 15,
+    backgroundColor: '#f1f5f9',
   },
   divider: {
     height: 1,

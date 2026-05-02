@@ -12,6 +12,7 @@ const createEquipment = async (data) => {
 const getAllEquipment = async () => {
   const equipments = await Equipment.find().lean();
 
+  /*
   // Aggregate feedback to get average rating per equipment
   const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
   const feedbacks = await Feedback.find({ targetType: 'Equipment' }).lean();
@@ -26,17 +27,17 @@ const getAllEquipment = async () => {
     const reviewCount = eqFeedbacks.length;
     const averageRating = reviewCount > 0
       ? eqFeedbacks.reduce((sum, f) => sum + f.rating, 0) / reviewCount
-
       : 0;
 
     return {
       ...eq,
       description: eq.description || "",
-
       averageRating,
       reviewCount
     };
   });
+  */
+  return equipments;
 };
 
 const getEquipmentById = async (id) => {

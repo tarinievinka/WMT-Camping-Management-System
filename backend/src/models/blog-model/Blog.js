@@ -29,7 +29,11 @@ const blogSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        default: 'no-photo.jpg'
+        default: ''
+    },
+    images: {
+        type: [String],
+        default: []
     },
     tags: [String],
     likes: [{

@@ -19,15 +19,25 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
-import { BASE_URL } from '../api/apiClient';
+import { BASE_URL, getImageUrl } from '../api/apiClient';
 import apiClient from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 
 const PaymentScreen = ({ route, navigation }) => {
   const { user } = useAuth();
   const { item, type, mode, startDate: rawStartDate, endDate: rawEndDate, totalAmount, guests, bookingId } = route.params;
-  const startDate = new Date(rawStartDate).toISOString().split('T')[0];
-  const endDate = new Date(rawEndDate).toISOString().split('T')[0];
+  
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    try {
+      return new Date(date).toISOString().split('T')[0];
+    } catch (e) {
+      return 'N/A';
+    }
+  };
+
+  const startDate = formatDate(rawStartDate);
+  const endDate = formatDate(rawEndDate);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [receiptImage, setReceiptImage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -40,12 +50,6 @@ const PaymentScreen = ({ route, navigation }) => {
   const [expiryDate, setExpiryDate] = useState(new Date());
   const [cvv, setCvv] = useState('');
   const [showExpiry, setShowExpiry] = useState(false);
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -78,7 +82,7 @@ const PaymentScreen = ({ route, navigation }) => {
           amount: totalAmount,
           paymentMethod: 'google-pay',
           userId: user?._id,
-          status: 'success'
+          paymentStatus: 'success'
         };
 
         await apiClient.post('/payment/add', paymentData);
@@ -149,13 +153,24 @@ const PaymentScreen = ({ route, navigation }) => {
 
         setLoading(false);
         navigation.navigate('PaymentSuccess', { type, pending: true });
+      } else if (paymentMethod === 'card') {
+        const paymentData = {
+          bookingId: bookingId || item._id,
+          bookingType: type === 'guide' ? 'GuideBooking' : type === 'equipment' ? 'EquipmentBooking' : 'CampsiteBooking',
+          amount: totalAmount,
+          paymentMethod: 'card',
+          userId: user?._id,
+          paymentStatus: 'success'
+        };
+        await apiClient.post('/payment/add', paymentData);
+        setLoading(false);
+        navigation.navigate('PaymentSuccess', { type, pending: false });
       } else {
-        // Handle other payment methods (simulated)
+        // Handle other simulated methods
         setTimeout(() => {
           setLoading(false);
           navigation.navigate('PaymentSuccess', { type, pending: false });
         }, 2000);
-        return; // Exit here since we set timeout
       }
     } catch (error) {
       console.error('Payment Error:', error);
@@ -179,7 +194,6 @@ const PaymentScreen = ({ route, navigation }) => {
       <ScrollView 
         style={{ flex: 1, ...Platform.select({ web: { maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' } }) }}
         contentContainerStyle={[styles.content, { flexGrow: 1 }]}
-        showsVerticalScrollIndicator={true}
       >
         {/* Order Summary Section */}
         <View style={styles.section}>
@@ -192,7 +206,9 @@ const PaymentScreen = ({ route, navigation }) => {
             />
             <View style={styles.summaryInfo}>
               <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemType}>{type?.toUpperCase() || 'BOOKING'} - {mode === 'buy' ? 'PURCHASE' : 'RENTAL'}</Text>
+              <Text style={styles.itemType}>
+                {type?.toUpperCase() || 'BOOKING'} - {mode === 'buy' ? 'PURCHASE' : (type === 'guide' ? 'BOOKING' : 'RENTAL')}
+              </Text>
               {mode !== 'buy' && (
                 <Text style={styles.itemDates}>{startDate} to {endDate}</Text>
               )}

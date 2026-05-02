@@ -13,7 +13,7 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { apiClient, BASE_URL } from '../../api/apiClient';
+import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const EquipmentListScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
@@ -39,12 +39,6 @@ const EquipmentListScreen = ({ navigation }) => {
     item.name?.toLowerCase().includes(search.toLowerCase()) ||
     item.category?.toLowerCase().includes(search.toLowerCase())
   );
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 

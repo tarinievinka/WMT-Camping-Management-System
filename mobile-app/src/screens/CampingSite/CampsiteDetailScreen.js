@@ -13,8 +13,12 @@ import {
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
+<<<<<<< HEAD
 import apiClient, { BASE_URL } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
+=======
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> 3eb4e86a2a0af9444a66a2bdce741440182578ef
 
 const { width } = Dimensions.get('window');
 
@@ -49,12 +53,6 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
     } catch (error) {
       console.error('Error checking eligibility:', error);
     }
-  };
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   return (
