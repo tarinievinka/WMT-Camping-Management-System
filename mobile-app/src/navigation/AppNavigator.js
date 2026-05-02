@@ -13,6 +13,7 @@ import GuideTabNavigator from './GuideTabNavigator';
 import OnboardingScreen from '../screens/Auth/OnboardingScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import EditProfileScreen from '../screens/Auth/EditProfileScreen';
+import SplashScreen from '../screens/SplashScreen';
 
 // Detail Screens
 import CampsiteDetailScreen from '../screens/CampingSite/CampsiteDetailScreen';
@@ -40,15 +41,12 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   const { user, isLoading } = useAuth();
+  const [isSplashFinished, setIsSplashFinished] = React.useState(false);
   
   console.log('[NAV] AppNavigator rendering for role:', user?.role);
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+  if (isLoading || !isSplashFinished) {
+    return <SplashScreen onFinish={() => setIsSplashFinished(true)} />;
   }
 
   return (

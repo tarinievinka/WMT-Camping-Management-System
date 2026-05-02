@@ -34,8 +34,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: Colors.primary,
-    paddingTop: Platform.OS === 'ios' ? 30 : 20, // Account for status bar
+    backgroundColor: 'rgba(22, 101, 52, 0.9)', // Theme Green with Glass effect
+    paddingTop: Platform.OS === 'ios' ? 40 : 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(10px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+      }
+    })
   },
   logoContainer: {
     flexDirection: 'row',
