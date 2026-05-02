@@ -41,18 +41,12 @@ exports.getAllCampsites = async (req, res) => {
     }
     console.log('[CAMPSITE] Fetching campsites with filter:', filter);
     const campsites = await Campsite.find(filter).lean();
-<<<<<<< HEAD
-
-    // Fetch all feedbacks to aggregate
-    const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
-=======
     console.log(`[CAMPSITE] Found ${campsites.length} campsites.`);
     
     /*
     // Fetch all feedbacks to aggregate
     console.log('[CAMPSITE] Fetching feedbacks...');
     const Feedback = require('../../models/feedback-model/FeedbackModel');
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
     const allFeedbacks = await Feedback.find({ targetType: 'Campsite' }).lean();
 
     const dataWithRatings = campsites.map(site => {

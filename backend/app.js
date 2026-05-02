@@ -35,17 +35,13 @@ app.use(cors({
   ],
   credentials: true
 }));
-<<<<<<< HEAD
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-=======
 app.use((req, res, next) => {
   console.log(`[REQUEST] ${req.method} ${req.url}`);
   next();
 });
 
-app.use(express.json());
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Simple error handler for JSON parsing
@@ -98,4 +94,5 @@ const start = async () => {
   }
 };
 
-start();
+
+start();

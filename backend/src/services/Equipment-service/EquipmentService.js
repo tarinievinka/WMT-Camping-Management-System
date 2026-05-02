@@ -12,7 +12,7 @@ const createEquipment = async (data) => {
 const getAllEquipment = async () => {
   const equipments = await Equipment.find().lean();
 
-<<<<<<< HEAD
+  /*
   // Aggregate feedback to get average rating per equipment
   const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
   const feedbacks = await Feedback.find({ targetType: 'Equipment' }).lean();
@@ -23,36 +23,21 @@ const getAllEquipment = async () => {
       const idMatch = f.targetId && f.targetId.toString() === eq._id.toString();
       const nameMatch = f.targetName && f.targetName.trim().toLowerCase() === eq.name.trim().toLowerCase();
       return idMatch || nameMatch;
-=======
-    /*
-    // Aggregate feedback to get average rating per equipment
-    const Feedback = require('../../models/feedback-model/FeedbackModel');
-    const feedbacks = await Feedback.find({ targetType: 'Equipment' }).lean();
-  
-    return equipments.map(eq => {
-      // Match exactly like EquipmentDetail.jsx: by targetId OR targetName
-      const eqFeedbacks = feedbacks.filter(f => {
-        const idMatch = f.targetId && f.targetId.toString() === eq._id.toString();
-        const nameMatch = f.targetName && f.targetName.trim().toLowerCase() === eq.name.trim().toLowerCase();
-        return idMatch || nameMatch;
-      });
-      const reviewCount = eqFeedbacks.length;
-      const averageRating = reviewCount > 0
-        ? eqFeedbacks.reduce((sum, f) => sum + f.rating, 0) / reviewCount
-  
-        : 0;
-  
-      return {
-        ...eq,
-        description: eq.description || "",
-  
-        averageRating,
-        reviewCount
-      };
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
     });
-    */
-    return equipments;
+    const reviewCount = eqFeedbacks.length;
+    const averageRating = reviewCount > 0
+      ? eqFeedbacks.reduce((sum, f) => sum + f.rating, 0) / reviewCount
+      : 0;
+
+    return {
+      ...eq,
+      description: eq.description || "",
+      averageRating,
+      reviewCount
+    };
+  });
+  */
+  return equipments;
 };
 
 const getEquipmentById = async (id) => {

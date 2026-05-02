@@ -9,12 +9,8 @@ const createGuide = async (data) => {
 // Get all guides
 const getAllGuides = async () => {
   const guides = await Guide.find().lean();
-<<<<<<< HEAD
-
-=======
   
   /*
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
   // Aggregate feedback to get average rating per guide
   const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
   const feedbacks = await Feedback.find({ targetType: 'Guide' }).lean();

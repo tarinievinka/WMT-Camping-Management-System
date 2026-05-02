@@ -5,15 +5,6 @@ import { Shadows } from '../theme/shadows';
 import { BASE_URL, getImageUrl } from '../api/apiClient';
 
 const GuideCard = ({ item, onPress }) => {
-<<<<<<< HEAD
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    if (path.startsWith('file:') || path.startsWith('content:')) return null;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
-=======
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>

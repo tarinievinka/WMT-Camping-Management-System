@@ -43,13 +43,8 @@ const MyBookingsScreen = ({ navigation }) => {
           ...item,
           type: 'Guide',
           name: item.guideName || 'Guide Booking',
-<<<<<<< HEAD
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
-          amount: `Rs. ${item.amount}`,
-=======
-          date: new Date(item.startDate).toLocaleDateString(),
           displayAmount: `Rs. ${item.amount}`,
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
           status: item.status
         }));
 
@@ -96,7 +91,7 @@ const MyBookingsScreen = ({ navigation }) => {
           <Text style={styles.feedbackBtnText}>Review</Text>
         </TouchableOpacity>
 
-        {item.type === 'Guide' && (item.status?.toLowerCase() === 'confirmed' || item.status?.toLowerCase() === 'pending') && (
+        {item.type === 'Guide' && item.status?.toLowerCase() === 'confirmed' && (
           <TouchableOpacity 
             style={[styles.feedbackBtn, { backgroundColor: Colors.primary, borderColor: Colors.primary, marginLeft: 10, flex: 2 }]}
             onPress={() => {

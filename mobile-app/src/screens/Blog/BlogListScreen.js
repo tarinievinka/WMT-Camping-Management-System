@@ -188,8 +188,6 @@ const BlogListScreen = ({ navigation }) => {
     }
   };
 
-<<<<<<< HEAD
-=======
   const onRefresh = () => {
     setRefreshing(true);
     fetchBlogs();
@@ -219,8 +217,6 @@ const BlogListScreen = ({ navigation }) => {
       </View>
     </TouchableOpacity>
   );
-
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />

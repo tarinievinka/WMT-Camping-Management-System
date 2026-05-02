@@ -1,8 +1,4 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
-=======
 import { 
   View, 
   Text, 
@@ -14,23 +10,16 @@ import {
   ActivityIndicator, 
   FlatList 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
->>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
-<<<<<<< HEAD
 import Header from '../../components/Header';
-<<<<<<< HEAD
-import { BASE_URL } from '../../api/apiClient';
-=======
-import { BASE_URL } from '../../api/apiClient';
-import Header from '../../components/Header';
->>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const ProfileScreen = ({ route, navigation }) => {
-  const { user: authUser, logout, token } = useAuth();
+  const { user: authUser, logout } = useAuth();
   const authorId = route?.params?.authorId;
   const isOwnProfile = !authorId || authorId === authUser?._id;
 
@@ -52,6 +41,7 @@ const ProfileScreen = ({ route, navigation }) => {
         const authorBlog = blogRes.data.find(b => b.author === authorId);
         if (authorBlog) {
           setProfileData({
+            _id: authorId,
             name: authorBlog.authorName,
             role: authorBlog.authorRole,
             email: 'author@camptrail360.com',
@@ -68,35 +58,17 @@ const ProfileScreen = ({ route, navigation }) => {
     } finally {
       setIsLoading(false);
     }
-<<<<<<< HEAD
   };
-=======
-import { BASE_URL, getImageUrl } from '../../api/apiClient';
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
 
   const user = {
-<<<<<<< HEAD
-    name: profileData?.name || authUser?.name || 'Happy Camper',
-    email: profileData?.email || authUser?.email || 'camper@example.com',
-    avatar: authUser?.profilePicture 
-      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
-      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
-=======
->>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
-=======
-    name: authUser?.name || 'Happy Camper',
-    email: authUser?.email || 'camper@example.com',
-    avatar: getImageUrl(authUser?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
->>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
+    name: profileData?.name || 'Happy Camper',
+    email: profileData?.email || 'camper@example.com',
+    avatar: getImageUrl(profileData?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
   };
 
-  const userAvatar = profileData?.profilePicture 
-    ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
-    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
-
   const menuItems = [
-    { icon: 'bookmark-outline', label: 'My Bookings', count: isOwnProfile ? 2 : null, action: () => navigation.navigate('MyBookings') },
-    { icon: 'heart-outline', label: 'Favorites', count: isOwnProfile ? 5 : null, action: () => Alert.alert('Favorites', 'Feature coming soon!') },
+    { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
+    { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Favorites', 'Feature coming soon!') },
     { icon: 'card-outline', label: 'Payment Methods', action: () => Alert.alert('Payments', 'Feature coming soon!') },
     { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Settings', 'Feature coming soon!') },
     { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Help Center', 'Feature coming soon!') },
@@ -121,36 +93,6 @@ import { BASE_URL, getImageUrl } from '../../api/apiClient';
 
   return (
     <View style={styles.container}>
-<<<<<<< HEAD
-      {/* Camptrail 360 Green Header */}
-      <View style={styles.greenHeader}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            {!isOwnProfile && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
-                <Ionicons name="arrow-back" size={24} color="#fff" />
-              </TouchableOpacity>
-            )}
-            <Ionicons name="leaf" size={20} color="#fff" />
-            <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Profile Info Section */}
-        <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: user.avatar }} 
-            style={styles.avatar} 
-          />
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-=======
       <Header />
       <ScrollView 
         showsVerticalScrollIndicator={false} 
@@ -158,12 +100,11 @@ import { BASE_URL, getImageUrl } from '../../api/apiClient';
       >
         <View style={styles.profileSection}>
           <Image 
-            source={{ uri: userAvatar }} 
+            source={{ uri: user.avatar }} 
             style={styles.avatar} 
           />
-          <Text style={styles.userName}>{profileData?.name || 'Happy Camper'}</Text>
-          <Text style={styles.userEmail}>{profileData?.email || 'camper@example.com'}</Text>
->>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
           
           {isOwnProfile && (
             <TouchableOpacity 
@@ -185,7 +126,6 @@ import { BASE_URL, getImageUrl } from '../../api/apiClient';
                   <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
                 <View style={styles.menuItemRight}>
-                  {item.count && <Text style={styles.badge}>{item.count}</Text>}
                   <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
                 </View>
               </TouchableOpacity>
@@ -226,7 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   profileSection: {
     alignItems: 'center',
@@ -289,16 +229,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  badge: {
-    backgroundColor: '#065f46',
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginRight: 10,
-  },
   blogsSection: {
     padding: 20,
     marginTop: 10,
@@ -338,12 +268,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
-<<<<<<< HEAD
-  },
-  scrollContent: {
-    paddingBottom: 100,
-=======
->>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
   },
   logoutButton: {
     flexDirection: 'row',
