@@ -144,7 +144,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         <Image source={{ uri: blog.image }} style={styles.image} />
         
         <View style={styles.content}>

@@ -92,7 +92,6 @@ const CreateBlogScreen = ({ route, navigation }) => {
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>

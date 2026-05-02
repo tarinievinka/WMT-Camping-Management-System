@@ -254,7 +254,6 @@ const BlogListScreen = ({ navigation }) => {
       )}
 
       <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchBlogs(); }} />}
