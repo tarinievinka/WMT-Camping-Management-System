@@ -90,6 +90,9 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = nu
         <View>
           <Text style={styles.target}>{item.targetName || 'General Feedback'}</Text>
           <Text style={styles.targetType}>{item.targetType}</Text>
+          {user?.role === 'admin' && (
+            <Text style={styles.authorText}>By: {item.userId?.name || 'Anonymous'}</Text>
+          )}
         </View>
         <View style={styles.ratingContainer}>
           <Ionicons name="star" size={12} color="#854d0e" />
@@ -232,6 +235,12 @@ const styles = StyleSheet.create({
   targetType: {
     fontSize: 11,
     color: '#64748b',
+    marginTop: 2,
+  },
+  authorText: {
+    fontSize: 12,
+    color: '#15803d',
+    fontWeight: '600',
     marginTop: 2,
   },
   ratingContainer: {
