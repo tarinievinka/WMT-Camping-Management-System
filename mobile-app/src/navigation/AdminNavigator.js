@@ -17,7 +17,7 @@ import AddGuideScreen from '../screens/Admin/AddGuideScreen';
 import CreateBlogScreen from '../screens/Blog/CreateBlogScreen';
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
 import EditGuideScreen from '../screens/Admin/EditGuideScreen';
-
+import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
 
 const Stack = createStackNavigator();
 
@@ -45,7 +45,7 @@ const AdminNavigator = () => {
       <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
       <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
       <Stack.Screen name="EditGuide" component={EditGuideScreen} />
-
+      <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
     </Stack.Navigator>
   );
 };

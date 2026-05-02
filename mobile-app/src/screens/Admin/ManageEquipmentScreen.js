@@ -24,8 +24,7 @@ const ManageEquipmentScreen = ({ navigation }) => {
       const response = await axios.get(`${API_URL}/api/equipment/display`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Backend returns { success: true, data: [...] }
-      setEquipment(response.data.data || response.data);
+      setEquipment(response.data.data || []);
     } catch (err) {
       Alert.alert('Error', 'Failed to fetch equipment');
     } finally {

@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView,
   ActivityIndicator,
-  Platform
+  Platform,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
@@ -19,9 +20,15 @@ const MyBookingsScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [refreshing, setRefreshing] = useState(false);
+  
   useEffect(() => {
     fetchBookings();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchBookings().then(() => setRefreshing(false));
   }, []);
 
   const fetchBookings = async () => {
@@ -34,7 +41,7 @@ const MyBookingsScreen = ({ navigation }) => {
         name: item.campsite?.name || 'Campsite Booking',
         date: new Date(item.checkInDate).toLocaleDateString(),
         displayAmount: `Rs. ${item.totalPrice}`,
-        status: item.status
+        status: item.status === 'Payment Confirmed' ? 'Confirmed' : item.status
       }));
 
       // Fetch Guide Bookings
@@ -45,10 +52,21 @@ const MyBookingsScreen = ({ navigation }) => {
           name: item.guideName || 'Guide Booking',
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
           displayAmount: `Rs. ${item.amount}`,
-          status: item.status
+          status: item.status === 'Payment Confirmed' ? 'Confirmed' : item.status
         }));
 
-      setBookings([...campData, ...guideData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      // Fetch Equipment Purchases/Rentals
+      const equipRes = await apiClient.get('/purchases/my');
+      const equipData = equipRes.data.map(item => ({
+        ...item,
+        type: 'Equipment',
+        name: item.items?.length > 0 ? item.items[0].name : 'Equipment Purchase',
+        date: new Date(item.createdAt).toLocaleDateString(),
+        displayAmount: `Rs. ${item.totalPrice}`,
+        status: item.status === 'paid' ? 'Confirmed' : (item.status === 'pending' ? 'Pending' : item.status)
+      }));
+
+      setBookings([...campData, ...guideData, ...equipData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setBookings([]);
@@ -64,8 +82,22 @@ const MyBookingsScreen = ({ navigation }) => {
           <Text style={styles.itemName}>{item.name || item.campsiteId?.name || 'Booking'}</Text>
           <Text style={styles.itemType}>{item.type || 'Reservation'}</Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: item.status === 'Completed' ? '#f0fdf4' : '#eff6ff' }]}>
-          <Text style={[styles.statusText, { color: item.status === 'Completed' ? Colors.primary : '#2563eb' }]}>
+        <View style={[
+          styles.statusBadge, 
+          { 
+            backgroundColor: 
+              item.status === 'Confirmed' || item.status === 'Completed' || item.status === 'confirmed' ? '#f0fdf4' : 
+              item.status === 'Pending' || item.status === 'pending' ? '#fffbeb' : '#eff6ff' 
+          }
+        ]}>
+          <Text style={[
+            styles.statusText, 
+            { 
+              color: 
+                item.status === 'Confirmed' || item.status === 'Completed' || item.status === 'confirmed' ? Colors.primary : 
+                item.status === 'Pending' || item.status === 'pending' ? '#d97706' : '#2563eb' 
+            }
+          ]}>
             {item.status || 'Active'}
           </Text>
         </View>
@@ -136,6 +168,9 @@ const MyBookingsScreen = ({ navigation }) => {
             renderItem={renderItem}
             keyExtractor={item => item._id}
             contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+            }
             ListEmptyComponent={
               <Text style={styles.emptyText}>No bookings found.</Text>
             }

@@ -13,7 +13,7 @@ import {
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import apiClient, { BASE_URL } from '../../api/apiClient';
+import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
 
 const GuideDetailScreen = ({ route, navigation }) => {

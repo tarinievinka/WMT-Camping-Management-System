@@ -102,18 +102,8 @@ const CreateBlogScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-<<<<<<< HEAD
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-=======
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-        >
->>>>>>> e6097f692e30a66e4ae7fb58a8ad57206bafb4cf
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color={Colors.text} />

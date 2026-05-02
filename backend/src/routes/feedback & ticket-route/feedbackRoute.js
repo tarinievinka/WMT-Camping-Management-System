@@ -26,6 +26,11 @@ router.post('/add', upload.array('images', 5), feedbackController.createFeedback
 // Get all
 router.get('/display', feedbackController.getAllFeedbacks);
 
+// Analytics
+router.get('/analytics/average', feedbackController.getAverageRating);
+router.get('/analytics/top', feedbackController.getTopRated);
+router.get('/check-eligibility', feedbackController.checkEligibility);
+
 // Get by ID
 router.get('/:id', feedbackController.getFeedbackById);
 
@@ -34,10 +39,5 @@ router.put('/update/:id', upload.array('images', 5), feedbackController.updateFe
 
 // Delete
 router.delete('/delete/:id', feedbackController.deleteFeedback);
-
-// Analytics
-router.get('/analytics/average', feedbackController.getAverageRating);
-router.get('/analytics/top', feedbackController.getTopRated);
-router.get('/check-eligibility', feedbackController.checkEligibility);
 
 module.exports = router;

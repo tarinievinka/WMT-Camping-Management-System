@@ -13,12 +13,8 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-<<<<<<< HEAD
-import apiClient, { BASE_URL } from '../../api/apiClient';
+import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
-=======
-import { BASE_URL, getImageUrl } from '../../api/apiClient';
->>>>>>> 3eb4e86a2a0af9444a66a2bdce741440182578ef
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;

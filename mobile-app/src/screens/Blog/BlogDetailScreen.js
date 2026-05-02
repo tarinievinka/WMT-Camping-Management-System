@@ -176,7 +176,6 @@ const BlogDetailScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
-<<<<<<< HEAD
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Image Gallery Slider */}
         <View style={styles.galleryContainer} onLayout={onLayout}>
@@ -231,11 +230,6 @@ const BlogDetailScreen = ({ route, navigation }) => {
           )}
         </View>
 
-=======
-      <ScrollView>
-        <Image source={{ uri: blog.image }} style={styles.image} />
-        
->>>>>>> e6097f692e30a66e4ae7fb58a8ad57206bafb4cf
         <View style={styles.content}>
           <Text style={styles.category}>{blog.category || 'General'}</Text>
           <Text style={styles.title}>{blog.title}</Text>
