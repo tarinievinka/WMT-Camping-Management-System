@@ -25,7 +25,7 @@ const ReservationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled'],
+    enum: ['pending', 'confirmed', 'cancelled', 'Payment Confirmed'],
     default: 'confirmed',
   }
 }, { timestamps: true });

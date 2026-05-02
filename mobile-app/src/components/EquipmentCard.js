@@ -2,14 +2,9 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
-import { BASE_URL } from '../api/apiClient';
+import { BASE_URL, getImageUrl } from '../api/apiClient';
 
 const EquipmentCard = ({ item, onPress }) => {
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>

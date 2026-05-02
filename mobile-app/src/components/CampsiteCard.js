@@ -3,14 +3,9 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
-import { BASE_URL } from '../api/apiClient';
+import { BASE_URL, getImageUrl } from '../api/apiClient';
 
 const CampsiteCard = ({ item, onPress }) => {
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   const getForecastColor = (type) => {
     switch (type?.toLowerCase()) {

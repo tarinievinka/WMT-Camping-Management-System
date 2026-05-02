@@ -9,7 +9,8 @@ const createGuide = async (data) => {
 // Get all guides
 const getAllGuides = async () => {
   const guides = await Guide.find().lean();
-
+  
+  /*
   // Aggregate feedback to get average rating per guide
   const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
   const feedbacks = await Feedback.find({ targetType: 'Guide' }).lean();
@@ -33,6 +34,8 @@ const getAllGuides = async () => {
       reviewCount
     };
   });
+  */
+  return guides;
 };
 
 // Get guide by ID
