@@ -15,8 +15,13 @@ import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+<<<<<<< HEAD
+import { BASE_URL } from '../../api/apiClient';
+import Header from '../../components/Header';
+=======
 import Header from '../../components/Header';
 import { BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> 4013bde82add11e7cfefc29a63012d1b88afc0e3
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -61,11 +66,25 @@ const ProfileScreen = ({ route, navigation }) => {
   };
 
   const user = {
+<<<<<<< HEAD
+    name: profileData?.name || authUser?.name || 'Happy Camper',
+    email: profileData?.email || authUser?.email || 'camper@example.com',
+    avatar: profileData?.profilePicture 
+      ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
+      : authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
+
+  const userAvatar = user.avatar;
+
+=======
     name: profileData?.name || 'Happy Camper',
     email: profileData?.email || 'camper@example.com',
     avatar: getImageUrl(profileData?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
   };
 
+>>>>>>> 4013bde82add11e7cfefc29a63012d1b88afc0e3
   const menuItems = [
     { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
     { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Favorites', 'Feature coming soon!') },
