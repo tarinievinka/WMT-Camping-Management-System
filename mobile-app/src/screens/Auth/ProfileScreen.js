@@ -88,7 +88,7 @@ const ProfileScreen = ({ route, navigation }) => {
   const menuItems = [
     { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
     { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Favorites', 'Feature coming soon!') },
-    { icon: 'card-outline', label: 'Payment Methods', action: () => Alert.alert('Payments', 'Feature coming soon!') },
+    { icon: 'card-outline', label: 'Payment History', action: () => navigation.navigate('PaymentHistory') },
     { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Settings', 'Feature coming soon!') },
     { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Help Center', 'Feature coming soon!') },
   ];
@@ -114,7 +114,6 @@ const ProfileScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <Header />
       <ScrollView 
-        showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.profileSection}>
@@ -154,13 +153,15 @@ const ProfileScreen = ({ route, navigation }) => {
 
         <View style={styles.blogsSection}>
           <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${user.name}`}</Text>
-          <FlatList
-            data={userBlogs}
-            renderItem={renderBlogItem}
-            keyExtractor={item => item._id}
-            scrollEnabled={false}
-            ListEmptyComponent={<Text style={styles.emptyText}>No blogs found.</Text>}
-          />
+          {userBlogs.length > 0 ? (
+            userBlogs.map(item => (
+              <React.Fragment key={item._id}>
+                {renderBlogItem({ item })}
+              </React.Fragment>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No blogs found.</Text>
+          )}
         </View>
 
         {isOwnProfile && (

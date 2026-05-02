@@ -211,7 +211,6 @@ const BookingScreen = ({ route, navigation }) => {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={true}
       >
         <View style={styles.itemCard}>
           <Text style={styles.itemType}>{type.toUpperCase()}</Text>

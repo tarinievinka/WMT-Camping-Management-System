@@ -26,6 +26,20 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
+// Get payments for logged-in user
+exports.getMyPayments = async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    console.log(`[PAYMENT_DEBUG] Fetching payments for user: ${userId}`);
+    const payments = await paymentService.getPaymentsByUser(userId);
+    console.log(`[PAYMENT_DEBUG] Found ${payments.length} payments`);
+    res.json(payments);
+  } catch (err) {
+    console.error(`[PAYMENT_DEBUG] Error fetching payments for ${req.user?._id}:`, err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Get a payment by ID
 exports.getPaymentById = async (req, res) => {
   try {
