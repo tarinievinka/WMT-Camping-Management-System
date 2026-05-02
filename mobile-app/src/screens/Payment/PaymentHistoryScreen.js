@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   Platform,
   TouchableOpacity,
-  SafeAreaView
+  SafeAreaView,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
@@ -16,9 +17,15 @@ import apiClient from '../../api/apiClient';
 const PaymentHistoryScreen = ({ navigation }) => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchPayments();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchPayments().then(() => setRefreshing(false));
   }, []);
 
   const fetchPayments = async () => {
@@ -51,6 +58,7 @@ const PaymentHistoryScreen = ({ navigation }) => {
       <View style={styles.row}>
         <View>
           <Text style={styles.id}>Invoice #{item._id?.substring(0, 8).toUpperCase()}</Text>
+          <Text style={styles.typeText}>{item.bookingType?.replace('Booking', '') || 'Payment'}</Text>
           <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.paymentStatus) + '15' }]}>
@@ -95,6 +103,9 @@ const PaymentHistoryScreen = ({ navigation }) => {
           renderItem={renderItem}
           keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="receipt-outline" size={60} color="#cbd5e1" />
@@ -174,6 +185,12 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 12,
     color: '#64748b',
+    marginTop: 2,
+  },
+  typeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary,
     marginTop: 2,
   },
   statusBadge: {

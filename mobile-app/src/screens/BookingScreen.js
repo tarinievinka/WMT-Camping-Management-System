@@ -155,41 +155,35 @@ const BookingScreen = ({ route, navigation }) => {
           amount: subtotal + serviceFee,
           customerName: user?.name,
           userId: user?._id,
-          status: 'Pending' // Force Pending for guide verification
+          status: 'Pending'
         };
       } else {
-        endpoint = mode === 'buy' ? '/payment/add' : '/payment/add'; // Simplified
+        endpoint = '/purchases';
         bookingData = {
-          itemId: item._id,
-          startDate: mode === 'buy' ? new Date() : startDate,
-          endDate: mode === 'buy' ? new Date() : endDate,
-          amount: subtotal + serviceFee,
-          mode
+          items: [{
+            equipmentId: item._id,
+            name: item.name,
+            quantity: parseInt(guests || 1),
+            price: price
+          }],
+          totalPrice: subtotal + serviceFee,
+          shippingAddress: mode === 'buy' ? 'Customer Address' : 'To be collected at site'
         };
       }
 
       const response = await apiClient.post(endpoint, bookingData);
       setLoading(false);
       
-      if (type === 'guide') {
-        setBookingStatus('pending');
-        Alert.alert(
-          'Request Sent', 
-          'Your guide booking request has been sent to the guide. You will be notified once it is approved.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        navigation.navigate('Payment', { 
-          item, 
-          type, 
-          mode, 
-          startDate: startDate, 
-          endDate: endDate, 
-          totalAmount: subtotal + serviceFee,
-          guests,
-          bookingId: response.data._id
-        });
-      }
+      navigation.navigate('Payment', { 
+        item, 
+        type, 
+        mode, 
+        startDate: startDate, 
+        endDate: endDate, 
+        totalAmount: subtotal + serviceFee,
+        guests,
+        bookingId: response.data._id
+      });
     } catch (error) {
       setLoading(false);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to process booking.';
