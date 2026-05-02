@@ -193,7 +193,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     paddingTop: 60,
+<<<<<<< HEAD
     paddingBottom: 40,
+=======
+    paddingBottom: 100,
+>>>>>>> 4abca72e32a1ad58feac66c978fc913731bce383
   },
   header: {
     flexDirection: 'row',

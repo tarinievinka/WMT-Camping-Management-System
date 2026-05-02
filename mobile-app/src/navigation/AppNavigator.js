@@ -11,6 +11,7 @@ import MainTabNavigator from './MainTabNavigator';
 import AdminNavigator from './AdminNavigator';
 import OnboardingScreen from '../screens/Auth/OnboardingScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
+import EditProfileScreen from '../screens/Auth/EditProfileScreen';
 
 // Detail Screens
 import CampsiteDetailScreen from '../screens/CampingSite/CampsiteDetailScreen';
@@ -73,6 +74,7 @@ const AppNavigator = () => {
             <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
             <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           </>
         )}
       </Stack.Navigator>

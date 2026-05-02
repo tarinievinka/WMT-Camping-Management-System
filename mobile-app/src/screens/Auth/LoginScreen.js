@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  ScrollView
 } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
@@ -30,13 +31,17 @@ const LoginScreen = ({ navigation }) => {
     setLoading(false);
 
     if (!result.success) {
-      Alert.alert('Error', result.error);
+      Alert.alert('Login Failed', result.error || 'Invalid email or password. Please try again.');
     }
     // No need to navigate manually, AppNavigator will react to user state change
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={{ flex: 1, backgroundColor: Colors.white }}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.title}>Welcome Back</Text>
       <Text style={styles.subtitle}>Login to your account</Text>
 
@@ -88,15 +93,16 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.skipButtonText}>Skip Login (Dev Only) →</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: Colors.white,
     padding: 24,
+    paddingTop: 80,
     justifyContent: 'center',
   },
   title: {
