@@ -4,27 +4,64 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  Platform
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import apiClient from '../../../api/apiClient';
+import { useAuth } from '../../../context/AuthContext';
 
-const FeedbackListScreen = ({ navigation }) => {
+const FeedbackListScreen = ({ navigation, refreshSignal }) => {
+  const { user, token } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchFeedbacks();
-  }, []);
+    if (user) fetchFeedbacks();
+  }, [user, refreshSignal]);
 
   const fetchFeedbacks = async () => {
     try {
-      const response = await apiClient.get('/feedback/display');
-      setFeedbacks(response.data.data || []);
+      const response = await apiClient.get(`/feedback/display?userId=${user._id || user.id}`);
+      setFeedbacks(response.data.data || response.data || []);
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = async () => {
+      try {
+        await apiClient.delete(`/feedback/delete/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        fetchFeedbacks();
+      } catch (error) {
+        console.error('Error deleting feedback:', error);
+        const msg = error.response?.data?.error || 'Failed to delete feedback';
+        if (Platform.OS === 'web') window.alert(msg);
+        else Alert.alert('Error', msg);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to delete this feedback?")) {
+        confirmDelete();
+      }
+    } else {
+      Alert.alert(
+        "Delete Feedback",
+        "Are you sure you want to delete this feedback?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Delete", style: "destructive", onPress: confirmDelete }
+        ]
+      );
     }
   };
 
@@ -38,15 +75,42 @@ const FeedbackListScreen = ({ navigation }) => {
         </View>
       </View>
       <Text style={styles.comment}>"{item.comment}"</Text>
-      <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+      <View style={styles.footer}>
+        <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        <View style={styles.actionRow}>
+          <TouchableOpacity 
+            style={styles.actionBtn} 
+            onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}
+          >
+            <Ionicons name="create-outline" size={18} color={Colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.actionBtn} 
+            onPress={() => handleDelete(item._id)}
+          >
+            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Feedbacks</Text>
-        <Text style={styles.subtitle}>Your shared experiences</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>My Feedbacks</Text>
+            <Text style={styles.subtitle}>Your shared experiences</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.createBtn}
+            onPress={() => navigation.navigate('AddFeedback')}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#fff" />
+            <Text style={styles.createBtnText}>New</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
@@ -74,7 +138,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 24,
     backgroundColor: Colors.white,
-    paddingTop: 60,
   },
   title: {
     fontSize: 24,
@@ -85,6 +148,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     marginTop: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  createBtn: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 8,
+  },
+  createBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   list: {
     padding: 20,
@@ -135,8 +217,19 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 11,
     color: '#94a3b8',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 12,
-    textAlign: 'right',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionBtn: {
+    padding: 4,
   },
   emptyText: {
     textAlign: 'center',

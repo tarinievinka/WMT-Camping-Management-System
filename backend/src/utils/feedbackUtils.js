@@ -6,7 +6,7 @@ function isValidRating(rating) {
 // Validate target type
 function isValidTargetType(type) {
   if (!type) return false;
-  const validTypes = ["Campsite", "Equipment", "Guide"];
+  const validTypes = ["Campsite", "Equipment", "Guide", "General"];
   return validTypes.some(t => t.toLowerCase() === type.toLowerCase());
 }
 

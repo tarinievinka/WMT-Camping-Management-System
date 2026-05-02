@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const feedbackController = require('../../controllers/feedback & ticket-controller/feedbackController');
+const authMiddleware = require('../../middleware/authMiddleware');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -21,7 +22,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Create
-router.post('/add', upload.array('images', 5), feedbackController.createFeedback);
+// Create
+router.post('/create', authMiddleware.protect, upload.array('files', 5), feedbackController.createFeedback);
 
 // Get all
 router.get('/display', feedbackController.getAllFeedbacks);
@@ -30,10 +32,11 @@ router.get('/display', feedbackController.getAllFeedbacks);
 router.get('/:id', feedbackController.getFeedbackById);
 
 // Update
-router.put('/update/:id', upload.array('images', 5), feedbackController.updateFeedback);
+// Update
+router.put('/update/:id', authMiddleware.protect, upload.array('files', 5), feedbackController.updateFeedback);
 
 // Delete
-router.delete('/delete/:id', feedbackController.deleteFeedback);
+router.delete('/delete/:id', authMiddleware.protect, feedbackController.deleteFeedback);
 
 // Analytics
 router.get('/analytics/average', feedbackController.getAverageRating);

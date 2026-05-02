@@ -1,68 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import React from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
-  Platform,
-  ActivityIndicator
+  Platform
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-<<<<<<< HEAD
-import apiClient, { BASE_URL } from '../../api/apiClient';
-import { useAuth } from '../../context/AuthContext';
-=======
-import { BASE_URL, getImageUrl } from '../../api/apiClient';
->>>>>>> 3eb4e86a2a0af9444a66a2bdce741440182578ef
+import { BASE_URL } from '../../api/apiClient';
 
 const GuideDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
-  const { user } = useAuth();
-  const [reviews, setReviews] = useState([]);
-  const [isEligible, setIsEligible] = useState(false);
-  const [loadingReviews, setLoadingReviews] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-    checkEligibility();
-  }, []);
-
-  const fetchReviews = async () => {
-    try {
-      const response = await apiClient.get(`/feedback/display?targetId=${item._id}&targetType=Guide`);
-      setReviews(response.data);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
-
-  const checkEligibility = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.get(`/feedback/check-eligibility?targetId=${item._id}&targetType=Guide&userId=${user._id || user.id}`);
-      setIsEligible(response.data.eligible);
-    } catch (error) {
-      console.error('Error checking eligibility:', error);
-    }
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    if (path.startsWith('file:') || path.startsWith('content:')) return null;
+    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
       >
         {/* Profile Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
@@ -72,28 +43,27 @@ const GuideDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }} 
-            style={styles.avatar} 
+          <Image
+            source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }}
+            style={styles.avatar}
             resizeMode="cover"
           />
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.username}>{item.email?.split('@')[0] || 'guide'}</Text>
-          <Text style={styles.expertise}>{item.tagline || 'Expert Wilderness Guide'}</Text>
-          
+          <Text style={styles.expertise}>{item.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
+
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{item.rating || '4.8'}</Text>
+              <Text style={styles.statValue}>4.9</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
-            <View style={statDividerStyles.statDivider} />
+            <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{item.pastTours?.length || '10+'}</Text>
+              <Text style={styles.statValue}>120+</Text>
               <Text style={styles.statLabel}>Tours</Text>
             </View>
-            <View style={statDividerStyles.statDivider} />
+            <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{item.experience ? `${item.experience} yrs` : 'New'}</Text>
+              <Text style={styles.statValue}>5 yrs</Text>
               <Text style={styles.statLabel}>Exp.</Text>
             </View>
           </View>
@@ -104,6 +74,7 @@ const GuideDetailScreen = ({ route, navigation }) => {
           <Text style={styles.bio}>
             {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
           </Text>
+
           <Text style={styles.sectionTitle}>Specialties</Text>
           <View style={styles.langContainer}>
             {(item.specialties || ['General Camping']).map((spec, idx) => (
@@ -113,75 +84,6 @@ const GuideDetailScreen = ({ route, navigation }) => {
             ))}
           </View>
 
-          {item.gallery && item.gallery.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Past Tours Gallery</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
-                contentContainerStyle={styles.galleryContainer}
-              >
-                {item.gallery.map((img, idx) => (
-                  <Image 
-                    key={idx} 
-                    source={{ uri: getImageUrl(img) }} 
-                    style={styles.galleryImage} 
-                  />
-                ))}
-              </ScrollView>
-            </>
-          )}
-
-          <View style={styles.divider} />
-
-          {/* Reviews Section */}
-          <View style={styles.reviewsHeader}>
-            <Text style={styles.sectionTitle}>Client Reviews</Text>
-            {isEligible && (
-              <TouchableOpacity 
-                style={styles.addReviewBtn}
-                onPress={() => navigation.navigate('AddFeedback', { 
-                  booking: { 
-                    targetId: item._id, 
-                    targetName: item.name, 
-                    targetType: 'Guide' 
-                  } 
-                })}
-              >
-                <Text style={styles.addReviewText}>Add Review</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {loadingReviews ? (
-            <ActivityIndicator size="small" color={Colors.primary} />
-          ) : reviews.length > 0 ? (
-            reviews.map((review, index) => (
-              <View key={index} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewerInfo}>
-                    <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarText}>
-                        {(review.userId?.name || review.userName || 'A')[0].toUpperCase()}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous User'}</Text>
-                      <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.reviewRating}>
-                    <Ionicons name="star" size={12} color="#fbbf24" />
-                    <Text style={styles.ratingValue}>{review.rating}</Text>
-                  </View>
-                </View>
-                <Text style={styles.reviewComment}>"{review.comment}"</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noReviews}>No reviews yet. {isEligible ? 'Be the first to review!' : 'Book a session with this guide to share your feedback.'}</Text>
-          )}
-
           <View style={styles.divider} />
 
           {/* Pricing & Booking */}
@@ -190,7 +92,7 @@ const GuideDetailScreen = ({ route, navigation }) => {
               <Text style={styles.priceLabel}>Daily Rate</Text>
               <Text style={styles.priceValue}>Rs. {item.dailyRate}</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.bookButton}
               onPress={() => navigation.navigate('Booking', { item, type: 'guide' })}
             >
@@ -202,14 +104,6 @@ const GuideDetailScreen = ({ route, navigation }) => {
     </SafeAreaView>
   );
 };
-
-const statDividerStyles = StyleSheet.create({
-  statDivider: {
-    width: 1,
-    height: '100%',
-    backgroundColor: '#f1f5f9',
-  }
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -258,17 +152,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
   },
-  username: {
-    fontSize: 14,
-    color: Colors.gray,
-    marginBottom: 8,
-  },
   expertise: {
     fontSize: 14,
     color: Colors.gray,
     marginTop: 4,
-    textAlign: 'center',
-    paddingHorizontal: 20,
   },
   statsRow: {
     flexDirection: 'row',
@@ -329,18 +216,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   langText: {
+    fontSize: 12,
+    color: Colors.primary,
     fontWeight: 'bold',
-  },
-  galleryContainer: {
-    paddingVertical: 10,
-    marginBottom: 10,
-  },
-  galleryImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 15,
-    marginRight: 15,
-    backgroundColor: '#f1f5f9',
   },
   divider: {
     height: 1,
@@ -375,97 +253,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
-  reviewsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  addReviewBtn: {
-    backgroundColor: '#f0fdf4',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#dcfce7',
-  },
-  addReviewText: {
-    color: Colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  reviewCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    ...Shadows.small,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  reviewerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  reviewerName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  reviewDate: {
-    fontSize: 11,
-    color: Colors.gray,
-    marginTop: 1,
-  },
-  reviewRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#fff',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  ratingValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#92400e',
-  },
-  reviewComment: {
-    fontSize: 14,
-    color: '#475569',
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-  noReviews: {
-    fontSize: 14,
-    color: Colors.gray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    paddingVertical: 20,
-  }
 });
 
 export default GuideDetailScreen;

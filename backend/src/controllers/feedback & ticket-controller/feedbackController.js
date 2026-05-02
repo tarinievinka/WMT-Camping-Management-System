@@ -16,6 +16,12 @@ exports.createFeedback = async (req, res) => {
     const rating = Number(req.body.rating);
     req.body.rating = rating;
 
+    // Use req.user if userId is not in body (from authMiddleware)
+    if (!req.body.userId && req.user) {
+      req.body.userId = req.user._id || req.user.id;
+      if (!req.body.userName) req.body.userName = req.user.name;
+    }
+
     if (!isValidRating(rating))
       return res.status(400).json({ error: "Invalid rating" });
 
@@ -48,10 +54,11 @@ exports.createFeedback = async (req, res) => {
 // Get all
 exports.getAllFeedbacks = async (req, res) => {
   try {
-    const { targetId, targetType } = req.query;
+    const { targetId, targetType, userId } = req.query;
     const filter = {};
     if (targetId) filter.targetId = targetId;
     if (targetType) filter.targetType = targetType;
+    if (userId) filter.userId = userId;
 
     const data = await feedbackService.getAllFeedbacks(filter);
     res.json(data);
@@ -71,9 +78,17 @@ exports.getFeedbackById = async (req, res) => {
   }
 };
 
-// Update
 exports.updateFeedback = async (req, res) => {
   try {
+    const feedback = await feedbackService.getFeedbackById(req.params.id);
+    if (!feedback) return res.status(404).json({ error: "Not found" });
+
+    // Check ownership
+    const currentUserId = req.user.id || req.user._id;
+    if (feedback.userId.toString() !== currentUserId.toString()) {
+      return res.status(403).json({ error: "Unauthorized to update this feedback" });
+    }
+
     let urls = [];
     if (req.body.existingImageUrls) {
       urls = Array.isArray(req.body.existingImageUrls) ? req.body.existingImageUrls : [req.body.existingImageUrls];
@@ -88,7 +103,6 @@ exports.updateFeedback = async (req, res) => {
     }
 
     const data = await feedbackService.updateFeedback(req.params.id, req.body);
-    if (!data) return res.status(404).json({ error: "Not found" });
     res.json(data);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -98,8 +112,16 @@ exports.updateFeedback = async (req, res) => {
 // Delete
 exports.deleteFeedback = async (req, res) => {
   try {
-    const data = await feedbackService.deleteFeedback(req.params.id);
-    if (!data) return res.status(404).json({ error: "Not found" });
+    const feedback = await feedbackService.getFeedbackById(req.params.id);
+    if (!feedback) return res.status(404).json({ error: "Not found" });
+
+    // Check ownership
+    const currentUserId = req.user.id || req.user._id;
+    if (feedback.userId.toString() !== currentUserId.toString()) {
+      return res.status(403).json({ error: "Unauthorized to delete this feedback" });
+    }
+
+    await feedbackService.deleteFeedback(req.params.id);
     res.json({ message: "Feedback deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
