@@ -32,7 +32,7 @@ const EquipmentListScreen = ({ navigation }) => {
   const fetchEquipment = async () => {
     try {
       const response = await apiClient.get('/equipment/display');
-      setItems(response.data || []);
+      setItems(response.data.data || []);
     } catch (error) {
       console.error('Error fetching equipment:', error);
     } finally {
