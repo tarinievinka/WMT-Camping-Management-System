@@ -64,6 +64,7 @@ exports.updatePayment = async (req, res) => {
 
 // Delete a payment by ID
 exports.deletePayment = async (req, res) => {
+  console.log(`[PAYMENT_CONTROLLER] Deletion requested for ID: ${req.params.id}`);
   try {
     const payment = await paymentService.deletePayment(req.params.id);
     if (!payment) return res.status(404).json({ error: 'Payment not found' });
