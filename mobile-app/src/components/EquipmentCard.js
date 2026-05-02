@@ -5,7 +5,7 @@ import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
 import { BASE_URL, getImageUrl } from '../api/apiClient';
 
-const EquipmentCard = ({ item, onPress }) => {
+const EquipmentCard = ({ item, onPress, onAddToCart }) => {
 
   const isLowStock = item.stockQuantity <= 5 && item.stockQuantity > 0;
   const isOutOfStock = item.stockQuantity === 0;
