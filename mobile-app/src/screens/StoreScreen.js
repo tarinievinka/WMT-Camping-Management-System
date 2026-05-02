@@ -18,8 +18,8 @@ import EquipmentListScreen from './Equipment/EquipmentListScreen';
 
 const { width } = Dimensions.get('window');
 
-const StoreScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState('campsites');
+const StoreScreen = ({ navigation, route }) => {
+  const [activeTab, setActiveTab] = useState(route.params?.activeTab || 'campsites');
 
   const renderContent = () => {
     switch (activeTab) {

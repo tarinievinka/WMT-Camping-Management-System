@@ -40,6 +40,7 @@ const AdminNavigator = () => {
       <Stack.Screen name="AddCampsite" component={AddCampsiteScreen} />
       <Stack.Screen name="EditCampsite" component={EditCampsiteScreen} />
       <Stack.Screen name="AddEquipment" component={AddEquipmentScreen} />
+      <Stack.Screen name="EditEquipment" component={EditEquipmentScreen} />
       <Stack.Screen name="AddGuide" component={AddGuideScreen} />
       <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
       <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />

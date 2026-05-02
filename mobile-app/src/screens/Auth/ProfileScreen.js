@@ -1,22 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  Alert, 
-  ScrollView, 
-  ActivityIndicator, 
-  FlatList,
-  Platform,
-  StatusBar,
-  SafeAreaView
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
-import apiClient, { BASE_URL } from '../../api/apiClient';
+import Header from '../../components/Header';
+import axios from 'axios';
+import { API_URL } from '../../api/config';
+import { BASE_URL } from '../../api/apiClient';
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -26,6 +16,14 @@ const ProfileScreen = ({ route, navigation }) => {
   const [profileData, setProfileData] = useState(null);
   const [userBlogs, setUserBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const user = {
+    name: authUser?.name || 'Happy Camper',
+    email: authUser?.email || 'camper@example.com',
+    avatar: authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
 
   useEffect(() => {
     fetchProfileData();
@@ -100,36 +98,35 @@ const ProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {/* Camptrail 360 Green Header */}
-      <View style={styles.greenHeader}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            {!isOwnProfile && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
-                <Ionicons name="arrow-back" size={24} color="#fff" />
-              </TouchableOpacity>
-            )}
-            <Ionicons name="leaf" size={20} color="#fff" />
-            <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+      {isOwnProfile ? (
+          <Header />
+      ) : (
+          <View style={styles.greenHeader}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
+                  <Ionicons name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Ionicons name="leaf" size={20} color="#fff" />
+                <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+              </View>
+              <View style={styles.headerRight}>
+                <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
+                <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      )}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Profile Info Section */}
         <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: userAvatar }} 
-            style={styles.avatar} 
-          />
-          <Text style={styles.userName}>{userDisplayName}</Text>
-          <Text style={styles.userEmail}>{userEmail}</Text>
+          <Image source={{ uri: isOwnProfile ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} style={styles.avatar} />
+          <Text style={styles.userName}>{isOwnProfile ? user.name : (profileData?.name || 'Happy Camper')}</Text>
+          <Text style={styles.userEmail}>{isOwnProfile ? user.email : (profileData?.email || 'camper@example.com')}</Text>
           
           {isOwnProfile && (
             <TouchableOpacity 
@@ -151,6 +148,7 @@ const ProfileScreen = ({ route, navigation }) => {
                   <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
                 <View style={styles.menuItemRight}>
+                  {item.count && <Text style={styles.badge}>{item.count}</Text>}
                   <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
                 </View>
               </TouchableOpacity>
@@ -172,8 +170,11 @@ const ProfileScreen = ({ route, navigation }) => {
         </View>
 
         {isOwnProfile && (
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={logout}
+          >
+            <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         )}
@@ -285,6 +286,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  badge: {
+    backgroundColor: '#065f46',
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 10,
+  },
   blogsSection: {
     padding: 20,
     marginTop: 10,
@@ -324,6 +335,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   logoutButton: {
     flexDirection: 'row',
