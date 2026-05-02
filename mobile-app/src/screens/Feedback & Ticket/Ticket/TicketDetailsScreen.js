@@ -52,7 +52,7 @@ const TicketDetailsScreen = ({ route, navigation }) => {
   const handleStatusUpdate = async (status) => {
     if (status === 'approved' || status === 'rejected') {
       setNewStatus(status);
-      setAdminReply(ticket.adminReply || '');
+      setAdminReply('');
       setReplyModalVisible(true);
       return;
     }
@@ -184,7 +184,7 @@ const TicketDetailsScreen = ({ route, navigation }) => {
           <View style={styles.adminActions}>
             <Text style={styles.sectionLabel}>Update Status</Text>
             <View style={styles.statusButtons}>
-              {['open', 'in-progress', 'approved', 'rejected', 'closed'].map((s) => (
+              {['open', 'in-progress', 'approved', 'rejected'].map((s) => (
                 <TouchableOpacity
                   key={s}
                   style={[
