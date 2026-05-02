@@ -194,7 +194,6 @@ const PaymentScreen = ({ route, navigation }) => {
       <ScrollView 
         style={{ flex: 1, ...Platform.select({ web: { maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' } }) }}
         contentContainerStyle={[styles.content, { flexGrow: 1 }]}
-        showsVerticalScrollIndicator={true}
       >
         {/* Order Summary Section */}
         <View style={styles.section}>

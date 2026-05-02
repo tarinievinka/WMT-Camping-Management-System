@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Payment = require('../../models/payement-model/PaymentModel');
 const GuideBooking = require('../../models/guide-booking-model/guideBookingModel');
 const Reservation = require('../../models/reservation-models/Reservation');
@@ -38,6 +39,18 @@ const createPayment = async (data) => {
 
 const getAllPayments = async () => {
   return await Payment.find();
+};
+
+
+
+const getPaymentsByUser = async (userId) => {
+  try {
+    const queryId = new mongoose.Types.ObjectId(userId);
+    return await Payment.find({ userId: queryId }).sort({ createdAt: -1 });
+  } catch (err) {
+    // If it's not a valid ObjectId string, try finding by string as backup
+    return await Payment.find({ userId }).sort({ createdAt: -1 });
+  }
 };
 
 const getPaymentById = async (id) => {
@@ -95,6 +108,7 @@ const updatePaymentStatus = async (id, status) => {
 module.exports = {
   createPayment,
   getAllPayments,
+  getPaymentsByUser,
   getPaymentById,
   updatePayment,
   deletePayment,

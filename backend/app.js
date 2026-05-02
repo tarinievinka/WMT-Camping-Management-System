@@ -24,6 +24,8 @@ const ticketManagementRoutes = require('./src/routes/feedback & ticket-route/tic
 
 
 const port = process.env.PORT || 5000;
+console.log('[DEBUG] Port variable from env:', process.env.PORT);
+console.log('[DEBUG] Starting server on port:', port);
 
 // Middleware
 app.use(cors({
@@ -95,4 +97,16 @@ const start = async () => {
 };
 
 
-start();
+
+
+
+
+
+
+start();
+
+
+
+
+
+
