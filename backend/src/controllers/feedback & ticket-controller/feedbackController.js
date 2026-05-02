@@ -5,6 +5,9 @@ const {
   generateEditableTime,
   sanitizeComment
 } = require('../../utils/feedbackUtils');
+const Reservation = require('../../models/reservation-models/Reservation');
+const GuideBooking = require('../../models/guide-booking-model/guideBookingModel');
+const EquipmentPurchase = require('../../models/Equipment-model/EquipmentPurchase');
 
 // Create
 exports.createFeedback = async (req, res) => {
@@ -45,7 +48,12 @@ exports.createFeedback = async (req, res) => {
 // Get all
 exports.getAllFeedbacks = async (req, res) => {
   try {
-    const data = await feedbackService.getAllFeedbacks();
+    const { targetId, targetType } = req.query;
+    const filter = {};
+    if (targetId) filter.targetId = targetId;
+    if (targetType) filter.targetType = targetType;
+
+    const data = await feedbackService.getAllFeedbacks(filter);
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -113,6 +121,45 @@ exports.getTopRated = async (req, res) => {
   try {
     const data = await feedbackService.getTopRated();
     res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Check eligibility
+exports.checkEligibility = async (req, res) => {
+  try {
+    const { targetId, targetType, userId } = req.query;
+    if (!targetId || !targetType || !userId) {
+      return res.status(400).json({ eligible: false, message: "Missing parameters" });
+    }
+
+    let booked = false;
+
+    if (targetType === 'Campsite') {
+      const reservation = await Reservation.findOne({
+        user: userId,
+        campsite: targetId,
+        status: 'confirmed'
+      });
+      booked = !!reservation;
+    } else if (targetType === 'Guide') {
+      const booking = await GuideBooking.findOne({
+        userId: userId,
+        guideId: targetId,
+        status: { $in: ['Confirmed', 'Completed'] }
+      });
+      booked = !!booking;
+    } else if (targetType === 'Equipment') {
+      const purchase = await EquipmentPurchase.findOne({
+        userId: userId,
+        'items.equipmentId': targetId,
+        status: { $in: ['paid', 'shipped', 'delivered'] }
+      });
+      booked = !!purchase;
+    }
+
+    res.json({ eligible: booked });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
