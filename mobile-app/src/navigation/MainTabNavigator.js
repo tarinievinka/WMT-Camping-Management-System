@@ -27,7 +27,7 @@ const MainTabNavigator = () => {
           if (route.name === 'Campsites') {
             iconName = focused ? 'home' : 'home-outline';
             return <Ionicons name={iconName} size={size} color={color} />;
-          } else if (route.name === 'Equipment') {
+          } else if (route.name === 'Store') {
             iconName = focused ? 'cart' : 'cart-outline';
             return <Ionicons name={iconName} size={size} color={color} />;
           } else if (route.name === 'Guides') {
@@ -69,7 +69,11 @@ const MainTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Campsites" component={HomeScreen} />
-      <Tab.Screen name="Equipment" component={StoreScreen} />
+      <Tab.Screen 
+        name="Store" 
+        component={StoreScreen} 
+        options={{ tabBarLabel: 'Equipment' }} 
+      />
       <Tab.Screen name="Guides" component={GuideListScreen} />
       <Tab.Screen name="Blogs" component={BlogListScreen} />
       <Tab.Screen name="Support" component={SupportPortalScreen} />

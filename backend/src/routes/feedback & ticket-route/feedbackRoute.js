@@ -38,5 +38,6 @@ router.delete('/delete/:id', feedbackController.deleteFeedback);
 // Analytics
 router.get('/analytics/average', feedbackController.getAverageRating);
 router.get('/analytics/top', feedbackController.getTopRated);
+router.get('/check-eligibility', feedbackController.checkEligibility);
 
 module.exports = router;

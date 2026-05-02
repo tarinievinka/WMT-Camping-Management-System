@@ -8,7 +8,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Platform
+  Platform,
+  Modal,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
@@ -22,6 +24,9 @@ const TicketDetailsScreen = ({ route, navigation }) => {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [replyModalVisible, setReplyModalVisible] = useState(false);
+  const [adminReply, setAdminReply] = useState('');
+  const [newStatus, setNewStatus] = useState('');
 
   const fetchTicketDetails = async () => {
     try {
@@ -44,14 +49,21 @@ const TicketDetailsScreen = ({ route, navigation }) => {
     fetchTicketDetails();
   }, [ticketId]);
 
-  const handleStatusUpdate = async (newStatus) => {
+  const handleStatusUpdate = async (status) => {
+    if (status === 'approved' || status === 'rejected') {
+      setNewStatus(status);
+      setAdminReply('');
+      setReplyModalVisible(true);
+      return;
+    }
+
     setUpdating(true);
     try {
-      await apiClient.put(`/tickets/update/${ticketId}`, { status: newStatus }, {
+      await apiClient.put(`/tickets/update/${ticketId}`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTicket({ ...ticket, status: newStatus });
-      Alert.alert('Success', `Ticket status updated to ${newStatus}`);
+      Alert.alert('Success', `Ticket status updated to ${status}`);
+      navigation.goBack();
     } catch (error) {
       Alert.alert('Error', 'Failed to update status');
     } finally {
@@ -59,9 +71,33 @@ const TicketDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  const displayStatus = ticket?.status === 'approved' || ticket?.status === 'rejected'
-    ? 'pending'
-    : ticket?.status;
+  const handleAdminReplySubmit = async () => {
+    if (!adminReply) {
+      Alert.alert('Error', 'Please provide a reply/note');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await apiClient.put(`/tickets/admin/reply/${ticketId}`, {
+        status: newStatus,
+        adminReply
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      Alert.alert('Success', `Ticket ${newStatus} successfully`);
+      setReplyModalVisible(false);
+      navigation.goBack();
+    } catch (error) {
+      const message = error?.response?.data?.error || 'Failed to update ticket';
+      Alert.alert('Error', message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const displayStatus = ticket?.status || 'open';
 
 
   if (loading) {
@@ -144,22 +180,27 @@ const TicketDetailsScreen = ({ route, navigation }) => {
         </View>
 
 
-        {user.role === 'admin' && (
+        {user.role === 'admin' && ticket.status !== 'approved' && ticket.status !== 'rejected' && (
           <View style={styles.adminActions}>
             <Text style={styles.sectionLabel}>Update Status</Text>
             <View style={styles.statusButtons}>
-              {['open', 'in-progress', 'closed'].map((s) => (
+              {['open', 'in-progress', 'approved', 'rejected'].map((s) => (
                 <TouchableOpacity
                   key={s}
                   style={[
                     styles.statusBtn,
                     ticket.status === s && styles.statusBtnActive,
-                    updating && styles.disabledBtn
+                    updating && styles.disabledBtn,
+                    (s === 'approved' || s === 'rejected') && { borderColor: s === 'approved' ? '#84cc16' : '#ef4444' }
                   ]}
                   onPress={() => handleStatusUpdate(s)}
                   disabled={updating || ticket.status === s}
                 >
-                  <Text style={[styles.statusBtnText, ticket.status === s && styles.statusBtnTextActive]}>
+                  <Text style={[
+                    styles.statusBtnText, 
+                    ticket.status === s && styles.statusBtnTextActive,
+                    (s === 'approved' || s === 'rejected') && { color: ticket.status === s ? '#fff' : (s === 'approved' ? '#84cc16' : '#ef4444') }
+                  ]}>
                     {s.toUpperCase()}
                   </Text>
                 </TouchableOpacity>
@@ -168,6 +209,48 @@ const TicketDetailsScreen = ({ route, navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      <Modal
+        visible={replyModalVisible}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Admin Reply & {newStatus.toUpperCase()}</Text>
+            <Text style={styles.modalSubtitle}>Ticket: {ticket?.title}</Text>
+            
+            <TextInput
+              style={styles.replyInput}
+              placeholder="Enter your reply or reason..."
+              multiline
+              numberOfLines={4}
+              value={adminReply}
+              onChangeText={setAdminReply}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.cancelBtn}
+                onPress={() => setReplyModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.confirmBtn, { backgroundColor: newStatus === 'approved' ? '#84cc16' : '#ef4444' }]}
+                onPress={handleAdminReplySubmit}
+                disabled={updating}
+              >
+                {updating ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.confirmBtnText}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -304,6 +387,7 @@ const styles = StyleSheet.create({
   },
   statusButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginTop: 10,
   },
@@ -330,6 +414,65 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     opacity: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginBottom: 20,
+  },
+  replyInput: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    height: 120,
+    textAlignVertical: 'top',
+    fontSize: 15,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: Colors.gray,
+    fontWeight: '600',
+  },
+  confirmBtn: {
+    flex: 2,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
   }
 });
 

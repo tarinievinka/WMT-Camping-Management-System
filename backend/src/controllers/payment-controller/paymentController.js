@@ -4,12 +4,14 @@ const paymentService = require('../../services/payment-service/paymentService');
 exports.createPayment = async (req, res) => {
   try {
     const paymentData = { ...req.body };
+    console.log('[PAYMENT DATA RECEIVED]', paymentData);
     if (req.file) {
       paymentData.receiptUrl = `/uploads/${req.file.filename}`;
     }
     const payment = await paymentService.createPayment(paymentData);
     res.status(201).json(payment);
   } catch (err) {
+    console.error('[PAYMENT_CONTROLLER_ERROR]', err);
     res.status(400).json({ error: err.message });
   }
 };
@@ -20,6 +22,20 @@ exports.getAllPayments = async (req, res) => {
     const payments = await paymentService.getAllPayments();
     res.json(payments);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get payments for logged-in user
+exports.getMyPayments = async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    console.log(`[PAYMENT_DEBUG] Fetching payments for user: ${userId}`);
+    const payments = await paymentService.getPaymentsByUser(userId);
+    console.log(`[PAYMENT_DEBUG] Found ${payments.length} payments`);
+    res.json(payments);
+  } catch (err) {
+    console.error(`[PAYMENT_DEBUG] Error fetching payments for ${req.user?._id}:`, err);
     res.status(500).json({ error: err.message });
   }
 };

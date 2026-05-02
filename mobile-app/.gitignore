@@ -1,8 +1,11 @@
+<<<<<<< HEAD
+node_modules    
+=======
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
 node_modules/
-
+.env
 # Expo
 .expo/
 dist/
@@ -39,3 +42,4 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+>>>>>>> aa09676aeb8e4fa255b9fa2731e0daf12312869e

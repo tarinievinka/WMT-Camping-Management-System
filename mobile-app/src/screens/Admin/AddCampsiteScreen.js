@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -16,9 +16,12 @@ const AddCampsiteScreen = ({ navigation }) => {
     capacity: '',
     description: '',
     amenities: '',
+    ownerName: '',
+    ownerPhone: '',
   });
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -47,6 +50,22 @@ const AddCampsiteScreen = ({ navigation }) => {
       return;
     }
 
+    if (parseFloat(formData.pricePerNight) < 0 || parseFloat(formData.capacity) < 0) {
+      Alert.alert('Error', "can't enter a miners numbers");
+      return;
+    }
+
+    if (/\d/.test(formData.location)) {
+      Alert.alert('Error', 'Location should not contain numbers, only characters');
+      return;
+    }
+
+    if (formData.ownerPhone && !/^\d{10}$/.test(formData.ownerPhone)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    Keyboard.dismiss();
     setIsLoading(true);
     try {
       const formDataToSend = new FormData();
@@ -56,41 +75,45 @@ const AddCampsiteScreen = ({ navigation }) => {
       formDataToSend.append('capacity', formData.capacity);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('amenities', JSON.stringify(formData.amenities.split(',').map(a => a.trim()).filter(a => a)));
+      if (formData.ownerName) formDataToSend.append('ownerName', formData.ownerName);
+      if (formData.ownerPhone) formDataToSend.append('ownerPhone', formData.ownerPhone);
 
       if (images.length > 0) {
-        // Upload the first image as the main image file
         const uri = images[0];
-        const filename = uri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : `image`;
         
-        formDataToSend.append('image', {
-          uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
-          name: filename,
-          type,
-        });
-        
-        // Also send all image URIs as the images array (for fallback or multiple)
-        images.forEach((img, index) => {
-           formDataToSend.append('images', img);
-        });
+        if (Platform.OS === 'web') {
+          const res = await fetch(uri);
+          const rawBlob = await res.blob();
+          
+          const ext = rawBlob.type === 'image/png' ? 'png' : rawBlob.type === 'image/webp' ? 'webp' : 'jpg';
+          const fileType = rawBlob.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+          
+          const blob = new Blob([rawBlob], { type: fileType });
+          formDataToSend.append('image', blob, `campsite.${ext}`);
+        } else {
+          const filename = uri.split('/').pop() || 'image.jpg';
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image/jpeg`;
+          
+          formDataToSend.append('image', {
+            uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+            name: filename,
+            type,
+          });
+        }
       }
 
       await axios.post(`${API_URL}/api/campsites/add`, formDataToSend, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          ...(Platform.OS !== 'web' && { 'Content-Type': 'multipart/form-data' }),
           Authorization: `Bearer ${token}`
         }
       });
       
-      if (Platform.OS === 'web') {
-        alert('Campsite added successfully!');
+      setSuccessMessage('Campsite added successfully!');
+      setTimeout(() => {
         navigation.goBack();
-      } else {
-        Alert.alert('Success', 'Campsite added successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
-      }
+      }, 1500);
     } catch (err) {
       console.error('Error adding campsite:', err);
       const errorMsg = err.response?.data?.error || 'Failed to add campsite';
@@ -135,33 +158,42 @@ const AddCampsiteScreen = ({ navigation }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Location *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, /\d/.test(formData.location) && { borderColor: 'red' }]}
             placeholder="e.g. Kitulgala"
             value={formData.location}
             onChangeText={(val) => setFormData({ ...formData, location: val })}
           />
+          {/\d/.test(formData.location) && (
+            <Text style={styles.errorText}>Location should not contain numbers</Text>
+          )}
         </View>
 
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>Price/Night (LKR) *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, parseFloat(formData.pricePerNight) < 0 && { borderColor: 'red' }]}
               placeholder="5000"
               value={formData.pricePerNight}
               onChangeText={(val) => setFormData({ ...formData, pricePerNight: val })}
               keyboardType="numeric"
             />
+            {parseFloat(formData.pricePerNight) < 0 && (
+              <Text style={styles.errorText}>can't enter a minus numbers</Text>
+            )}
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.label}>Capacity *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, parseFloat(formData.capacity) < 0 && { borderColor: 'red' }]}
               placeholder="e.g. 10"
               value={formData.capacity}
               onChangeText={(val) => setFormData({ ...formData, capacity: val })}
               keyboardType="numeric"
             />
+            {parseFloat(formData.capacity) < 0 && (
+              <Text style={styles.errorText}>can't enter a minus numbers</Text>
+            )}
           </View>
         </View>
 
@@ -174,6 +206,31 @@ const AddCampsiteScreen = ({ navigation }) => {
             onChangeText={(val) => setFormData({ ...formData, description: val })}
             multiline
           />
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+            <Text style={styles.label}>Owner Name (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. John Doe"
+              value={formData.ownerName}
+              onChangeText={(val) => setFormData({ ...formData, ownerName: val })}
+            />
+          </View>
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>Phone Number (Optional)</Text>
+            <TextInput
+              style={[styles.input, formData.ownerPhone.length > 0 && !/^\d{10}$/.test(formData.ownerPhone) && { borderColor: 'red' }]}
+              placeholder="e.g. 0712345678"
+              value={formData.ownerPhone}
+              onChangeText={(val) => setFormData({ ...formData, ownerPhone: val })}
+              keyboardType="phone-pad"
+            />
+            {formData.ownerPhone.length > 0 && !/^\d{10}$/.test(formData.ownerPhone) && (
+              <Text style={styles.errorText}>Invalid format (10 digits)</Text>
+            )}
+          </View>
         </View>
 
         <View style={styles.inputGroup}>
@@ -204,6 +261,13 @@ const AddCampsiteScreen = ({ navigation }) => {
             </View>
           ))}
         </ScrollView>
+
+        {successMessage ? (
+          <View style={styles.successMessageContainer}>
+            <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+            <Text style={styles.successMessageText}>{successMessage}</Text>
+          </View>
+        ) : null}
 
         <TouchableOpacity 
           style={[styles.submitButton, isLoading && styles.disabledButton]}
@@ -324,6 +388,26 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.7,
+  },
+  successMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d1fae5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    justifyContent: 'center',
+  },
+  successMessageText: {
+    color: '#065f46',
+    marginLeft: 8,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 
