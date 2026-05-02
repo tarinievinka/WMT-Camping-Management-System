@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  ScrollView, 
-  Image, 
-  TouchableOpacity, 
-  TextInput, 
-  Alert, 
-  ActivityIndicator, 
-  SafeAreaView 
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+  SafeAreaView,
+  Platform,
+  FlatList,
+  Dimensions
 } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +27,14 @@ const BlogDetailScreen = ({ route, navigation }) => {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width);
   const { user, token } = useAuth();
+
+  const flatListRef = useRef(null);
+
+  // Ensure images is always an array
+  const displayImages = blog.images && blog.images.length > 0 ? blog.images : [blog.image];
 
   useEffect(() => {
     checkBookmarkStatus();
@@ -50,7 +60,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
     try {
       const stored = await AsyncStorage.getItem('blog_bookmarks');
       let bookmarks = stored ? JSON.parse(stored) : [];
-      
+
       if (bookmarks.includes(blog._id)) {
         bookmarks = bookmarks.filter(id => id !== blog._id);
         setIsBookmarked(false);
@@ -58,7 +68,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
         bookmarks.push(blog._id);
         setIsBookmarked(true);
       }
-      
+
       await AsyncStorage.setItem('blog_bookmarks', JSON.stringify(bookmarks));
     } catch (err) {
       console.error(err);
@@ -102,31 +112,53 @@ const BlogDetailScreen = ({ route, navigation }) => {
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      'Delete Blog',
-      'Are you sure you want to delete this blog post?',
-      [
+    const executeDelete = async () => {
+      try {
+        await axios.delete(`${API_URL}/api/blogs/${blog._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (Platform.OS === 'web') window.alert('Blog deleted successfully');
+        else Alert.alert('Success', 'Blog deleted successfully');
+        navigation.goBack();
+      } catch (err) {
+        if (Platform.OS === 'web') window.alert('Failed to delete blog');
+        else Alert.alert('Error', 'Failed to delete blog');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to delete this blog post?')) executeDelete();
+    } else {
+      Alert.alert('Delete Blog', 'Are you sure you want to delete this blog post?', [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await axios.delete(`${API_URL}/api/blogs/${blog._id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              Alert.alert('Success', 'Blog deleted successfully');
-              navigation.goBack();
-            } catch (err) {
-              Alert.alert('Error', 'Failed to delete blog');
-            }
-          }
-        }
-      ]
-    );
+        { text: 'Delete', style: 'destructive', onPress: executeDelete }
+      ]);
+    }
   };
 
-  const canEdit = user && (user._id === blog.author || user.role === 'admin');
+  const blogAuthorId = blog.author?._id || blog.author;
+  const currentUserId = user?._id || user?.id;
+  const canEdit = user && currentUserId === blogAuthorId;
+
+  const renderImageItem = ({ item }) => (
+    <Image source={{ uri: item }} style={[styles.galleryImage, { width: containerWidth }]} />
+  );
+
+  const handleScroll = (event) => {
+    const xOffset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(xOffset / containerWidth);
+    setActiveImage(index);
+  };
+
+  const onLayout = (event) => {
+    setContainerWidth(event.nativeEvent.layout.width);
+  };
+
+  const scrollToImage = (index) => {
+    if (index >= 0 && index < displayImages.length) {
+      flatListRef.current?.scrollToIndex({ index, animated: true });
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -136,21 +168,78 @@ const BlogDetailScreen = ({ route, navigation }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Blog Details</Text>
         <TouchableOpacity onPress={toggleBookmark}>
-          <Ionicons 
-            name={isBookmarked ? "bookmark" : "bookmark-outline"} 
-            size={24} 
-            color={isBookmarked ? Colors.primary : Colors.text} 
+          <Ionicons
+            name={isBookmarked ? "bookmark" : "bookmark-outline"}
+            size={24}
+            color={isBookmarked ? Colors.primary : Colors.text}
           />
         </TouchableOpacity>
       </View>
 
+<<<<<<< HEAD
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Image Gallery Slider */}
+        <View style={styles.galleryContainer} onLayout={onLayout}>
+          <FlatList
+            ref={flatListRef}
+            data={displayImages}
+            renderItem={renderImageItem}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            keyExtractor={(item, index) => index.toString()}
+            getItemLayout={(data, index) => ({
+              length: containerWidth,
+              offset: containerWidth * index,
+              index,
+            })}
+          />
+
+          {displayImages.length > 1 && (
+            <>
+              {/* Navigation Arrows (Web Convenience) */}
+              <TouchableOpacity
+                style={[styles.arrowBtn, styles.leftArrow]}
+                onPress={() => scrollToImage(activeImage - 1)}
+                disabled={activeImage === 0}
+              >
+                <Ionicons name="chevron-back" size={24} color={activeImage === 0 ? "rgba(255,255,255,0.3)" : "#fff"} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.arrowBtn, styles.rightArrow]}
+                onPress={() => scrollToImage(activeImage + 1)}
+                disabled={activeImage === displayImages.length - 1}
+              >
+                <Ionicons name="chevron-forward" size={24} color={activeImage === displayImages.length - 1 ? "rgba(255,255,255,0.3)" : "#fff"} />
+              </TouchableOpacity>
+
+              <View style={styles.pagination}>
+                {displayImages.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      activeImage === index ? styles.activeDot : styles.inactiveDot
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+        </View>
+
+=======
       <ScrollView>
         <Image source={{ uri: blog.image }} style={styles.image} />
         
+>>>>>>> e6097f692e30a66e4ae7fb58a8ad57206bafb4cf
         <View style={styles.content}>
           <Text style={styles.category}>{blog.category || 'General'}</Text>
           <Text style={styles.title}>{blog.title}</Text>
-          
+
           <View style={styles.authorRow}>
             <Text style={styles.authorName}>By {blog.authorName}</Text>
             <Text style={styles.date}>{new Date(blog.createdAt).toLocaleDateString()}</Text>
@@ -158,20 +247,17 @@ const BlogDetailScreen = ({ route, navigation }) => {
 
           <View style={styles.actionRow}>
             <TouchableOpacity onPress={handleLike} style={styles.actionBtn}>
-              <Ionicons 
-                name={blog.likes?.includes(user?._id) ? "heart" : "heart-outline"} 
-                size={24} 
-                color={blog.likes?.includes(user?._id) ? Colors.danger : Colors.text} 
+              <Ionicons
+                name={blog.likes?.includes(user?._id) ? "heart" : "heart-outline"}
+                size={24}
+                color={blog.likes?.includes(user?._id) ? Colors.danger : Colors.text}
               />
               <Text style={styles.actionText}>{blog.likes?.length || 0} Likes</Text>
             </TouchableOpacity>
 
             {canEdit && (
               <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity 
-                  onPress={() => navigation.navigate('CreateBlog', { blog })}
-                  style={styles.actionBtn}
-                >
+                <TouchableOpacity onPress={() => navigation.navigate('CreateBlog', { blog })} style={styles.actionBtn}>
                   <Ionicons name="create-outline" size={24} color={Colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleDelete} style={styles.actionBtn}>
@@ -186,7 +272,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Comments ({blog.comments?.length || 0})</Text>
-          
+
           {blog.comments?.map((c, index) => (
             <View key={index} style={styles.commentCard}>
               <Text style={styles.commentUser}>{c.name}</Text>
@@ -204,7 +290,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
                 onChangeText={setComment}
                 multiline
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.commentBtn, !comment.trim() && styles.disabledBtn]}
                 onPress={handleComment}
                 disabled={isSubmitting || !comment.trim()}
@@ -224,137 +310,52 @@ const BlogDetailScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
+  container: { flex: 1, backgroundColor: Colors.white },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.text },
+  galleryContainer: { position: 'relative', width: '100%', overflow: 'hidden' },
+  galleryImage: { height: 300, resizeMode: 'cover' },
+  arrowBtn: {
+    position: 'absolute', top: '50%', marginTop: -25,
+    backgroundColor: 'rgba(0,0,0,0.3)', width: 40, height: 50,
+    justifyContent: 'center', alignItems: 'center', zIndex: 10,
   },
-  image: {
-    width: '100%',
-    height: 250,
+  leftArrow: { left: 0, borderTopRightRadius: 20, borderBottomRightRadius: 20 },
+  rightArrow: { right: 0, borderTopLeftRadius: 20, borderBottomLeftRadius: 20 },
+  pagination: {
+    position: 'absolute', bottom: 15, width: '100%',
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
   },
-  content: {
-    padding: 20,
-  },
-  category: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 15,
-  },
-  authorRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  authorName: {
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  date: {
-    color: '#999',
-  },
+  dot: { width: 8, height: 8, borderRadius: 4, marginHorizontal: 4 },
+  activeDot: { backgroundColor: '#fff', width: 20 },
+  inactiveDot: { backgroundColor: 'rgba(255, 255, 255, 0.5)' },
+  content: { padding: 20 },
+  category: { color: Colors.primary, fontSize: 14, fontWeight: 'bold', marginBottom: 8, textTransform: 'uppercase' },
+  title: { fontSize: 24, fontWeight: 'bold', color: Colors.text, marginBottom: 15 },
+  authorRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  authorName: { color: '#4B5563', fontWeight: '600' },
+  date: { color: '#999' },
   actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#f0f0f0',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 25, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#f0f0f0',
   },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  actionText: {
-    marginLeft: 8,
-    color: Colors.text,
-    fontWeight: '600',
-  },
-  blogContent: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#444',
-    marginBottom: 30,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginBottom: 25,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 20,
-  },
-  commentCard: {
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  commentUser: {
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: Colors.text,
-  },
-  commentText: {
-    color: '#555',
-    marginBottom: 5,
-  },
-  commentDate: {
-    fontSize: 10,
-    color: '#999',
-  },
-  commentInputContainer: {
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  commentInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 15,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    marginBottom: 10,
-  },
-  commentBtn: {
-    backgroundColor: Colors.primary,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  commentBtnText: {
-    color: Colors.white,
-    fontWeight: 'bold',
-  },
-  disabledBtn: {
-    opacity: 0.5,
-  },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
+  actionText: { marginLeft: 8, color: Colors.text, fontWeight: '600' },
+  blogContent: { fontSize: 16, lineHeight: 24, color: '#444', marginBottom: 30 },
+  divider: { height: 1, backgroundColor: '#f0f0f0', marginBottom: 25 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.text, marginBottom: 20 },
+  commentCard: { backgroundColor: '#f9f9f9', padding: 15, borderRadius: 10, marginBottom: 15 },
+  commentUser: { fontWeight: 'bold', marginBottom: 5, color: Colors.text },
+  commentText: { color: '#555', marginBottom: 5 },
+  commentDate: { fontSize: 10, color: '#999' },
+  commentInputContainer: { marginTop: 20, marginBottom: 40 },
+  commentInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 15, minHeight: 80, textAlignVertical: 'top', marginBottom: 10 },
+  commentBtn: { backgroundColor: Colors.primary, padding: 15, borderRadius: 10, alignItems: 'center' },
+  commentBtnText: { color: Colors.white, fontWeight: 'bold' },
+  disabledBtn: { opacity: 0.5 },
 });
 
 export default BlogDetailScreen;

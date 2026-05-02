@@ -60,9 +60,7 @@ const MyTicketsScreen = ({ navigation, route, isEmbedded = false, refreshSignal 
       fetchTickets();
     }
   }, [route?.params?.refreshAt]);
-  const getDisplayStatus = (status) => (
-    status === 'approved' || status === 'rejected' ? 'pending' : status
-  );
+  const getDisplayStatus = (status) => status || 'open';
 
 
 

@@ -7,8 +7,10 @@ const createFeedback = async (data) => {
 };
 
 // Get all
-const getAllFeedbacks = async () => {
-  return await Feedback.find();
+const getAllFeedbacks = async (filter = {}) => {
+  return await Feedback.find(filter)
+    .populate('userId', 'name email profileImage')
+    .sort({ createdAt: -1 });
 };
 
 // Get by ID
