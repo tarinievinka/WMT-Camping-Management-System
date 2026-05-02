@@ -8,19 +8,19 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 
 const EditGuideScreen = ({ route, navigation }) => {
-  const { guide } = route.params;
+  const { guide } = route.params || { guide: {} };
   const { token } = useAuth();
   const [formData, setFormData] = useState({
-    name: guide.name,
-    email: guide.email,
-    phone: guide.phone || '',
-    nic: guide.nic || '',
-    age: guide.age?.toString() || '',
-    dailyRate: guide.dailyRate?.toString() || '',
-    description: guide.description || '',
-    specialization: guide.specialties?.join(', ') || '',
+    name: guide?.name || '',
+    email: guide?.email || '',
+    phone: guide?.phone || '',
+    nic: guide?.nic || '',
+    age: guide?.age?.toString() || '',
+    dailyRate: guide?.dailyRate?.toString() || '',
+    description: guide?.description || '',
+    specialization: guide?.specialties?.join(', ') || '',
   });
-  const [profilePhoto, setProfilePhoto] = useState(guide.profilePhoto);
+  const [profilePhoto, setProfilePhoto] = useState(guide?.profilePhoto || null);
   const [isLoading, setIsLoading] = useState(false);
 
   const pickImage = async () => {
@@ -28,17 +28,44 @@ const EditGuideScreen = ({ route, navigation }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.4,
+      base64: true,
     });
 
     if (!result.canceled && result.assets) {
-      setProfilePhoto(result.assets[0].uri);
+      const asset = result.assets[0];
+      
+      if (Platform.OS === 'web') {
+        try {
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result;
+            console.log("[IMAGE_PICKER] Base64 conversion successful. Size:", Math.round(base64data.length / 1024), "KB");
+            setProfilePhoto(base64data);
+          };
+          reader.readAsDataURL(blob);
+        } catch (e) {
+          console.error("[IMAGE_PICKER] Error converting image to base64:", e);
+          Alert.alert("Error", "Failed to process image. Please try a different one.");
+        }
+      } else {
+        const base64 = asset.base64;
+        if (base64) {
+          setProfilePhoto(`data:image/jpeg;base64,${base64}`);
+        } else {
+          setProfilePhoto(asset.uri);
+        }
+      }
     }
   };
 
   const handleUpdate = async () => {
     if (!formData.name || !formData.email || !formData.specialization || !formData.dailyRate) {
-      Alert.alert('Error', 'Please fill in required fields');
+      const msg = 'Please fill in all required fields';
+      if (Platform.OS === 'web') alert(msg);
+      Alert.alert('Error', msg);
       return;
     }
 
@@ -49,8 +76,8 @@ const EditGuideScreen = ({ route, navigation }) => {
         email: formData.email,
         phone: formData.phone,
         nic: formData.nic,
-        age: parseInt(formData.age),
-        dailyRate: parseFloat(formData.dailyRate),
+        age: parseInt(formData.age) || 0,
+        dailyRate: parseFloat(formData.dailyRate) || 0,
         description: formData.description,
         specialties: formData.specialization.split(',').map(s => s.trim()).filter(s => s),
         profilePhoto
@@ -79,7 +106,7 @@ const EditGuideScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Guide</Text>
@@ -96,6 +123,7 @@ const EditGuideScreen = ({ route, navigation }) => {
         style={styles.scrollView} 
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
       >
         <TouchableOpacity style={styles.avatarPicker} onPress={pickImage}>
           {profilePhoto ? (
@@ -206,6 +234,7 @@ const EditGuideScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: Platform.OS === 'web' ? '100vh' : '100%',
     backgroundColor: Colors.white,
     paddingTop: Platform.OS === 'android' ? 40 : (Platform.OS === 'ios' ? 50 : 10),
   },
@@ -217,6 +246,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
+  },
+  headerBtn: {
+    padding: 5,
   },
   headerTitle: {
     fontSize: 18,

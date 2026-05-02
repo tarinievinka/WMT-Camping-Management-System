@@ -28,6 +28,7 @@ const BookingScreen = ({ route, navigation }) => {
   const [markedDates, setMarkedDates] = useState({});
   const [guests, setGuests] = useState('1');
   const [bookedDates, setBookedDates] = useState({});
+  const [bookingStatus, setBookingStatus] = useState(null);
 
   React.useEffect(() => {
     if (type === 'campsite') {
@@ -154,7 +155,7 @@ const BookingScreen = ({ route, navigation }) => {
           amount: subtotal + serviceFee,
           customerName: user?.name,
           userId: user?._id,
-          status: 'pending' // Force pending for admin verification
+          status: 'Pending' // Force Pending for guide verification
         };
       } else {
         endpoint = mode === 'buy' ? '/payment/add' : '/payment/add'; // Simplified
@@ -171,10 +172,11 @@ const BookingScreen = ({ route, navigation }) => {
       setLoading(false);
       
       if (type === 'guide') {
+        setBookingStatus('pending');
         Alert.alert(
           'Request Sent', 
-          'Your guide booking request has been sent to the admin for verification. You will be notified once it is approved.',
-          [{ text: 'View My Bookings', onPress: () => navigation.navigate('MyBookings') }]
+          'Your guide booking request has been sent to the guide. You will be notified once it is approved.',
+          [{ text: 'OK' }]
         );
       } else {
         navigation.navigate('Payment', { 
@@ -281,15 +283,31 @@ const BookingScreen = ({ route, navigation }) => {
           </View>
         </View>
 
+        {type === 'guide' && bookingStatus === 'pending' && (
+          <View style={styles.pendingMessageContainer}>
+            <Ionicons name="time-outline" size={20} color="#d97706" />
+            <Text style={styles.pendingMessage}>Your request has been sent to the guide.</Text>
+          </View>
+        )}
+
         <TouchableOpacity 
-          style={[styles.confirmButton, loading && styles.disabledButton]} 
+          style={[
+            styles.confirmButton, 
+            (loading || (type === 'guide' && bookingStatus === 'pending')) && styles.disabledButton,
+            type === 'guide' && bookingStatus === 'pending' && { backgroundColor: '#fef3c7' }
+          ]} 
           onPress={handleConfirmBooking}
-          disabled={loading}
+          disabled={loading || (type === 'guide' && bookingStatus === 'pending')}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.confirmButtonText}>Confirm and Pay</Text>
+            <Text style={[
+              styles.confirmButtonText,
+              type === 'guide' && bookingStatus === 'pending' && { color: '#d97706' }
+            ]}>
+              {type === 'guide' ? (bookingStatus === 'pending' ? 'Booking Pending' : 'Book Now') : 'Confirm and Pay'}
+            </Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -457,6 +475,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  pendingMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fefce8',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#fef08a',
+  },
+  pendingMessage: {
+    fontSize: 14,
+    color: '#d97706',
+    marginLeft: 8,
+    fontWeight: '500',
   },
 });
 
