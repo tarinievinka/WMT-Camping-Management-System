@@ -19,7 +19,8 @@ const GuideDetailScreen = ({ route, navigation }) => {
 
   const getImageUrl = (path) => {
     if (!path) return null;
-    if (path.startsWith('http')) return path;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    if (path.startsWith('file:') || path.startsWith('content:')) return null;
     return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
@@ -43,7 +44,7 @@ const GuideDetailScreen = ({ route, navigation }) => {
 
         <View style={styles.profileSection}>
           <Image 
-            source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'G')}&background=166534&color=fff&size=256` }} 
+            source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }} 
             style={styles.avatar} 
             resizeMode="cover"
           />
@@ -74,11 +75,11 @@ const GuideDetailScreen = ({ route, navigation }) => {
             {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
           </Text>
 
-          <Text style={styles.sectionTitle}>Languages</Text>
+          <Text style={styles.sectionTitle}>Specialties</Text>
           <View style={styles.langContainer}>
-            {(item.languages || ['English', 'Spanish']).map((lang, idx) => (
+            {(item.specialties || ['General Camping']).map((spec, idx) => (
               <View key={idx} style={styles.langBadge}>
-                <Text style={styles.langText}>{lang}</Text>
+                <Text style={styles.langText}>{spec}</Text>
               </View>
             ))}
           </View>
@@ -143,6 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderWidth: 4,
     borderColor: '#fff',
+    backgroundColor: '#f1f5f9',
     marginBottom: 15,
   },
   name: {

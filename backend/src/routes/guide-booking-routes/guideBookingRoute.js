@@ -12,6 +12,12 @@ router.get("/display", guideBookingController.getAllBookings);
 // Get bookings for a specific guide
 router.get("/guide/:guideId", guideBookingController.getBookingsByGuide);
 
+// Get bookings for the currently logged-in guide
+router.get("/my-bookings", protect, guideBookingController.getMyBookings);
+
+// Get bookings for the currently logged-in customer
+router.get("/my-customer-bookings", protect, guideBookingController.getCustomerBookings);
+
 // Customer notifications (after guide confirms booking, etc.)
 router.get("/notifications", guideBookingController.getCustomerNotifications);
 router.patch("/notifications/:id/read", guideBookingController.markCustomerNotificationRead);
@@ -20,6 +26,6 @@ router.patch("/notifications/:id/read", guideBookingController.markCustomerNotif
 router.put("/update/:id", guideBookingController.updateBooking);
 
 // Delete booking by ID
-router.delete("/cancel/:id", guideBookingController.deleteBookingById);
+router.delete("/cancel/:id", protect, guideBookingController.deleteBookingById);
 
 module.exports = router;

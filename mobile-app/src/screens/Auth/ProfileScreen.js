@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,6 +48,25 @@ const ProfileScreen = ({ route, navigation }) => {
     } finally {
       setIsLoading(false);
     }
+=======
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import { Ionicons, Feather } from '@expo/vector-icons';
+import { Colors } from '../../theme/colors';
+import { useAuth } from '../../context/AuthContext';
+import Header from '../../components/Header';
+import { BASE_URL } from '../../api/apiClient';
+
+const ProfileScreen = ({ navigation }) => {
+  const { user: authUser, logout } = useAuth();
+  
+  const user = {
+    name: authUser?.name || 'Happy Camper',
+    email: authUser?.email || 'camper@example.com',
+    avatar: authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+>>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
   };
 
   const menuItems = [
@@ -76,6 +96,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       {/* Camptrail 360 Green Header */}
       <View style={styles.greenHeader}>
         <View style={styles.headerRow}>
@@ -142,6 +163,53 @@ const ProfileScreen = ({ route, navigation }) => {
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         )}
+=======
+      <Header />
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.profileSection}>
+          <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+          
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Ionicons name="pencil-sharp" size={16} color="#fff" />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.menuItem}
+              onPress={item.action}
+            >
+              <View style={styles.menuItemLeft}>
+                <Ionicons name={item.icon} size={22} color={Colors.text} />
+                <Text style={styles.menuLabel}>{item.label}</Text>
+              </View>
+              <View style={styles.menuItemRight}>
+                {item.count && <Text style={styles.badge}>{item.count}</Text>}
+                <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={logout}
+        >
+          <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+>>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
       </ScrollView>
     </View>
   );
@@ -207,6 +275,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     marginTop: 4,
+    marginBottom: 20,
+  },
+  editButton: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   menuContainer: {
     paddingHorizontal: 20,
@@ -242,6 +325,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10,
   },
+<<<<<<< HEAD
   blogsSection: {
     padding: 20,
     marginTop: 10,
@@ -281,12 +365,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
+=======
+  scrollContent: {
+    paddingBottom: 100,
+>>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+<<<<<<< HEAD
     marginTop: 20,
+=======
+    marginTop: 40,
+    marginBottom: 20,
+>>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
     paddingVertical: 15,
   },
   logoutText: {

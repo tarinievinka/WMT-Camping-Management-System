@@ -5,9 +5,9 @@ const cors = require('cors');
 const app = express();
 const connectDB = require('./src/config/db');
 
-// Route Imports
+// Routes Imports
 const paymentRoute = require('./src/routes/payment-route/paymentRoute');
-const feedbackRoute = require('./src/routes/feedback-route/feedbackRoute');
+const feedbackRoute = require('./src/routes/feedback & ticket-route/feedbackRoute');
 const equipmentRouter = require('./src/routes/Equipment-route/EquipmentRoute');
 const notifyRoute = require('./src/routes/Notify-route/NotifyRoute');
 const userRoute = require('./src/routes/user-routes/userRoutes');
@@ -16,22 +16,27 @@ const guideBookingRoute = require("./src/routes/guide-booking-routes/guideBookin
 const campsiteRoute = require('./src/routes/campsite-route/campsiteRoutes');
 const reservationRoute = require('./src/routes/reservation-routes/reservations');
 const customerNotificationRoute = require('./src/routes/customer-notification-route/CustomerNotificationRoute');
-const ticketRoute = require('./src/routes/ticket-routes/ticketRoutes');
+
+
 const blogRoute = require('./src/routes/blog-route/blogRoutes');
 const purchaseRoute = require('./src/routes/Equipment-route/purchaseRoutes');
+const ticketManagementRoutes = require('./src/routes/feedback & ticket-route/ticket.routes');
+
 
 const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000', 
+    process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://localhost:8081' // Added for Expo Web
+    'http://localhost:8081',
+    'http://127.0.0.1:8081'
   ],
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Simple error handler for JSON parsing
@@ -47,6 +52,8 @@ app.get('/', (req, res) => {
   res.send('Server running with .env port!');
 });
 
+// Important: Mount ticketManagementRoutes early to avoid prefix conflicts with /api/feedback
+app.use('/api', ticketManagementRoutes);
 app.use('/api/payment', paymentRoute);
 app.use('/api/feedback', feedbackRoute);
 app.use('/api/equipment', equipmentRouter);
@@ -57,9 +64,9 @@ app.use('/api/guide-bookings', guideBookingRoute);
 app.use('/api/campsites', campsiteRoute);
 app.use('/api/reservations', reservationRoute);
 app.use('/api/customer-notifications', customerNotificationRoute);
-app.use('/api/tickets', ticketRoute);
 app.use('/api/blogs', blogRoute);
 app.use('/api/purchases', purchaseRoute);
+
 
 const start = async () => {
   try {

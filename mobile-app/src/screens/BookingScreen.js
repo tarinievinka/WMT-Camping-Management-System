@@ -27,18 +27,56 @@ const BookingScreen = ({ route, navigation }) => {
   const [endDate, setEndDate] = useState('');
   const [markedDates, setMarkedDates] = useState({});
   const [guests, setGuests] = useState('1');
+  const [bookedDates, setBookedDates] = useState({});
+  const [bookingStatus, setBookingStatus] = useState(null);
+
+  React.useEffect(() => {
+    if (type === 'campsite') {
+      fetchBookedDates();
+    }
+  }, [item._id]);
+
+  const fetchBookedDates = async () => {
+    try {
+      const response = await apiClient.get(`/reservations/campsite/${item._id}/bookeddates`);
+      const bookings = response.data;
+      const disabled = {};
+      
+      bookings.forEach(booking => {
+        let start = new Date(booking.checkInDate);
+        let end = new Date(booking.checkOutDate);
+        while (start <= end) {
+          const dateStr = start.toISOString().split('T')[0];
+          disabled[dateStr] = { 
+            disabled: true, 
+            disableTouchEvent: true, 
+            textColor: '#d1d5db',
+            color: '#f1f5f9'
+          };
+          start.setDate(start.getDate() + 1);
+        }
+      });
+      setBookedDates(disabled);
+      setMarkedDates(disabled);
+    } catch (error) {
+      console.error('Error fetching booked dates:', error);
+    }
+  };
 
   const onDayPress = (day) => {
     if (!startDate || (startDate && endDate)) {
       setStartDate(day.dateString);
       setEndDate('');
       setMarkedDates({
+        ...bookedDates,
         [day.dateString]: { startingDay: true, color: Colors.primary, textColor: 'white' }
       });
     } else if (startDate && !endDate) {
-      if (day.dateString < startDate) {
+      if (day.dateString <= startDate) {
+        // Reset or update start date if user picks a date before or same as current start
         setStartDate(day.dateString);
         setMarkedDates({
+          ...bookedDates,
           [day.dateString]: { startingDay: true, color: Colors.primary, textColor: 'white' }
         });
       } else {
@@ -59,7 +97,7 @@ const BookingScreen = ({ route, navigation }) => {
           };
           start.setDate(start.getDate() + 1);
         }
-        setMarkedDates(range);
+        setMarkedDates({ ...bookedDates, ...range });
       }
     }
   };
@@ -99,9 +137,9 @@ const BookingScreen = ({ route, navigation }) => {
       let bookingData = {};
 
       if (type === 'campsite') {
-        endpoint = '/reservations/add';
+        endpoint = '/reservations';
         bookingData = { 
-          campsiteId: item._id, 
+          campsite: item._id, 
           checkInDate: startDate,
           checkOutDate: endDate,
           numberOfGuests: guests,
@@ -117,7 +155,7 @@ const BookingScreen = ({ route, navigation }) => {
           amount: subtotal + serviceFee,
           customerName: user?.name,
           userId: user?._id,
-          status: 'pending' // Force pending for admin verification
+          status: 'Pending' // Force Pending for guide verification
         };
       } else {
         endpoint = mode === 'buy' ? '/payment/add' : '/payment/add'; // Simplified
@@ -134,18 +172,19 @@ const BookingScreen = ({ route, navigation }) => {
       setLoading(false);
       
       if (type === 'guide') {
+        setBookingStatus('pending');
         Alert.alert(
           'Request Sent', 
-          'Your guide booking request has been sent to the admin for verification. You will be notified once it is approved.',
-          [{ text: 'View My Bookings', onPress: () => navigation.navigate('MyBookings') }]
+          'Your guide booking request has been sent to the guide. You will be notified once it is approved.',
+          [{ text: 'OK' }]
         );
       } else {
         navigation.navigate('Payment', { 
           item, 
           type, 
           mode, 
-          startDate: startDate.toISOString().split('T')[0], 
-          endDate: endDate.toISOString().split('T')[0], 
+          startDate: startDate, 
+          endDate: endDate, 
           totalAmount: subtotal + serviceFee,
           guests,
           bookingId: response.data._id
@@ -153,8 +192,9 @@ const BookingScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       setLoading(false);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to process booking.';
       console.error('Booking error:', error.response?.data || error);
-      Alert.alert('Error', error.response?.data?.error || 'Failed to process booking.');
+      Alert.alert('Booking Failed', errorMsg);
     }
   };
 
@@ -168,7 +208,11 @@ const BookingScreen = ({ route, navigation }) => {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={true}
+      >
         <View style={styles.itemCard}>
           <Text style={styles.itemType}>{type.toUpperCase()}</Text>
           <Text style={styles.itemName}>{item.name}</Text>
@@ -239,15 +283,31 @@ const BookingScreen = ({ route, navigation }) => {
           </View>
         </View>
 
+        {type === 'guide' && bookingStatus === 'pending' && (
+          <View style={styles.pendingMessageContainer}>
+            <Ionicons name="time-outline" size={20} color="#d97706" />
+            <Text style={styles.pendingMessage}>Your request has been sent to the guide.</Text>
+          </View>
+        )}
+
         <TouchableOpacity 
-          style={[styles.confirmButton, loading && styles.disabledButton]} 
+          style={[
+            styles.confirmButton, 
+            (loading || (type === 'guide' && bookingStatus === 'pending')) && styles.disabledButton,
+            type === 'guide' && bookingStatus === 'pending' && { backgroundColor: '#fef3c7' }
+          ]} 
           onPress={handleConfirmBooking}
-          disabled={loading}
+          disabled={loading || (type === 'guide' && bookingStatus === 'pending')}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.confirmButtonText}>Confirm and Pay</Text>
+            <Text style={[
+              styles.confirmButtonText,
+              type === 'guide' && bookingStatus === 'pending' && { color: '#d97706' }
+            ]}>
+              {type === 'guide' ? (bookingStatus === 'pending' ? 'Booking Pending' : 'Book Now') : 'Confirm and Pay'}
+            </Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -259,6 +319,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -275,6 +338,8 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingBottom: 100,
+    flexGrow: 1,
   },
   itemCard: {
     backgroundColor: '#f8fafc',
@@ -410,6 +475,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  pendingMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fefce8',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#fef08a',
+  },
+  pendingMessage: {
+    fontSize: 14,
+    color: '#d97706',
+    marginLeft: 8,
+    fontWeight: '500',
   },
 });
 

@@ -31,13 +31,21 @@ const LoginScreen = ({ navigation }) => {
     setLoading(false);
 
     if (!result.success) {
-      Alert.alert('Error', result.error);
+      Alert.alert('Login Failed', result.error || 'Invalid email or password. Please try again.');
     }
     // No need to navigate manually, AppNavigator will react to user state change
   };
 
   return (
+<<<<<<< HEAD
     <ScrollView contentContainerStyle={styles.container}>
+=======
+    <ScrollView 
+      style={{ flex: 1, backgroundColor: Colors.white }}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+>>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
       <Text style={styles.title}>Welcome Back</Text>
       <Text style={styles.subtitle}>Login to your account</Text>
 
@@ -98,6 +106,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: Colors.white,
     padding: 24,
+    paddingTop: 80,
     justifyContent: 'center',
   },
   title: {

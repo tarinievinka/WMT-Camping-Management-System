@@ -20,6 +20,7 @@ const AdminDashboard = ({ navigation }) => {
     { title: 'Manage Guides', icon: '👤', color: '#10b981', route: 'ManageGuides' },
     { title: 'Manage Blogs', icon: '📝', color: '#8b5cf6', route: 'ManageBlogs' },
     { title: 'Manage Tickets', icon: '🎟️', color: '#ef4444', route: 'ManageTickets' },
+    { title: 'Manage Reviews', icon: '⭐', color: '#0ea5e9', route: 'ManageReviews' },
     { title: 'Verify Payments', icon: '💳', color: '#10b981', route: 'VerifyPayments' },
   ];
 

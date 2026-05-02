@@ -9,8 +9,10 @@ import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import MainTabNavigator from './MainTabNavigator';
 import AdminNavigator from './AdminNavigator';
+import GuideTabNavigator from './GuideTabNavigator';
 import OnboardingScreen from '../screens/Auth/OnboardingScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
+import EditProfileScreen from '../screens/Auth/EditProfileScreen';
 
 // Detail Screens
 import CampsiteDetailScreen from '../screens/CampingSite/CampsiteDetailScreen';
@@ -19,10 +21,17 @@ import EquipmentDetailScreen from '../screens/Equipment/EquipmentDetailScreen';
 import BookingScreen from '../screens/BookingScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
-import AddFeedbackScreen from '../screens/Feedback/AddFeedbackScreen';
+import AddFeedbackScreen from '../screens/Feedback & Ticket/Feedback/AddFeedbackScreen';
 import PaymentSuccessScreen from '../screens/Payment/PaymentSuccessScreen';
-import MyTicketsScreen from '../screens/MyTicketsScreen';
+import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen';
+import CreateTicketScreen from '../screens/Feedback & Ticket/Ticket/CreateTicketScreen';
+import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
+import SubmitFeedbackScreen from '../screens/Feedback & Ticket/Feedback/SubmitFeedbackScreen';
+
+import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
+
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
+
 import CreateBlogScreen from '../screens/Blog/CreateBlogScreen';
 import CartScreen from '../screens/CartScreen';
 
@@ -30,6 +39,8 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   const { user, isLoading } = useAuth();
+  
+  console.log('[NAV] AppNavigator rendering for role:', user?.role);
 
   if (isLoading) {
     return (
@@ -41,7 +52,7 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         screenOptions={{
           headerShown: false
         }}
@@ -57,6 +68,9 @@ const AppNavigator = () => {
         ) : user.role === 'admin' ? (
           // Admin Stack
           <Stack.Screen name="AdminRoot" component={AdminNavigator} />
+        ) : user.role === 'guide' ? (
+          // Guide Stack
+          <Stack.Screen name="GuideRoot" component={GuideTabNavigator} />
         ) : (
           // User Stack
           <>
@@ -70,9 +84,15 @@ const AppNavigator = () => {
             <Stack.Screen name="AddFeedback" component={AddFeedbackScreen} />
             <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
             <Stack.Screen name="MyTickets" component={MyTicketsScreen} />
+            <Stack.Screen name="CreateTicket" component={CreateTicketScreen} />
+            <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
+            <Stack.Screen name="SubmitFeedback" component={SubmitFeedbackScreen} />
+            <Stack.Screen name="AdminTickets" component={AdminTicketsScreen} />
             <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
+
             <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           </>
         )}
       </Stack.Navigator>
