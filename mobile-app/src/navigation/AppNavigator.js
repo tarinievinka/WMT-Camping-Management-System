@@ -9,6 +9,7 @@ import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import MainTabNavigator from './MainTabNavigator';
 import AdminNavigator from './AdminNavigator';
+import GuideTabNavigator from './GuideTabNavigator';
 import OnboardingScreen from '../screens/Auth/OnboardingScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import EditProfileScreen from '../screens/Auth/EditProfileScreen';
@@ -31,6 +32,8 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   const { user, isLoading } = useAuth();
+  
+  console.log('[NAV] AppNavigator rendering for role:', user?.role);
 
   if (isLoading) {
     return (
@@ -58,6 +61,9 @@ const AppNavigator = () => {
         ) : user.role === 'admin' ? (
           // Admin Stack
           <Stack.Screen name="AdminRoot" component={AdminNavigator} />
+        ) : user.role === 'guide' ? (
+          // Guide Stack
+          <Stack.Screen name="GuideRoot" component={GuideTabNavigator} />
         ) : (
           // User Stack
           <>
