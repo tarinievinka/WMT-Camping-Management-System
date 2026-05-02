@@ -131,6 +131,11 @@ const BookingScreen = ({ route, navigation }) => {
       return;
     }
 
+    if (!guests || isNaN(parseInt(guests)) || parseInt(guests) <= 0) {
+      Alert.alert('Error', 'Please enter a valid number of guests');
+      return;
+    }
+
     setLoading(true);
     try {
       let endpoint = '';
@@ -174,6 +179,11 @@ const BookingScreen = ({ route, navigation }) => {
       const response = await apiClient.post(endpoint, bookingData);
       setLoading(false);
       
+      if (type === 'guide') {
+        navigation.navigate('PaymentSuccess', { type: 'guide', pending: true });
+        return;
+      }
+
       navigation.navigate('Payment', { 
         item, 
         type, 

@@ -84,13 +84,6 @@ const LoginScreen = ({ navigation }) => {
             Don't have an account? <Text style={styles.registerLinkText}>Sign Up</Text>
           </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('Main')}
-          style={styles.skipButton}
-        >
-          <Text style={styles.skipButtonText}>Skip Login (Dev Only) →</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -158,20 +151,6 @@ const styles = StyleSheet.create({
   registerLinkText: {
     color: Colors.primary,
     fontWeight: 'bold',
-  },
-  skipButton: {
-    marginTop: 40,
-    padding: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    borderStyle: 'dashed',
-  },
-  skipButtonText: {
-    color: Colors.gray,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
 

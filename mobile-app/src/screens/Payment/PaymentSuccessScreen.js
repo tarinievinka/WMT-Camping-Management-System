@@ -30,19 +30,23 @@ const PaymentSuccessScreen = ({ route, navigation }) => {
           />
         </Animated.View>
 
-        <Text style={styles.title}>{pending ? 'Booking Pending' : 'Payment Successful!'}</Text>
+        <Text style={styles.title}>
+          {type === 'guide' ? 'Request Sent' : (pending ? 'Booking Pending' : 'Payment Successful!')}
+        </Text>
         <Text style={styles.subtitle}>
-          {pending 
-            ? 'Your receipt has been uploaded. Your booking will be confirmed once the admin approves your bank slip.'
-            : `Your booking for the ${type || 'campsite'} has been confirmed. A confirmation email has been sent to your registered address.`
+          {type === 'guide' 
+            ? 'Your booking request has been sent to the guide. Please wait for their approval before proceeding with the payment.'
+            : (pending 
+                ? 'Your receipt has been uploaded. Your booking will be confirmed once the admin approves your bank slip.'
+                : `Your booking for the ${type || 'campsite'} has been confirmed. A confirmation email has been sent to your registered address.`)
           }
         </Text>
 
         <View style={styles.infoBox}>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Status</Text>
-            <Text style={[styles.infoValue, { color: pending ? '#f59e0b' : Colors.primary }]}>
-              {pending ? 'Pending Approval' : 'Confirmed'}
+            <Text style={[styles.infoValue, { color: (pending || type === 'guide') ? '#f59e0b' : Colors.primary }]}>
+              {type === 'guide' ? 'Waiting for Guide' : (pending ? 'Pending Approval' : 'Confirmed')}
             </Text>
           </View>
           <View style={styles.divider} />

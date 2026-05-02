@@ -4,9 +4,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
-import axios from 'axios';
-import { API_URL } from '../../api/config';
-import { BASE_URL } from '../../api/apiClient';
+import apiClient, { BASE_URL } from '../../api/apiClient';
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();

@@ -9,8 +9,6 @@ import {
   ActivityIndicator, 
   Image, 
   Modal,
-  TextInput,
-  ScrollView,
   Platform 
 } from 'react-native';
 import { Colors } from '../../theme/colors';
@@ -21,11 +19,6 @@ const VerifyPaymentsScreen = ({ navigation }) => {
   const [payments, setPayments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
-  
-  // Edit Modal States
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [editingPayment, setEditingPayment] = useState(null);
-  const [editAmount, setEditAmount] = useState('');
 
   useEffect(() => {
     fetchPayments();
@@ -86,30 +79,6 @@ const VerifyPaymentsScreen = ({ navigation }) => {
           { text: 'Delete', style: 'destructive', onPress: performDelete }
         ]
       );
-    }
-  };
-
-  const openEditModal = (payment) => {
-    setEditingPayment(payment);
-    setEditAmount(payment.amount.toString());
-    setIsEditModalVisible(true);
-  };
-
-  const handleUpdateDetails = async () => {
-    if (!editAmount || isNaN(editAmount)) {
-      Alert.alert('Invalid Amount', 'Please enter a valid numeric amount.');
-      return;
-    }
-
-    try {
-      const response = await apiClient.put(`/payment/update/${editingPayment._id}`, {
-        amount: parseFloat(editAmount)
-      });
-      setPayments(payments.map(p => p._id === editingPayment._id ? response.data : p));
-      setIsEditModalVisible(false);
-      Alert.alert('Updated', 'Transaction details have been updated.');
-    } catch (err) {
-      Alert.alert('Error', 'Failed to update transaction details');
     }
   };
 
@@ -188,12 +157,6 @@ const VerifyPaymentsScreen = ({ navigation }) => {
         <View style={styles.secondaryActions}>
           <TouchableOpacity 
             style={styles.iconButton}
-            onPress={() => openEditModal(item)}
-          >
-            <Feather name="edit-2" size={18} color={Colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.iconButton}
             onPress={() => deletePayment(item._id)}
           >
             <Feather name="trash-2" size={18} color="#ef4444" />
@@ -244,38 +207,6 @@ const VerifyPaymentsScreen = ({ navigation }) => {
           )}
         </View>
       </Modal>
-
-      {/* Edit Details Modal */}
-      <Modal visible={isEditModalVisible} transparent={true} animationType="slide">
-        <View style={styles.editModalOverlay}>
-          <View style={styles.editModalContent}>
-            <View style={styles.editModalHeader}>
-              <Text style={styles.editModalTitle}>Update Transaction</Text>
-              <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.editForm}>
-              <Text style={styles.inputLabel}>AMOUNT (LKR)</Text>
-              <TextInput 
-                style={styles.input}
-                value={editAmount}
-                onChangeText={setEditAmount}
-                keyboardType="numeric"
-                placeholder="Enter new amount"
-              />
-              
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={handleUpdateDetails}
-              >
-                <Text style={styles.saveButtonText}>Save Changes</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -292,9 +223,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 20,
-    backgroundColor: Colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: 'rgba(241, 245, 249, 0.5)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(10px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }
+    })
   },
   title: {
     fontSize: 18,
@@ -456,61 +395,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 15,
     color: Colors.gray,
-    fontSize: 16,
   },
-  editModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  editModalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-  },
-  editModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  editModalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  editForm: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.gray,
-    marginBottom: 10,
-    letterSpacing: 0.5,
-  },
-  input: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 15,
-    fontSize: 16,
-    color: Colors.text,
-    marginBottom: 20,
-  },
-  saveButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  }
 });
 
 export default VerifyPaymentsScreen;

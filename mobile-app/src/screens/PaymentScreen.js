@@ -139,16 +139,30 @@ const PaymentScreen = ({ route, navigation }) => {
         formData.append('userId', user?._id);
         
         if (receiptImage) {
-          const uri = receiptImage.uri;
-          const name = uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(name);
-          const type = match ? `image/${match[1]}` : `image`;
-          
-          formData.append('receipt', { uri, name, type });
+          if (Platform.OS === 'web') {
+            // For Web, we need to fetch the blob from the URI
+            const response = await fetch(receiptImage.uri);
+            const blob = await response.blob();
+            formData.append('receipt', blob, receiptImage.fileName || `receipt_${Date.now()}.jpg`);
+          } else {
+            // For Mobile (Native)
+            const uri = receiptImage.uri;
+            const name = uri.split('/').pop() || 'receipt.jpg';
+            const match = /\.(\w+)$/.exec(name);
+            const fileType = match ? `image/${match[1]}` : `image/jpeg`;
+            
+            formData.append('receipt', { 
+              uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''), 
+              name, 
+              type: fileType 
+            });
+          }
         }
 
         await apiClient.post('/payment/add', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 
+            'Content-Type': undefined, 
+          },
         });
 
         setLoading(false);

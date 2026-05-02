@@ -58,6 +58,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Header />
       <ScrollView 
         style={styles.container} 
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
@@ -67,20 +68,11 @@ const HomeScreen = ({ navigation }) => {
           source={require('../../assets/hero-bg.png')} 
           style={styles.hero}
         >
-          <Header />
           <View style={styles.heroOverlay}>
 
             <View style={styles.heroContent}>
               <Text style={styles.heroTitle}>Gateway to the</Text>
               <Text style={styles.heroTitleHighlight}>Outdoors</Text>
-              
-              <View style={styles.weatherBadge}>
-                <Text style={styles.weatherText}>☀️ Sunny, 24°C</Text>
-              </View>
-
-              <TouchableOpacity style={styles.planButton} onPress={() => navigation.navigate('Equipment')}>
-                <Text style={styles.planButtonText}>Plan Adventure</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </ImageBackground>
@@ -250,32 +242,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#10b981',
     marginTop: -5,
-  },
-  weatherBadge: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginTop: 15,
-  },
-  weatherText: {
-    color: Colors.white,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  planButton: {
-    backgroundColor: '#166534',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 25,
-  },
-  planButtonText: {
-    color: Colors.white,
-    fontWeight: 'bold',
-    fontSize: 14,
   },
   section: {
     marginTop: 25,
