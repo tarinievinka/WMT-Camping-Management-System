@@ -39,10 +39,14 @@ exports.getAllCampsites = async (req, res) => {
     if (req.query.status) {
       filter.status = req.query.status;
     }
+    console.log('[CAMPSITE] Fetching campsites with filter:', filter);
     const campsites = await Campsite.find(filter).lean();
-
+    console.log(`[CAMPSITE] Found ${campsites.length} campsites.`);
+    
+    /*
     // Fetch all feedbacks to aggregate
-    const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
+    console.log('[CAMPSITE] Fetching feedbacks...');
+    const Feedback = require('../../models/feedback-model/FeedbackModel');
     const allFeedbacks = await Feedback.find({ targetType: 'Campsite' }).lean();
 
     const dataWithRatings = campsites.map(site => {
@@ -63,7 +67,11 @@ exports.getAllCampsites = async (req, res) => {
       };
     });
 
-    res.status(200).json({ success: true, data: dataWithRatings });
+    res.json({ success: true, data: dataWithRatings });
+    */
+    console.log('[CAMPSITE] Sending response with', campsites.length, 'items');
+    res.json({ success: true, data: campsites });
+    console.log('[CAMPSITE] Response sent.');
   } catch (error) {
     console.error(`[CAMPSITE_CONTROLLER] Error in getAllCampsites:`, error);
     res.status(500).json({ success: false, error: error.message });

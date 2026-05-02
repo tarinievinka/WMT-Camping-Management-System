@@ -27,6 +27,7 @@ import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen
 import CreateTicketScreen from '../screens/Feedback & Ticket/Ticket/CreateTicketScreen';
 import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
 import SubmitFeedbackScreen from '../screens/Feedback & Ticket/Feedback/SubmitFeedbackScreen';
+import PaymentHistoryScreen from '../screens/Payment/PaymentHistoryScreen';
 
 import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
 
@@ -93,6 +94,7 @@ const AppNavigator = () => {
             <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
           </>
         )}
       </Stack.Navigator>

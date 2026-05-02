@@ -1,14 +1,38 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList, Platform, StatusBar } from 'react-native';
+=======
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  Alert, 
+  ScrollView, 
+  ActivityIndicator, 
+  FlatList 
+} from 'react-native';
+>>>>>>> 50d02e082b9aba6abb0a1a033a1c1eb7d78da81a
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+<<<<<<< HEAD
 import { BASE_URL } from '../../api/apiClient';
+=======
+<<<<<<< HEAD
+import { BASE_URL } from '../../api/apiClient';
+import Header from '../../components/Header';
+=======
+import Header from '../../components/Header';
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> 4013bde82add11e7cfefc29a63012d1b88afc0e3
+>>>>>>> 50d02e082b9aba6abb0a1a033a1c1eb7d78da81a
 
 const ProfileScreen = ({ route, navigation }) => {
-  const { user: authUser, logout, token } = useAuth();
+  const { user: authUser, logout } = useAuth();
   const authorId = route?.params?.authorId;
   const isOwnProfile = !authorId || authorId === authUser?._id;
 
@@ -30,6 +54,7 @@ const ProfileScreen = ({ route, navigation }) => {
         const authorBlog = blogRes.data.find(b => b.author === authorId);
         if (authorBlog) {
           setProfileData({
+            _id: authorId,
             name: authorBlog.authorName,
             role: authorBlog.authorRole,
             email: 'author@camptrail360.com',
@@ -46,16 +71,35 @@ const ProfileScreen = ({ route, navigation }) => {
     } finally {
       setIsLoading(false);
     }
+<<<<<<< HEAD
+=======
   };
 
-  const userAvatar = profileData?.profilePicture 
-    ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
-    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+  const user = {
+<<<<<<< HEAD
+    name: profileData?.name || authUser?.name || 'Happy Camper',
+    email: profileData?.email || authUser?.email || 'camper@example.com',
+    avatar: profileData?.profilePicture 
+      ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
+      : authUser?.profilePicture 
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+>>>>>>> 50d02e082b9aba6abb0a1a033a1c1eb7d78da81a
+  };
 
+  const userAvatar = user.avatar;
+
+=======
+    name: profileData?.name || 'Happy Camper',
+    email: profileData?.email || 'camper@example.com',
+    avatar: getImageUrl(profileData?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
+
+>>>>>>> 4013bde82add11e7cfefc29a63012d1b88afc0e3
   const menuItems = [
-    { icon: 'bookmark-outline', label: 'My Bookings', count: isOwnProfile ? 2 : null, action: () => navigation.navigate('MyBookings') },
-    { icon: 'heart-outline', label: 'Favorites', count: isOwnProfile ? 5 : null, action: () => Alert.alert('Favorites', 'Feature coming soon!') },
-    { icon: 'card-outline', label: 'Payment Methods', action: () => Alert.alert('Payments', 'Feature coming soon!') },
+    { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
+    { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Favorites', 'Feature coming soon!') },
+    { icon: 'card-outline', label: 'Payment History', action: () => navigation.navigate('PaymentHistory') },
     { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Settings', 'Feature coming soon!') },
     { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Help Center', 'Feature coming soon!') },
   ];
@@ -82,6 +126,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       {/* Camptrail 360 Green Header */}
       <View style={styles.greenHeader}>
@@ -111,6 +156,19 @@ const ProfileScreen = ({ route, navigation }) => {
           />
           <Text style={styles.userName}>{userDisplayName}</Text>
           <Text style={styles.userEmail}>{userEmail}</Text>
+=======
+      <Header />
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.profileSection}>
+          <Image 
+            source={{ uri: user.avatar }} 
+            style={styles.avatar} 
+          />
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+>>>>>>> 50d02e082b9aba6abb0a1a033a1c1eb7d78da81a
           
           {isOwnProfile && (
             <TouchableOpacity 
@@ -132,7 +190,6 @@ const ProfileScreen = ({ route, navigation }) => {
                   <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
                 <View style={styles.menuItemRight}>
-                  {item.count && <Text style={styles.badge}>{item.count}</Text>}
                   <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
                 </View>
               </TouchableOpacity>
@@ -141,6 +198,7 @@ const ProfileScreen = ({ route, navigation }) => {
         )}
 
         <View style={styles.blogsSection}>
+<<<<<<< HEAD
           <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
           <FlatList
             data={userBlogs}
@@ -149,6 +207,18 @@ const ProfileScreen = ({ route, navigation }) => {
             scrollEnabled={false}
             ListEmptyComponent={<Text style={styles.emptyText}>No blogs found.</Text>}
           />
+=======
+          <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${user.name}`}</Text>
+          {userBlogs.length > 0 ? (
+            userBlogs.map(item => (
+              <React.Fragment key={item._id}>
+                {renderBlogItem({ item })}
+              </React.Fragment>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No blogs found.</Text>
+          )}
+>>>>>>> 50d02e082b9aba6abb0a1a033a1c1eb7d78da81a
         </View>
 
         {isOwnProfile && (
@@ -264,16 +334,6 @@ const styles = StyleSheet.create({
   menuItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  badge: {
-    backgroundColor: '#065f46',
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginRight: 10,
   },
   blogsSection: {
     padding: 20,
