@@ -4,7 +4,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
-import { BASE_URL } from '../../api/apiClient';
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const ProfileScreen = ({ navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -12,9 +12,7 @@ const ProfileScreen = ({ navigation }) => {
   const user = {
     name: authUser?.name || 'Happy Camper',
     email: authUser?.email || 'camper@example.com',
-    avatar: authUser?.profilePicture 
-      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
-      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+    avatar: getImageUrl(authUser?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
   };
 
   const menuItems = [

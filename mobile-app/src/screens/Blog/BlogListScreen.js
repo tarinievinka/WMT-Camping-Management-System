@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity, ActivityIndi
 import { Colors } from '../../theme/colors';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+import { getImageUrl } from '../../api/apiClient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 
@@ -38,7 +39,7 @@ const BlogListScreen = ({ navigation }) => {
       style={styles.blogCard}
       onPress={() => navigation.navigate('BlogDetail', { blog: item })}
     >
-      <Image source={{ uri: item.image }} style={styles.blogImage} />
+      <Image source={{ uri: getImageUrl(item.image) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=500' }} style={styles.blogImage} />
       <View style={styles.blogContent}>
         <View style={styles.tagRow}>
           {item.tags?.map((tag, index) => (
