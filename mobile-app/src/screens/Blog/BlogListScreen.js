@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '../../theme/colors';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+import { getImageUrl } from '../../api/apiClient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -187,6 +188,39 @@ const BlogListScreen = ({ navigation }) => {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchBlogs();
+  };
+
+  const renderBlogItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.blogCard}
+      onPress={() => navigation.navigate('BlogDetail', { blog: item })}
+    >
+      <Image source={{ uri: getImageUrl(item.image) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=500' }} style={styles.blogImage} />
+      <View style={styles.blogContent}>
+        <View style={styles.tagRow}>
+          {item.tags?.map((tag, index) => (
+            <View key={index} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.blogTitle} numberOfLines={2}>{item.title}</Text>
+        <View style={styles.authorRow}>
+          <Ionicons name="person-circle-outline" size={20} color={Colors.primary} />
+          <Text style={styles.authorName}>{item.authorName}</Text>
+          <Text style={styles.dot}>•</Text>
+          <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+>>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />

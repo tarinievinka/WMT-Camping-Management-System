@@ -12,18 +12,12 @@ import {
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
-import { BASE_URL } from '../../api/apiClient';
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const { width } = Dimensions.get('window');
 
 const CampsiteDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   return (
     <SafeAreaView style={styles.container}>

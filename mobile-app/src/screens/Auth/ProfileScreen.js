@@ -22,6 +22,7 @@ import axios from 'axios';
 import { API_URL } from '../../api/config';
 <<<<<<< HEAD
 import Header from '../../components/Header';
+<<<<<<< HEAD
 import { BASE_URL } from '../../api/apiClient';
 =======
 import { BASE_URL } from '../../api/apiClient';
@@ -69,8 +70,12 @@ const ProfileScreen = ({ route, navigation }) => {
     }
 <<<<<<< HEAD
   };
+=======
+import { BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
 
   const user = {
+<<<<<<< HEAD
     name: profileData?.name || authUser?.name || 'Happy Camper',
     email: profileData?.email || authUser?.email || 'camper@example.com',
     avatar: authUser?.profilePicture 
@@ -78,6 +83,11 @@ const ProfileScreen = ({ route, navigation }) => {
       : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
 =======
 >>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
+=======
+    name: authUser?.name || 'Happy Camper',
+    email: authUser?.email || 'camper@example.com',
+    avatar: getImageUrl(authUser?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+>>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
   };
 
   const userAvatar = profileData?.profilePicture 

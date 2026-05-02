@@ -33,7 +33,7 @@ const MyBookingsScreen = ({ navigation }) => {
         type: 'Campsite',
         name: item.campsite?.name || 'Campsite Booking',
         date: new Date(item.checkInDate).toLocaleDateString(),
-        amount: `Rs. ${item.totalPrice}`,
+        displayAmount: `Rs. ${item.totalPrice}`,
         status: item.status
       }));
 
@@ -43,8 +43,13 @@ const MyBookingsScreen = ({ navigation }) => {
           ...item,
           type: 'Guide',
           name: item.guideName || 'Guide Booking',
+<<<<<<< HEAD
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
           amount: `Rs. ${item.amount}`,
+=======
+          date: new Date(item.startDate).toLocaleDateString(),
+          displayAmount: `Rs. ${item.amount}`,
+>>>>>>> f2ca66c5d095caae7da6519b6f3697a2aa8ded8d
           status: item.status
         }));
 
@@ -78,7 +83,7 @@ const MyBookingsScreen = ({ navigation }) => {
         </View>
         <View style={styles.detail}>
           <Ionicons name="wallet-outline" size={14} color={Colors.gray} />
-          <Text style={styles.detailText}>{item.amount || `Rs. ${item.totalPrice}`}</Text>
+          <Text style={styles.detailText}>{item.displayAmount || `Rs. ${item.totalPrice || item.amount}`}</Text>
         </View>
       </View>
 
@@ -91,15 +96,23 @@ const MyBookingsScreen = ({ navigation }) => {
           <Text style={styles.feedbackBtnText}>Review</Text>
         </TouchableOpacity>
 
-        {item.type === 'Guide' && item.status.toLowerCase() === 'confirmed' && (
+        {item.type === 'Guide' && (item.status?.toLowerCase() === 'confirmed' || item.status?.toLowerCase() === 'pending') && (
           <TouchableOpacity 
             style={[styles.feedbackBtn, { backgroundColor: Colors.primary, borderColor: Colors.primary, marginLeft: 10, flex: 2 }]}
-            onPress={() => navigation.navigate('Payment', { 
-              item: { _id: item.guideId, name: item.guideName, dailyRate: item.amount / 1.1 }, // Approximation
-              type: 'guide',
-              totalAmount: item.amount,
-              bookingId: item._id
-            })}
+            onPress={() => {
+              const paymentItem = { _id: item.guideId, name: item.guideName, profilePhoto: item.guidePhoto };
+              
+              navigation.navigate('Payment', { 
+                item: paymentItem,
+                type: 'guide',
+                mode: 'rent',
+                startDate: item.startDate,
+                endDate: item.endDate,
+                totalAmount: item.amount,
+                guests: item.numberOfGuests || 1,
+                bookingId: item._id
+              });
+            }}
           >
             <Ionicons name="card-outline" size={16} color="#fff" />
             <Text style={[styles.feedbackBtnText, { color: '#fff' }]}>Pay Now</Text>
