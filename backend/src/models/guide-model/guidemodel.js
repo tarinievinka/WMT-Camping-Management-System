@@ -57,6 +57,11 @@ const guideSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    tagline: {
+      type: String,
+      trim: true,
+      default: ""
+    },
 
     coverPhoto: { type: String, default: "" },
     profilePhoto: { type: String, default: "" },

@@ -1,12 +1,32 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+=======
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  Alert, 
+  ScrollView, 
+  ActivityIndicator, 
+  FlatList 
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+>>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+<<<<<<< HEAD
 import Header from '../../components/Header';
 import { BASE_URL } from '../../api/apiClient';
+=======
+import { BASE_URL } from '../../api/apiClient';
+import Header from '../../components/Header';
+>>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout, token } = useAuth();
@@ -24,23 +44,21 @@ const ProfileScreen = ({ route, navigation }) => {
   const fetchProfileData = async () => {
     setIsLoading(true);
     try {
-      // 1. Set the user basic info
       if (isOwnProfile) {
         setProfileData(authUser);
       } else {
-        // In a real app, fetch user by ID. For now, we find them from the blogs list
         const blogRes = await axios.get(`${API_URL}/api/blogs`);
         const authorBlog = blogRes.data.find(b => b.author === authorId);
         if (authorBlog) {
           setProfileData({
             name: authorBlog.authorName,
             role: authorBlog.authorRole,
-            email: 'author@camptrail360.com' // Placeholder for privacy
+            email: 'author@camptrail360.com',
+            profilePicture: authorBlog.authorAvatar
           });
         }
       }
 
-      // 2. Fetch all blogs by this user
       const response = await axios.get(`${API_URL}/api/blogs`);
       const filtered = response.data.filter(b => b.author === (authorId || authUser?._id));
       setUserBlogs(filtered);
@@ -49,6 +67,7 @@ const ProfileScreen = ({ route, navigation }) => {
     } finally {
       setIsLoading(false);
     }
+<<<<<<< HEAD
   };
 
   const user = {
@@ -57,7 +76,13 @@ const ProfileScreen = ({ route, navigation }) => {
     avatar: authUser?.profilePicture 
       ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
       : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+=======
+>>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
   };
+
+  const userAvatar = profileData?.profilePicture 
+    ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
 
   const menuItems = [
     { icon: 'bookmark-outline', label: 'My Bookings', count: isOwnProfile ? 2 : null, action: () => navigation.navigate('MyBookings') },
@@ -81,11 +106,12 @@ const ProfileScreen = ({ route, navigation }) => {
   );
 
   if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#065f46" /></View>;
+    return <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>;
   }
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       {/* Camptrail 360 Green Header */}
       <View style={styles.greenHeader}>
         <View style={styles.headerRow}>
@@ -114,6 +140,20 @@ const ProfileScreen = ({ route, navigation }) => {
           />
           <Text style={styles.userName}>{user.name}</Text>
           <Text style={styles.userEmail}>{user.email}</Text>
+=======
+      <Header />
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.profileSection}>
+          <Image 
+            source={{ uri: userAvatar }} 
+            style={styles.avatar} 
+          />
+          <Text style={styles.userName}>{profileData?.name || 'Happy Camper'}</Text>
+          <Text style={styles.userEmail}>{profileData?.email || 'camper@example.com'}</Text>
+>>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
           
           {isOwnProfile && (
             <TouchableOpacity 
@@ -126,7 +166,6 @@ const ProfileScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Menu Options (Only for own profile) */}
         {isOwnProfile && (
           <View style={styles.menuContainer}>
             {menuItems.map((item, index) => (
@@ -144,7 +183,6 @@ const ProfileScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Author's Blogs Section */}
         <View style={styles.blogsSection}>
           <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${user.name}`}</Text>
           <FlatList
@@ -177,34 +215,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  greenHeader: {
-    backgroundColor: '#065f46',
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerBrand: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-    letterSpacing: 0.5,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerIcon: {
-    marginLeft: 15,
+  scrollContent: {
+    paddingBottom: 40,
   },
   profileSection: {
     alignItems: 'center',
@@ -316,9 +328,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
+<<<<<<< HEAD
   },
   scrollContent: {
     paddingBottom: 100,
+=======
+>>>>>>> b8244902e5816eeffe0969e3655e7f9c80f84b64
   },
   logoutButton: {
     flexDirection: 'row',

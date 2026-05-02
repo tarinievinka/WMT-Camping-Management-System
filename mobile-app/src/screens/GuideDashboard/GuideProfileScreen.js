@@ -16,6 +16,8 @@ const GuideProfileScreen = ({ navigation }) => {
     specialties: '',
     dailyRate: '',
     description: '',
+    experience: '',
+    tagline: '',
   });
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [gallery, setGallery] = useState([]);
@@ -44,6 +46,8 @@ const GuideProfileScreen = ({ navigation }) => {
           specialties: myProfile.specialties?.join(', ') || '',
           dailyRate: myProfile.dailyRate?.toString() || '',
           description: myProfile.description || '',
+          experience: myProfile.experience?.toString() || '',
+          tagline: myProfile.tagline || '',
         });
         setProfilePhoto(myProfile.profilePhoto || null);
         setGallery(myProfile.gallery || []);
@@ -113,6 +117,7 @@ const GuideProfileScreen = ({ navigation }) => {
       const data = {
         ...formData,
         dailyRate: parseFloat(formData.dailyRate),
+        experience: parseInt(formData.experience) || 0,
         specialties: formData.specialties.split(',').map(s => s.trim()).filter(s => s),
         profilePhoto,
         gallery
@@ -161,6 +166,16 @@ const GuideProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>Profile Tagline (Key Description)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.tagline}
+            onChangeText={(val) => setFormData({ ...formData, tagline: val })}
+            placeholder="e.g. Solo Hiker and Trail Expert"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Full Name</Text>
           <TextInput
             style={styles.input}
@@ -186,6 +201,17 @@ const GuideProfileScreen = ({ navigation }) => {
             value={formData.dailyRate}
             onChangeText={(val) => setFormData({ ...formData, dailyRate: val })}
             keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Years of Experience</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.experience}
+            onChangeText={(val) => setFormData({ ...formData, experience: val })}
+            keyboardType="numeric"
+            placeholder="e.g. 5"
           />
         </View>
 

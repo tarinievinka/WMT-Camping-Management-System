@@ -7,6 +7,8 @@ import { API_URL } from '../../api/config';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../../context/AuthContext';
+import { Platform } from 'react-native';
+
 const ManageCampsitesScreen = ({ navigation }) => {
   const { token } = useAuth();
   const [campsites, setCampsites] = useState([]);
@@ -32,33 +34,51 @@ const ManageCampsitesScreen = ({ navigation }) => {
   };
 
   const deleteCampsite = (id) => {
-    Alert.alert(
-      'Delete Campsite',
-      'Are you sure you want to delete this campsite?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await axios.delete(`${API_URL}/api/campsites/delete/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              setCampsites(campsites.filter(c => c._id !== id));
-              Alert.alert('Success', 'Campsite deleted successfully');
-            } catch (err) {
-              Alert.alert('Error', 'Failed to delete campsite');
-            }
-          }
+    const performDelete = async () => {
+      try {
+        await axios.delete(`${API_URL}/api/campsites/delete/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCampsites(prev => prev.filter(c => c._id !== id));
+        if (Platform.OS === 'web') {
+          alert('Campsite deleted successfully');
+        } else {
+          Alert.alert('Success', 'Campsite deleted successfully');
         }
-      ]
-    );
+      } catch (err) {
+        if (Platform.OS === 'web') {
+          alert('Failed to delete campsite');
+        } else {
+          Alert.alert('Error', 'Failed to delete campsite');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (confirm('Are you sure you want to delete this campsite?')) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Campsite',
+        'Are you sure you want to delete this campsite?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: performDelete }
+        ]
+      );
+    }
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=60';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={{ uri: item.images?.[0] || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=60' }} style={styles.cardImage} />
+      <Image source={{ uri: getImageUrl(item.image || item.images?.[0]) }} style={styles.cardImage} />
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.name}</Text>
         <Text style={styles.cardSubtitle}>{item.location}</Text>
