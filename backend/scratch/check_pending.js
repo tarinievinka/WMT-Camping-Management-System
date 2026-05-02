@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../src/models/user-model/userModel');
 require('dotenv').config({ path: './.env' });
-
+//check
 async function checkPendingGuides() {
   try {
     await mongoose.connect(process.env.MONGO_URI);

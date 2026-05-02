@@ -14,6 +14,7 @@ import AddCampsiteScreen from '../screens/Admin/AddCampsiteScreen';
 import EditCampsiteScreen from '../screens/Admin/EditCampsiteScreen';
 import AddEquipmentScreen from '../screens/Admin/AddEquipmentScreen';
 import AddGuideScreen from '../screens/Admin/AddGuideScreen';
+import EditGuideScreen from '../screens/Admin/EditGuideScreen';
 
 const Stack = createStackNavigator();
 
@@ -37,6 +38,7 @@ const AdminNavigator = () => {
       <Stack.Screen name="EditCampsite" component={EditCampsiteScreen} />
       <Stack.Screen name="AddEquipment" component={AddEquipmentScreen} />
       <Stack.Screen name="AddGuide" component={AddGuideScreen} />
+      <Stack.Screen name="EditGuide" component={EditGuideScreen} />
     </Stack.Navigator>
   );
 };

@@ -16,9 +16,9 @@ const guideBookingSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["Confirmed", "Pending", "Cancelled", "completed", "pending"],
+            enum: ["Pending", "Confirmed", "Completed", "Cancelled"],
             /** New bookings are requests until the guide confirms */
-            default: "pending",
+            default: "Pending",
         },
         customerName: {
             type: String,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -62,89 +62,98 @@ const AddEquipmentScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Equipment</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Equipment Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 4-Person Tent"
-          value={formData.name}
-          onChangeText={(val) => setFormData({ ...formData, name: val })}
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Price (LKR) *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 1500"
-          value={formData.price}
-          onChangeText={(val) => setFormData({ ...formData, price: val })}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Quantity in Stock *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 10"
-          value={formData.quantity}
-          onChangeText={(val) => setFormData({ ...formData, quantity: val })}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Describe the item..."
-          value={formData.description}
-          onChangeText={(val) => setFormData({ ...formData, description: val })}
-          multiline
-        />
-      </View>
-
-      <Text style={styles.label}>Images</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-        <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-          <Ionicons name="camera" size={30} color={Colors.primary} />
-          <Text style={styles.addImageText}>Add</Text>
-        </TouchableOpacity>
-        {images.map((img, index) => (
-          <View key={index} style={styles.imageContainer}>
-            <Image source={{ uri: img }} style={styles.previewImage} />
-            <TouchableOpacity 
-              style={styles.removeImage}
-              onPress={() => setImages(images.filter((_, i) => i !== index))}
-            >
-              <Ionicons name="close-circle" size={20} color="#ef4444" />
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
-
-      <TouchableOpacity 
-        style={[styles.submitButton, isLoading && styles.disabledButton]}
-        onPress={handleCreate}
-        disabled={isLoading}
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
       >
-        {isLoading ? (
-          <ActivityIndicator color={Colors.white} />
-        ) : (
-          <Text style={styles.submitText}>Create Equipment</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Add New Equipment</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Equipment Name *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 4-Person Tent"
+            value={formData.name}
+            onChangeText={(val) => setFormData({ ...formData, name: val })}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Price (LKR) *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 1500"
+            value={formData.price}
+            onChangeText={(val) => setFormData({ ...formData, price: val })}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Quantity in Stock *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 10"
+            value={formData.quantity}
+            onChangeText={(val) => setFormData({ ...formData, quantity: val })}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Describe the item..."
+            value={formData.description}
+            onChangeText={(val) => setFormData({ ...formData, description: val })}
+            multiline
+          />
+        </View>
+
+        <Text style={styles.label}>Images</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+          <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
+            <Ionicons name="camera" size={30} color={Colors.primary} />
+            <Text style={styles.addImageText}>Add</Text>
+          </TouchableOpacity>
+          {images.map((img, index) => (
+            <View key={index} style={styles.imageContainer}>
+              <Image source={{ uri: img }} style={styles.previewImage} />
+              <TouchableOpacity 
+                style={styles.removeImage}
+                onPress={() => setImages(images.filter((_, i) => i !== index))}
+              >
+                <Ionicons name="close-circle" size={20} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity 
+          style={[styles.submitButton, isLoading && styles.disabledButton]}
+          onPress={handleCreate}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <Text style={styles.submitText}>Create Equipment</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -153,9 +162,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
   },
+  scrollView: {
+    flex: 1,
+  },
   content: {
+    flexGrow: 1,
     padding: 20,
     paddingTop: 60,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',

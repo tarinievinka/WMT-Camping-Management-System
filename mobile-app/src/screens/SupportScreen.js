@@ -7,7 +7,8 @@ import {
   SafeAreaView, 
   ScrollView,
   TextInput,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   header: {
     marginBottom: 30,

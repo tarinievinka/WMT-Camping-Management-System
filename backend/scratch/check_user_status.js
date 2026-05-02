@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 const User = require('./src/models/user-model/userModel');
-
+//guide
 async function checkUser(email) {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/camping');
     const user = await User.findOne({ email });

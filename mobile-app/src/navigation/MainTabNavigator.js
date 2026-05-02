@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 
@@ -47,16 +48,22 @@ const MainTabNavigator = () => {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray,
         tabBarStyle: {
-          height: 65,
-          paddingBottom: 10,
+          height: Platform.OS === 'ios' ? 85 : 70,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 12,
           paddingTop: 10,
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#f1f5f9',
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '600',
+          marginBottom: 0,
         },
         headerShown: false,
       })}

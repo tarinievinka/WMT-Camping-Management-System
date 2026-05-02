@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 const connectDB = require('./src/config/db');
 
-// Route Imports
+// Routes Imports
 const paymentRoute = require('./src/routes/payment-route/paymentRoute');
 const feedbackRoute = require('./src/routes/feedback & ticket-route/feedbackRoute');
 const equipmentRouter = require('./src/routes/Equipment-route/EquipmentRoute');
@@ -35,7 +35,8 @@ app.use(cors({
   ],
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Simple error handler for JSON parsing
