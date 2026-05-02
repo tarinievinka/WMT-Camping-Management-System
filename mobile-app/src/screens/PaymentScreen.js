@@ -50,6 +50,7 @@ const PaymentScreen = ({ route, navigation }) => {
   const [expiryDate, setExpiryDate] = useState(new Date());
   const [cvv, setCvv] = useState('');
   const [showExpiry, setShowExpiry] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -106,23 +107,39 @@ const PaymentScreen = ({ route, navigation }) => {
   };
 
   const handlePayment = async () => {
+    setErrors({});
+
     if (paymentMethod === 'gpay') {
       setShowGPayModal(true);
       return;
     }
 
     if (paymentMethod === 'deposit' && !receiptImage) {
-      Alert.alert('Receipt Required', 'Please upload your bank transfer receipt to continue.');
+      setErrors({ deposit: 'Please upload your bank transfer receipt to continue.' });
       return;
     }
 
     if (paymentMethod === 'card') {
+      let newErrors = {};
+
       if (cardNumber.replace(/\s/g, '').length !== 16) {
-        Alert.alert('Invalid Card', 'Card number must be 16 digits.');
-        return;
+        newErrors.cardNumber = 'Card number must be 16 digits.';
       }
       if (cvv.length !== 3) {
-        Alert.alert('Invalid CVV', 'CVV must be 3 digits.');
+        newErrors.cvv = 'CVV must be 3 digits.';
+      }
+
+      // Expiry Date Validation
+      const now = new Date();
+      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const selectedMonth = new Date(expiryDate.getFullYear(), expiryDate.getMonth(), 1);
+      
+      if (selectedMonth < currentMonth) {
+        newErrors.expiry = 'The card has already expired.';
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
     }
@@ -189,7 +206,7 @@ const PaymentScreen = ({ route, navigation }) => {
     } catch (error) {
       console.error('Payment Error:', error);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Something went wrong during the payment process.';
-      Alert.alert('Payment Failed', errorMsg);
+      setErrors({ form: errorMsg });
     } finally {
       setLoading(false);
     }
@@ -292,35 +309,46 @@ const PaymentScreen = ({ route, navigation }) => {
                 placeholder="XXXX XXXX XXXX XXXX"
                 keyboardType="numeric"
                 value={cardNumber}
-                onChangeText={(text) => setCardNumber(text.replace(/[^0-9]/g, '').substring(0, 16))}
+                onChangeText={(text) => { setCardNumber(text.replace(/[^0-9]/g, '').substring(0, 16)); setErrors({ ...errors, cardNumber: null }); }}
                 maxLength={16}
               />
+              {errors.cardNumber && <Text style={styles.errorText}>{errors.cardNumber}</Text>}
             </View>
             <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: 15 }]}>
                 <Text style={styles.label}>Expiry Date</Text>
                 {Platform.OS === 'web' ? (
-                  <input
-                    type="month"
-                    value={`${expiryDate.getFullYear()}-${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}`}
-                    onChange={(e) => {
-                      const [y, m] = e.target.value.split('-');
-                      setExpiryDate(new Date(parseInt(y), parseInt(m) - 1));
-                    }}
-                    style={{
-                      padding: 15,
-                      borderRadius: 12,
-                      border: '1px solid #f1f5f9',
-                      backgroundColor: '#f8fafc',
-                      fontSize: 16,
-                      width: '100%',
-                      fontFamily: 'inherit'
-                    }}
-                  />
+                  <View style={[styles.input, { padding: 0, overflow: 'hidden' }]}>
+                    <input
+                      type="month"
+                      value={`${expiryDate.getFullYear()}-${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}`}
+                      onChange={(e) => {
+                        const [y, m] = e.target.value.split('-');
+                        setExpiryDate(new Date(parseInt(y), parseInt(m) - 1));
+                      }}
+                      style={{
+                        padding: '12px 15px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        fontSize: '15px',
+                        width: '100%',
+                        height: '100%',
+                        fontFamily: 'inherit',
+                        outline: 'none',
+                        color: Colors.text
+                      }}
+                    />
+                  </View>
                 ) : (
                   <>
-                    <TouchableOpacity style={styles.input} onPress={() => setShowExpiry(true)}>
-                      <Text>{(expiryDate.getMonth() + 1).toString().padStart(2, '0')}/{expiryDate.getFullYear().toString().substring(2)}</Text>
+                    <TouchableOpacity 
+                      style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]} 
+                      onPress={() => setShowExpiry(true)}
+                    >
+                      <Text style={{ fontSize: 16, color: Colors.text }}>
+                        {(expiryDate.getMonth() + 1).toString().padStart(2, '0')} / {expiryDate.getFullYear().toString().substring(2)}
+                      </Text>
+                      <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
                     </TouchableOpacity>
                     {showExpiry && (
                       <DateTimePicker
@@ -335,6 +363,7 @@ const PaymentScreen = ({ route, navigation }) => {
                     )}
                   </>
                 )}
+                {errors.expiry && <Text style={styles.errorText}>{errors.expiry}</Text>}
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.label}>CVV</Text>
@@ -344,11 +373,18 @@ const PaymentScreen = ({ route, navigation }) => {
                   keyboardType="numeric"
                   secureTextEntry
                   value={cvv}
-                  onChangeText={(text) => setCvv(text.replace(/[^0-9]/g, '').substring(0, 3))}
+                  onChangeText={(text) => { setCvv(text.replace(/[^0-9]/g, '').substring(0, 3)); setErrors({ ...errors, cvv: null }); }}
                   maxLength={3}
                 />
+                {errors.cvv && <Text style={styles.errorText}>{errors.cvv}</Text>}
               </View>
             </View>
+            {errors.form && (
+              <View style={styles.formErrorContainer}>
+                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Text style={styles.formErrorText}>{errors.form}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -622,6 +658,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    width: '100%',
   },
   label: {
     fontSize: 12,

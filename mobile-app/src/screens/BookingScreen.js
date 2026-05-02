@@ -29,6 +29,7 @@ const BookingScreen = ({ route, navigation }) => {
   const [guests, setGuests] = useState('1');
   const [bookedDates, setBookedDates] = useState({});
   const [bookingStatus, setBookingStatus] = useState(null);
+  const [errors, setErrors] = useState({});
 
   React.useEffect(() => {
     if (type === 'campsite') {
@@ -126,13 +127,19 @@ const BookingScreen = ({ route, navigation }) => {
   const serviceFee = 250;
 
   const handleConfirmBooking = async () => {
+    setErrors({});
+    let newErrors = {};
+
     if (mode !== 'buy' && (!startDate || !endDate)) {
-      Alert.alert('Error', 'Please enter both check-in and check-out dates');
-      return;
+      newErrors.dates = 'Please select both check-in and check-out dates';
     }
 
     if (!guests || isNaN(parseInt(guests)) || parseInt(guests) <= 0) {
-      Alert.alert('Error', 'Please enter a valid number of guests');
+      newErrors.guests = 'Please enter a valid number of guests';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -198,7 +205,7 @@ const BookingScreen = ({ route, navigation }) => {
       setLoading(false);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to process booking.';
       console.error('Booking error:', error.response?.data || error);
-      Alert.alert('Booking Failed', errorMsg);
+      setErrors({ form: errorMsg });
     }
   };
 
@@ -255,6 +262,7 @@ const BookingScreen = ({ route, navigation }) => {
                   <Text style={styles.dateValue}>{endDate || 'Select Date'}</Text>
                 </View>
               </View>
+              {errors.dates && <Text style={styles.errorText}>{errors.dates}</Text>}
             </View>
           ) : (
             <Text style={styles.buyNote}>Direct purchase - No date range required.</Text>
@@ -265,8 +273,9 @@ const BookingScreen = ({ route, navigation }) => {
             style={styles.input}
             keyboardType="numeric"
             value={guests}
-            onChangeText={setGuests}
+            onChangeText={(text) => { setGuests(text); setErrors({ ...errors, guests: null }); }}
           />
+          {errors.guests && <Text style={styles.errorText}>{errors.guests}</Text>}
 
           <View style={styles.summary}>
             <View style={styles.summaryRow}>
@@ -284,6 +293,12 @@ const BookingScreen = ({ route, navigation }) => {
               <Text style={styles.totalValue}>Rs. {subtotal + serviceFee}</Text>
             </View>
           </View>
+          {errors.form && (
+            <View style={styles.formErrorContainer}>
+              <Ionicons name="alert-circle" size={18} color="#ef4444" />
+              <Text style={styles.formErrorText}>{errors.form}</Text>
+            </View>
+          )}
         </View>
 
         {type === 'guide' && bookingStatus === 'pending' && (
@@ -494,6 +509,29 @@ const styles = StyleSheet.create({
     color: '#d97706',
     marginLeft: 8,
     fontWeight: '500',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 5,
+    fontWeight: '600',
+  },
+  formErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  formErrorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: '600',
+    flex: 1,
   },
 });
 
