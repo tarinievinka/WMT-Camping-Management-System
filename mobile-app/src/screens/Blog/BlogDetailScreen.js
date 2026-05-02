@@ -14,6 +14,7 @@ import {
 import { Colors } from '../../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
 
@@ -22,7 +23,47 @@ const BlogDetailScreen = ({ route, navigation }) => {
   const [blog, setBlog] = useState(initialBlog);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const { user, token } = useAuth();
+
+  useEffect(() => {
+    checkBookmarkStatus();
+  }, [blog._id]);
+
+  const checkBookmarkStatus = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('blog_bookmarks');
+      if (stored) {
+        const bookmarks = JSON.parse(stored);
+        setIsBookmarked(bookmarks.includes(blog._id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleBookmark = async () => {
+    if (!user) {
+      Alert.alert('Login Required', 'Please login to bookmark posts');
+      return;
+    }
+    try {
+      const stored = await AsyncStorage.getItem('blog_bookmarks');
+      let bookmarks = stored ? JSON.parse(stored) : [];
+      
+      if (bookmarks.includes(blog._id)) {
+        bookmarks = bookmarks.filter(id => id !== blog._id);
+        setIsBookmarked(false);
+      } else {
+        bookmarks.push(blog._id);
+        setIsBookmarked(true);
+      }
+      
+      await AsyncStorage.setItem('blog_bookmarks', JSON.stringify(bookmarks));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleLike = async () => {
     if (!user) {
@@ -94,7 +135,13 @@ const BlogDetailScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Blog Details</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={toggleBookmark}>
+          <Ionicons 
+            name={isBookmarked ? "bookmark" : "bookmark-outline"} 
+            size={24} 
+            color={isBookmarked ? Colors.primary : Colors.text} 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
