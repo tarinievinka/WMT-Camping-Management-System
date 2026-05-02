@@ -17,6 +17,8 @@ const EditCampsiteScreen = ({ route, navigation }) => {
     capacity: campsite.capacity?.toString() || '',
     description: campsite.description || '',
     amenities: campsite.amenities?.join(', ') || '',
+    ownerName: campsite.ownerName || '',
+    ownerPhone: campsite.ownerPhone || '',
   });
   const [images, setImages] = useState(campsite.images || []);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +43,21 @@ const EditCampsiteScreen = ({ route, navigation }) => {
       return;
     }
 
+    if (parseFloat(formData.pricePerNight) < 0 || parseFloat(formData.capacity) < 0) {
+      Alert.alert('Error', "can't enter a miners numbers");
+      return;
+    }
+
+    if (/\d/.test(formData.location)) {
+      Alert.alert('Error', 'Location should not contain numbers, only characters');
+      return;
+    }
+
+    if (formData.ownerPhone && !/^\d{10}$/.test(formData.ownerPhone)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      return;
+    }
+
     Keyboard.dismiss();
     setIsLoading(true);
     try {
@@ -51,6 +68,8 @@ const EditCampsiteScreen = ({ route, navigation }) => {
       formDataToSend.append('capacity', parseInt(formData.capacity));
       formDataToSend.append('description', formData.description);
       formDataToSend.append('amenities', JSON.stringify(formData.amenities.split(',').map(a => a.trim()).filter(a => a)));
+      if (formData.ownerName) formDataToSend.append('ownerName', formData.ownerName);
+      if (formData.ownerPhone) formDataToSend.append('ownerPhone', formData.ownerPhone);
 
       // Find the LAST image that is a local URI, as the first one might be a stale blob string from the DB
       const localImages = images.filter(img => img && (img.startsWith('blob:') || img.startsWith('file:') || img.startsWith('data:')));
@@ -122,30 +141,39 @@ const EditCampsiteScreen = ({ route, navigation }) => {
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Location *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, /\d/.test(formData.location) && { borderColor: 'red' }]}
           value={formData.location}
           onChangeText={(val) => setFormData({ ...formData, location: val })}
         />
+        {/\d/.test(formData.location) && (
+          <Text style={styles.errorText}>Location should not contain numbers</Text>
+        )}
       </View>
 
       <View style={styles.row}>
         <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
           <Text style={styles.label}>Price/Night (LKR) *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, parseFloat(formData.pricePerNight) < 0 && { borderColor: 'red' }]}
             value={formData.pricePerNight}
             onChangeText={(val) => setFormData({ ...formData, pricePerNight: val })}
             keyboardType="numeric"
           />
+          {parseFloat(formData.pricePerNight) < 0 && (
+            <Text style={styles.errorText}>can't enter a minus numbers</Text>
+          )}
         </View>
         <View style={[styles.inputGroup, { flex: 1 }]}>
           <Text style={styles.label}>Capacity *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, parseFloat(formData.capacity) < 0 && { borderColor: 'red' }]}
             value={formData.capacity}
             onChangeText={(val) => setFormData({ ...formData, capacity: val })}
             keyboardType="numeric"
           />
+          {parseFloat(formData.capacity) < 0 && (
+            <Text style={styles.errorText}>can't enter a minus numbers</Text>
+          )}
         </View>
       </View>
 
@@ -157,6 +185,29 @@ const EditCampsiteScreen = ({ route, navigation }) => {
           onChangeText={(val) => setFormData({ ...formData, description: val })}
           multiline
         />
+      </View>
+
+      <View style={styles.row}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+          <Text style={styles.label}>Owner Name (Optional)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.ownerName}
+            onChangeText={(val) => setFormData({ ...formData, ownerName: val })}
+          />
+        </View>
+        <View style={[styles.inputGroup, { flex: 1 }]}>
+          <Text style={styles.label}>Phone Number (Optional)</Text>
+          <TextInput
+            style={[styles.input, formData.ownerPhone.length > 0 && !/^\d{10}$/.test(formData.ownerPhone) && { borderColor: 'red' }]}
+            value={formData.ownerPhone}
+            onChangeText={(val) => setFormData({ ...formData, ownerPhone: val })}
+            keyboardType="phone-pad"
+          />
+          {formData.ownerPhone.length > 0 && !/^\d{10}$/.test(formData.ownerPhone) && (
+            <Text style={styles.errorText}>Invalid format (10 digits)</Text>
+          )}
+        </View>
       </View>
 
       <View style={styles.inputGroup}>
@@ -322,6 +373,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 
