@@ -56,7 +56,7 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         {/* Product Image */}
         <View style={styles.imageSection}>
           <Image 

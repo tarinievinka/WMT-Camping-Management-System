@@ -61,7 +61,6 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView 
         style={styles.container} 
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
       >
         {/* Hero Section */}
         <ImageBackground 
