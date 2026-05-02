@@ -10,7 +10,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 // Import DateTimePicker dynamically for mobile only
 const DateTimePicker = Platform.OS !== 'web' ? require('@react-native-community/datetimepicker').default : null;
@@ -30,6 +31,9 @@ const PaymentScreen = ({ route, navigation }) => {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [receiptImage, setReceiptImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showGPayModal, setShowGPayModal] = useState(false);
+  const [gpayLoading, setGPayLoading] = useState(false);
+  const [gpayStep, setGpayStep] = useState('summary'); // 'summary', 'processing', 'success'
 
   // Card States
   const [cardNumber, setCardNumber] = useState('');
@@ -61,7 +65,48 @@ const PaymentScreen = ({ route, navigation }) => {
     }
   };
 
+  const handleGPayPayment = async () => {
+    setGpayStep('processing');
+    setGPayLoading(true);
+    
+    // Simulate contact with Google Pay servers
+    setTimeout(async () => {
+      try {
+        const paymentData = {
+          bookingId: bookingId || item._id,
+          bookingType: type === 'guide' ? 'GuideBooking' : type === 'equipment' ? 'EquipmentBooking' : 'CampsiteBooking',
+          amount: totalAmount,
+          paymentMethod: 'google-pay',
+          userId: user?._id,
+          status: 'success'
+        };
+
+        await apiClient.post('/payment/add', paymentData);
+        
+        setGpayStep('success');
+        setGPayLoading(false);
+        
+        // Show success for 1.5 seconds then navigate
+        setTimeout(() => {
+          setShowGPayModal(false);
+          setGpayStep('summary'); // reset for next time
+          navigation.navigate('PaymentSuccess', { type, pending: false });
+        }, 1500);
+      } catch (error) {
+        console.error('GPay Error:', error);
+        setGPayLoading(false);
+        setGpayStep('summary');
+        Alert.alert('Payment Failed', 'Google Pay transaction failed. Please try again.');
+      }
+    }, 3000);
+  };
+
   const handlePayment = async () => {
+    if (paymentMethod === 'gpay') {
+      setShowGPayModal(true);
+      return;
+    }
+
     if (paymentMethod === 'deposit' && !receiptImage) {
       Alert.alert('Receipt Required', 'Please upload your bank transfer receipt to continue.');
       return;
@@ -114,7 +159,8 @@ const PaymentScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Payment Error:', error);
-      Alert.alert('Error', 'Something went wrong during the payment process.');
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Something went wrong during the payment process.';
+      Alert.alert('Payment Failed', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -131,7 +177,7 @@ const PaymentScreen = ({ route, navigation }) => {
       </View>
 
       <ScrollView 
-        style={{ flex: 1 }}
+        style={{ flex: 1, ...Platform.select({ web: { maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' } }) }}
         contentContainerStyle={[styles.content, { flexGrow: 1 }]}
         showsVerticalScrollIndicator={true}
       >
@@ -321,10 +367,89 @@ const PaymentScreen = ({ route, navigation }) => {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.payButtonText}>
-              {paymentMethod === 'deposit' ? 'Confirm Booking' : `Pay Rs. ${totalAmount}`}
+              {paymentMethod === 'deposit' ? 'Confirm Booking' : paymentMethod === 'gpay' ? 'Pay with Google Pay' : `Pay Rs. ${totalAmount}`}
             </Text>
           )}
         </TouchableOpacity>
+
+        {/* Google Pay Simulation Modal */}
+        <Modal
+          visible={showGPayModal}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.gpaySheet}>
+              <View style={styles.gpayHeader}>
+                <Image 
+                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png' }} 
+                  style={styles.gpayLogo}
+                  resizeMode="contain"
+                />
+                {!gpayLoading && gpayStep !== 'success' && (
+                  <TouchableOpacity onPress={() => setShowGPayModal(false)}>
+                    <Ionicons name="close" size={24} color={Colors.text} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {gpayStep === 'summary' && (
+                <View>
+                  <View style={styles.gpayContent}>
+                    <Text style={styles.gpayTotal}>Rs. {totalAmount}</Text>
+                    <Text style={styles.gpayTo}>to Smart Camping System</Text>
+                    
+                    <View style={styles.gpayUser}>
+                      <View style={styles.gpayAvatar}>
+                        <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.gpayUserName}>{user?.name}</Text>
+                        <Text style={styles.gpayUserEmail}>{user?.email}</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.gpayCard}>
+                      <Ionicons name="card" size={24} color={Colors.primary} />
+                      <View style={{ marginLeft: 15 }}>
+                        <Text style={styles.cardName}>Visa •••• 4242</Text>
+                        <Text style={styles.cardType}>Google Pay Secured</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={Colors.gray} style={{ marginLeft: 'auto' }} />
+                    </View>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.gpayButton}
+                    onPress={handleGPayPayment}
+                  >
+                    <Text style={styles.gpayButtonText}>Pay Now</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {gpayStep === 'processing' && (
+                <View style={styles.statusContainer}>
+                  <ActivityIndicator size="large" color={Colors.primary} />
+                  <Text style={styles.statusText}>Contacting Google Pay...</Text>
+                  <Text style={styles.statusSubtext}>Please don't close the app</Text>
+                </View>
+              )}
+
+              {gpayStep === 'success' && (
+                <View style={styles.statusContainer}>
+                  <View style={styles.successCircle}>
+                    <Ionicons name="checkmark" size={50} color="#fff" />
+                  </View>
+                  <Text style={styles.statusText}>Payment Successful!</Text>
+                  <Text style={styles.statusSubtext}>Redirecting to your booking...</Text>
+                </View>
+              )}
+              
+              <Text style={styles.gpayFooter}>Verified by Google</Text>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -334,12 +459,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    ...Platform.select({
-      web: {
-        height: '100vh',
-        overflow: 'auto',
-      }
-    })
   },
   header: {
     flexDirection: 'row',
@@ -583,6 +702,133 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  gpaySheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  gpayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  gpayLogo: {
+    width: 80,
+    height: 30,
+  },
+  gpayContent: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  gpayTotal: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  gpayTo: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginBottom: 30,
+  },
+  gpayUser: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    padding: 15,
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    marginBottom: 15,
+  },
+  gpayAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  avatarText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  gpayUserName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  gpayUserEmail: {
+    fontSize: 12,
+    color: Colors.gray,
+  },
+  gpayCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  cardName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  cardType: {
+    fontSize: 11,
+    color: Colors.gray,
+  },
+  gpayButton: {
+    backgroundColor: '#000',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  gpayButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  gpayFooter: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: Colors.gray,
+  },
+  statusContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  statusText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginTop: 20,
+  },
+  statusSubtext: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginTop: 8,
+  },
+  successCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#16a34a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.primary('#16a34a'),
   },
 });
 

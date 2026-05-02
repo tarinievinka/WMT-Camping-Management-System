@@ -19,6 +19,14 @@ const blogSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    authorRole: {
+        type: String,
+        default: 'user'
+    },
+    category: {
+        type: String,
+        default: 'Smart Gear'
+    },
     image: {
         type: String,
         default: 'no-photo.jpg'

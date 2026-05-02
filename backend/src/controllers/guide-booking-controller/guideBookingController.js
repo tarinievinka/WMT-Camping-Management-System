@@ -63,6 +63,32 @@ exports.getBookingsByGuide = async (req, res) => {
     }
 };
 
+// Get bookings for the currently logged-in guide
+exports.getMyBookings = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const guide = await Guide.findOne({ userId });
+        if (!guide) {
+            return res.status(404).json({ error: "Guide profile not found for this user" });
+        }
+        const bookings = await GuideBooking.find({ guideId: guide._id }).sort({ createdAt: -1 });
+        res.json(bookings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get bookings for the currently logged-in customer (camper)
+exports.getCustomerBookings = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const bookings = await GuideBooking.find({ userId }).sort({ createdAt: -1 });
+        res.json(bookings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // Update a booking by ID
 exports.updateBooking = async (req, res) => {
     try {

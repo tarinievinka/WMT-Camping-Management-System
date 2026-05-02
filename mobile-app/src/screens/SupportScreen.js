@@ -7,7 +7,8 @@ import {
   SafeAreaView, 
   ScrollView,
   TextInput,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
@@ -17,7 +18,8 @@ import apiClient from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 
 const SupportScreen = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,11 +32,13 @@ const SupportScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await apiClient.post('/tickets/add', {
-        subject,
-        message,
-        userName: user?.name
+      await apiClient.post('/tickets/create', {
+        title: subject,
+        description: message,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+
       
       Alert.alert(
         'Success', 
@@ -95,7 +99,10 @@ const SupportScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Feedback & Ratings</Text>
           <TouchableOpacity 
             style={styles.feedbackCard}
-            onPress={() => navigation.navigate('MyBookings')}
+            onPress={() => navigation.navigate('Main', {
+              screen: 'Support',
+              params: { activeTab: 'feedback' }
+            })}
           >
             <View style={styles.feedbackIcon}>
               <Ionicons name="star" size={24} color="#fbbf24" />
@@ -155,7 +162,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   header: {
     marginBottom: 30,

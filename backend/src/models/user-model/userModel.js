@@ -55,6 +55,7 @@ const userSchema = new mongoose.Schema({
     experience: { type: Number, min: 0 },
   },
 
+  profilePicture: { type: String },
   isActive: { type: Boolean, default: true },
   resetPasswordToken: String,
   resetPasswordExpire: Date,

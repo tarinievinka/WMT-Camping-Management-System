@@ -9,7 +9,8 @@ import {
   FlatList,
   Dimensions,
   SafeAreaView,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
@@ -57,7 +58,11 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero Section */}
         <ImageBackground 
           source={require('../../assets/hero-bg.png')} 
@@ -174,7 +179,7 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        <View style={{ height: 30 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
     </SafeAreaView>
   );

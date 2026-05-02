@@ -40,17 +40,17 @@ exports.getAllCampsites = async (req, res) => {
       filter.status = req.query.status;
     }
     const campsites = await Campsite.find(filter).lean();
-    
+
     // Fetch all feedbacks to aggregate
-    const Feedback = require('../../models/feedback-model/FeedbackModel');
+    const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
     const allFeedbacks = await Feedback.find({ targetType: 'Campsite' }).lean();
 
     const dataWithRatings = campsites.map(site => {
-      const siteFeedbacks = allFeedbacks.filter(f => 
-        String(f.targetId || "") === String(site._id) || 
+      const siteFeedbacks = allFeedbacks.filter(f =>
+        String(f.targetId || "") === String(site._id) ||
         String(f.targetName || "").trim().toLowerCase() === String(site.name || "").trim().toLowerCase()
       );
-      
+
       const reviewCount = siteFeedbacks.length;
       const averageRating = reviewCount > 0
         ? siteFeedbacks.reduce((sum, f) => sum + f.rating, 0) / reviewCount
@@ -78,7 +78,7 @@ exports.getCampsiteById = async (req, res) => {
     }
 
     // Fetch feedbacks for this campsite
-    const Feedback = require('../../models/feedback-model/FeedbackModel');
+    const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
     const feedbacks = await Feedback.find({
       targetType: 'Campsite',
       $or: [
@@ -92,13 +92,13 @@ exports.getCampsiteById = async (req, res) => {
       ? feedbacks.reduce((sum, f) => sum + f.rating, 0) / reviewCount
       : 0;
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: {
         ...campsite,
         averageRating,
         reviewCount
-      } 
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

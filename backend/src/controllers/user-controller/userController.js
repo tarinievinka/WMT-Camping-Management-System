@@ -9,7 +9,12 @@ const register = async (req, res) => {
     
     // Generate token for auto-login
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { 
+        id: user._id, 
+        role: user.role,
+        name: user.name,
+        username: user.username
+      },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
@@ -48,7 +53,7 @@ const login = async (req, res) => {
     const result = await userService.loginUser(email, password);
     res.status(200).json(result);
   } catch (err) {
-    console.error(`[AUTH] Login error: ${err.message}`);
+    console.error(`[AUTH] Login error for ${req.body.email}: ${err.message}`);
     // Distinguish between credential errors and server errors
     const status = (err.message === 'User not found' || err.message === 'Invalid credentials') ? 401 : 400;
     res.status(status).json({ error: err.message });
@@ -66,7 +71,11 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const user = await userService.updateUser(req.user.id, req.body);
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.profilePicture = `/uploads/${req.file.filename}`;
+    }
+    const user = await userService.updateUser(req.user.id, updateData);
     res.status(200).json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });
