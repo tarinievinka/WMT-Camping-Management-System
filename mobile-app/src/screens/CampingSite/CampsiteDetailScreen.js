@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
   Dimensions,
   Platform,
@@ -13,7 +13,11 @@ import {
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
+<<<<<<< HEAD
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
+=======
+import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -53,18 +57,18 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
       >
         {/* Header Image */}
         <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: getImageUrl(item.image) || item.images?.[0] || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1000' }} 
-            style={styles.image} 
+          <Image
+            source={{ uri: getImageUrl(item.image) || item.images?.[0] || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1000' }}
+            style={styles.image}
             resizeMode="cover"
           />
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
@@ -114,14 +118,14 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
           <View style={styles.reviewsHeader}>
             <Text style={styles.sectionTitle}>Community Reviews</Text>
             {isEligible && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.addReviewBtn}
-                onPress={() => navigation.navigate('AddFeedback', { 
-                  booking: { 
-                    targetId: item._id, 
-                    targetName: item.name, 
-                    targetType: 'Campsite' 
-                  } 
+                onPress={() => navigation.navigate('AddFeedback', {
+                  booking: {
+                    targetId: item._id,
+                    targetName: item.name,
+                    targetType: 'Campsite'
+                  }
                 })}
               >
                 <Text style={styles.addReviewText}>Add Review</Text>
@@ -166,7 +170,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
               <Text style={styles.priceLabel}>Price per night</Text>
               <Text style={styles.priceValue}>Rs. {item.pricePerNight}</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.bookButton}
               onPress={() => navigation.navigate('Booking', { item, type: 'campsite' })}
             >

@@ -12,13 +12,22 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
+<<<<<<< HEAD
+import { BASE_URL } from '../../api/apiClient';
+=======
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
   const [quantity, setQuantity] = useState(1);
 
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
 
   return (
     <SafeAreaView style={styles.container}>

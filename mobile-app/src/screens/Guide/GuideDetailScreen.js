@@ -12,91 +12,105 @@ import {
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
+<<<<<<< HEAD
+import { BASE_URL } from '../../api/apiClient';
+=======
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 
 const GuideDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
 
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    if (path.startsWith('file:') || path.startsWith('content:')) return null;
+    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
+<<<<<<< HEAD
+  <ScrollView
+    showsVerticalScrollIndicator={false}
+=======
       <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
+    contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+  >
+    {/* Profile Header */}
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
       >
-        {/* Profile Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color={Colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Guide Profile</Text>
-          <View style={{ width: 40 }} />
+        <Ionicons name="arrow-back" size={24} color={Colors.text} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Guide Profile</Text>
+      <View style={{ width: 40 }} />
+    </View>
+
+    <View style={styles.profileSection}>
+      <Image
+        source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }}
+        style={styles.avatar}
+        resizeMode="cover"
+      />
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.expertise}>{item.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>4.9</Text>
+          <Text style={styles.statLabel}>Rating</Text>
         </View>
-
-        <View style={styles.profileSection}>
-          <Image
-            source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }}
-            style={styles.avatar}
-            resizeMode="cover"
-          />
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.expertise}>{item.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>4.9</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>120+</Text>
-              <Text style={styles.statLabel}>Tours</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>5 yrs</Text>
-              <Text style={styles.statLabel}>Exp.</Text>
-            </View>
-          </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>120+</Text>
+          <Text style={styles.statLabel}>Tours</Text>
         </View>
-
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>About Me</Text>
-          <Text style={styles.bio}>
-            {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
-          </Text>
-
-          <Text style={styles.sectionTitle}>Specialties</Text>
-          <View style={styles.langContainer}>
-            {(item.specialties || ['General Camping']).map((spec, idx) => (
-              <View key={idx} style={styles.langBadge}>
-                <Text style={styles.langText}>{spec}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Pricing & Booking */}
-          <View style={styles.bookingCard}>
-            <View>
-              <Text style={styles.priceLabel}>Daily Rate</Text>
-              <Text style={styles.priceValue}>Rs. {item.dailyRate}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.bookButton}
-              onPress={() => navigation.navigate('Booking', { item, type: 'guide' })}
-            >
-              <Text style={styles.bookButtonText}>Book Guide</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>5 yrs</Text>
+          <Text style={styles.statLabel}>Exp.</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </View>
+
+    <View style={styles.content}>
+      <Text style={styles.sectionTitle}>About Me</Text>
+      <Text style={styles.bio}>
+        {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
+      </Text>
+
+      <Text style={styles.sectionTitle}>Specialties</Text>
+      <View style={styles.langContainer}>
+        {(item.specialties || ['General Camping']).map((spec, idx) => (
+          <View key={idx} style={styles.langBadge}>
+            <Text style={styles.langText}>{spec}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.divider} />
+
+      {/* Pricing & Booking */}
+      <View style={styles.bookingCard}>
+        <View>
+          <Text style={styles.priceLabel}>Daily Rate</Text>
+          <Text style={styles.priceValue}>Rs. {item.dailyRate}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.bookButton}
+          onPress={() => navigation.navigate('Booking', { item, type: 'guide' })}
+        >
+          <Text style={styles.bookButtonText}>Book Guide</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </ScrollView>
+    </SafeAreaView >
   );
 };
 

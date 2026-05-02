@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  Alert, 
-  ScrollView, 
-  ActivityIndicator, 
-  FlatList, 
-  Platform, 
-  StatusBar 
+<<<<<<< HEAD
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  StatusBar
 } from 'react-native';
+=======
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, FlatList, Platform, StatusBar } from 'react-native';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
+<<<<<<< HEAD
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
+=======
+import apiClient, { BASE_URL } from '../../api/apiClient';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -30,7 +38,7 @@ const ProfileScreen = ({ route, navigation }) => {
   const user = {
     name: authUser?.name || 'Happy Camper',
     email: authUser?.email || 'camper@example.com',
-    avatar: authUser?.profilePicture 
+    avatar: authUser?.profilePicture
       ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
       : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
   };
@@ -47,7 +55,11 @@ const ProfileScreen = ({ route, navigation }) => {
       } else {
         const response = await apiClient.get('/blogs');
         const blogs = response.data.data || response.data;
+<<<<<<< HEAD
         const authorBlog = blogs.find(b => b.author?._id === authorId || b.author === authorId);
+=======
+        const authorBlog = blogs.find(b => (b.author?._id || b.author) === authorId);
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
         if (authorBlog) {
           setProfileData({
             _id: authorId,
@@ -72,6 +84,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
   const userDisplayName = profileData?.name || authUser?.name || 'Happy Camper';
   const userEmail = profileData?.email || authUser?.email || 'camper@example.com';
+<<<<<<< HEAD
   const userAvatar = getImageUrl(profileData?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
 
   const menuItems = [
@@ -80,16 +93,30 @@ const ProfileScreen = ({ route, navigation }) => {
     { icon: 'card-outline', label: 'Payment History', action: () => navigation.navigate('PaymentHistory') },
     { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Coming Soon', 'Feature in development!') },
     { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Coming Soon', 'Feature in development!') },
+=======
+  const userAvatar = profileData?.profilePicture
+    ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
+    : authUser?.profilePicture
+    ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+
+  const menuItems = [
+    { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
+    { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Favorites', 'Feature coming soon!') },
+    { icon: 'card-outline', label: 'Payment History', action: () => navigation.navigate('PaymentHistory') },
+    { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Settings', 'Feature coming soon!') },
+    { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Help Center', 'Feature coming soon!') },
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
   ];
 
   const renderBlogItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.blogCard}
       onPress={() => navigation.navigate('BlogDetail', { blog: item })}
     >
-      <Image 
-        source={{ uri: getImageUrl(item.image) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=600' }} 
-        style={styles.blogThumb} 
+      <Image
+        source={{ uri: getImageUrl(item.image) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=600' }}
+        style={styles.blogThumb}
       />
       <View style={styles.blogInfo}>
         <Text style={styles.blogCategory}>{item.category?.toUpperCase()}</Text>
@@ -104,10 +131,18 @@ const ProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <Header />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.profileSection}>
+          <Image source={{ uri: userAvatar }} style={styles.avatar} />
+          <Text style={styles.userName}>{userDisplayName}</Text>
+          <Text style={styles.userEmail}>{userEmail}</Text>
+=======
       {isOwnProfile ? (
           <Header />
-      ) : (
+        ) : (
           <View style={styles.greenHeader}>
             <View style={styles.headerRow}>
               <View style={styles.headerLeft}>
@@ -123,136 +158,276 @@ const ProfileScreen = ({ route, navigation }) => {
               </View>
             </View>
           </View>
-      )}
+        )}
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View style={styles.profileSection}>
-          <Image source={{ uri: isOwnProfile ? user.avatar : userAvatar }} style={styles.avatar} />
-          <Text style={styles.userName}>{isOwnProfile ? user.name : userDisplayName}</Text>
-          <Text style={styles.userEmail}>{isOwnProfile ? user.email : userEmail}</Text>
-          
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Profile Info Section */}
+          <View style={styles.profileSection}>
+            <Image source={{ uri: isOwnProfile ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} style={styles.avatar} />
+            <Text style={styles.userName}>{isOwnProfile ? user.name : (profileData?.name || 'Happy Camper')}</Text>
+            <Text style={styles.userEmail}>{isOwnProfile ? user.email : (profileData?.email || 'camper@example.com')}</Text>
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
+
+            {isOwnProfile && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate('EditProfile')}
+              >
+                <Ionicons name="pencil-sharp" size={16} color="#fff" />
+                <Text style={styles.editButtonText}>Edit Profile</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           {isOwnProfile && (
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => navigation.navigate('EditProfile')}
+            <View style={styles.menuContainer}>
+              {menuItems.map((item, index) => (
+                <TouchableOpacity key={index} style={styles.menuItem} onPress={item.action}>
+                  <View style={styles.menuItemLeft}>
+                    <Ionicons name={item.icon} size={22} color={Colors.text} />
+                    <Text style={styles.menuLabel}>{item.label}</Text>
+                  </View>
+                  <View style={styles.menuItemRight}>
+                    {item.count && <Text style={styles.badge}>{item.count}</Text>}
+                    <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.blogsSection}>
+            <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
+            {userBlogs.length > 0 ? (
+              userBlogs.map(item => (
+                <React.Fragment key={item._id || Math.random().toString()}>
+                  {renderBlogItem({ item })}
+                </React.Fragment>
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No blogs found.</Text>
+            )}
+          </View>
+
+          {isOwnProfile && (
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={logout}
             >
-              <Ionicons name="pencil-sharp" size={16} color="#fff" />
-              <Text style={styles.editButtonText}>Edit Profile</Text>
+              <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
+              <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
           )}
-        </View>
-
-        {isOwnProfile && (
-          <View style={styles.menuContainer}>
-            {menuItems.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.menuItem} onPress={item.action}>
-                <View style={styles.menuItemLeft}>
-                  <Ionicons name={item.icon} size={22} color={Colors.text} />
-                  <Text style={styles.menuLabel}>{item.label}</Text>
-                </View>
-                <View style={styles.menuItemRight}>
-                  {item.count && <Text style={styles.badge}>{item.count}</Text>}
-                  <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.blogsSection}>
-          <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
-          {userBlogs.length > 0 ? (
-            userBlogs.map(item => (
-              <React.Fragment key={item._id || Math.random().toString()}>
-                {renderBlogItem({ item })}
-              </React.Fragment>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No blogs found.</Text>
-          )}
-        </View>
-
-        {isOwnProfile && (
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={logout}
-          >
-            <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </View>
-  );
+        </ScrollView>
+      </View>
+      );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  greenHeader: {
-    backgroundColor: '#065f46',
-    paddingTop: Platform.OS === 'ios' ? 50 : (StatusBar.currentHeight || 40) + 10,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
+      const styles = StyleSheet.create({
+<<<<<<< HEAD
+        container: {flex: 1, backgroundColor: '#fff' },
+      centered: {flex: 1, justifyContent: 'center', alignItems: 'center' },
+      scrollContent: {paddingBottom: 100 },
+      profileSection: {alignItems: 'center', paddingVertical: 30 },
+      avatar: {width: 100, height: 100, borderRadius: 50, marginBottom: 15, borderWidth: 3, borderColor: '#f1f5f9' },
+      userName: {fontSize: 22, fontWeight: 'bold', color: '#1e293b' },
+      userEmail: {fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 20 },
+      editButton: {flexDirection: 'row', backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, alignItems: 'center' },
+      editButtonText: {color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 },
+      menuContainer: {paddingHorizontal: 20 },
+      menuItem: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+      menuItemLeft: {flexDirection: 'row', alignItems: 'center' },
+      menuLabel: {fontSize: 16, marginLeft: 15, color: '#334155' },
+      menuItemRight: {flexDirection: 'row', alignItems: 'center' },
+      blogsSection: {padding: 20, marginTop: 10 },
+      sectionTitle: {fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 15 },
+      blogCard: {flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#f1f5f9' },
+      blogThumb: {width: 60, height: 60, borderRadius: 8 },
+      blogInfo: {flex: 1, marginLeft: 15 },
+      blogCategory: {fontSize: 10, fontWeight: 'bold', color: Colors.primary, marginBottom: 2 },
+      blogTitle: {fontSize: 15, fontWeight: '600', color: '#1e293b' },
+      logoutButton: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 20, paddingVertical: 15 },
+      logoutText: {color: Colors.danger, fontSize: 16, fontWeight: '600', marginLeft: 10 },
+      emptyText: {textAlign: 'center', color: '#94a3b8', marginTop: 10 },
+=======
+  container: {
+        flex: 1,
+      backgroundColor: '#fff',
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+      greenHeader: {
+        backgroundColor: '#065f46',
+      paddingTop: Platform.OS === 'ios' ? 50 : (StatusBar.currentHeight || 40) + 10,
+      paddingBottom: 15,
+      paddingHorizontal: 20,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+      headerRow: {
+        flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
   },
-  headerBrand: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-    letterSpacing: 1,
+      headerLeft: {
+        flexDirection: 'row',
+      alignItems: 'center',
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+      headerBrand: {
+        color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginLeft: 8,
+      letterSpacing: 1,
   },
-  headerIcon: {
-    marginLeft: 15,
+      headerRight: {
+        flexDirection: 'row',
+      alignItems: 'center',
   },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: 100 },
-  profileSection: { alignItems: 'center', paddingVertical: 30 },
-  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15, borderWidth: 3, borderColor: '#f1f5f9' },
-  userName: { fontSize: 22, fontWeight: 'bold', color: '#1e293b' },
-  userEmail: { fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 20 },
-  editButton: { flexDirection: 'row', backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, alignItems: 'center' },
-  editButtonText: { color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 },
-  menuContainer: { paddingHorizontal: 20 },
-  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
-  menuLabel: { fontSize: 16, marginLeft: 15, color: '#334155' },
-  menuItemRight: { flexDirection: 'row', alignItems: 'center' },
-  badge: {
-    backgroundColor: '#065f46',
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginRight: 10,
+      headerIcon: {
+        marginLeft: 15,
   },
-  blogsSection: { padding: 20, marginTop: 10 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 15 },
-  blogCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#f1f5f9' },
-  blogThumb: { width: 60, height: 60, borderRadius: 8 },
-  blogInfo: { flex: 1, marginLeft: 15 },
-  blogCategory: { fontSize: 10, fontWeight: 'bold', color: Colors.primary, marginBottom: 2 },
-  blogTitle: { fontSize: 15, fontWeight: '600', color: '#1e293b' },
-  logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 20, paddingVertical: 15 },
-  logoutText: { color: Colors.danger, fontSize: 16, fontWeight: '600', marginLeft: 10 },
-  emptyText: { textAlign: 'center', color: '#94a3b8', marginTop: 10 },
+      centered: {
+        flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+      scrollContent: {
+        paddingBottom: 100,
+  },
+      profileSection: {
+        alignItems: 'center',
+      paddingVertical: 30,
+  },
+      avatar: {
+        width: 100,
+      height: 100,
+      borderRadius: 50,
+      marginBottom: 15,
+      borderWidth: 3,
+      borderColor: '#f1f5f9',
+  },
+      userName: {
+        fontSize: 22,
+      fontWeight: 'bold',
+      color: '#1e293b',
+  },
+      userEmail: {
+        fontSize: 14,
+      color: '#64748b',
+      marginTop: 4,
+      marginBottom: 20,
+  },
+      editButton: {
+        flexDirection: 'row',
+      backgroundColor: Colors.primary,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 20,
+      alignItems: 'center',
+  },
+      editButtonText: {
+        color: '#fff',
+      fontSize: 14,
+      fontWeight: '600',
+      marginLeft: 8,
+  },
+      menuContainer: {
+        paddingHorizontal: 20,
+  },
+      menuItem: {
+        flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 18,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f1f5f9',
+  },
+      menuItemLeft: {
+        flexDirection: 'row',
+      alignItems: 'center',
+  },
+      menuLabel: {
+        fontSize: 16,
+      marginLeft: 15,
+      color: '#334155',
+  },
+      menuItemRight: {
+        flexDirection: 'row',
+      alignItems: 'center',
+  },
+      badge: {
+        backgroundColor: '#065f46',
+      color: '#fff',
+      fontSize: 10,
+      fontWeight: 'bold',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 10,
+      marginRight: 10,
+  },
+      blogsSection: {
+        padding: 20,
+      marginTop: 10,
+  },
+      sectionTitle: {
+        fontSize: 18,
+      fontWeight: 'bold',
+      color: '#1e293b',
+      marginBottom: 15,
+  },
+      blogCard: {
+        flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 10,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
+  },
+      blogThumb: {
+        width: 60,
+      height: 60,
+      borderRadius: 8,
+  },
+      blogInfo: {
+        flex: 1,
+      marginLeft: 15,
+  },
+      blogCategory: {
+        fontSize: 10,
+      fontWeight: 'bold',
+      color: '#065f46',
+      marginBottom: 2,
+  },
+      blogTitle: {
+        fontSize: 15,
+      fontWeight: '600',
+      color: '#1e293b',
+  },
+      scrollContent: {
+        paddingBottom: 100,
+  },
+      logoutButton: {
+        flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 40,
+      marginBottom: 20,
+      paddingVertical: 15,
+  },
+      logoutText: {
+        color: '#ef4444',
+      fontSize: 16,
+      fontWeight: '600',
+      marginLeft: 10,
+  },
+      emptyText: {
+        textAlign: 'center',
+      color: '#94a3b8',
+      marginTop: 10,
+  },
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 });
 
-export default ProfileScreen;
+      export default ProfileScreen;

@@ -1,11 +1,22 @@
 import { Platform } from 'react-native';
 
+<<<<<<< HEAD
 // FOR PHYSICAL DEVICES: Replace with your machine's IP (e.g. 'http://192.168.x.x:5000')
 // FOR EMULATOR: 10.0.2.2 is the alias for localhost on Android
 // FOR WEB/LOCAL: localhost is generally most compatible
-export const BASE_URL = Platform.OS === 'android' 
-  ? 'http://10.0.2.2:5000' 
+export const BASE_URL = Platform.OS === 'android'
+  ? 'http://10.0.2.2:5000'
   : 'http://localhost:5000';
+=======
+// FOR PHYSICAL DEVICES: Replace with your machine's IP (e.g. 'http://192.168.1.5:5000')
+// FOR EMULATOR: 10.0.2.2 is the alias for localhost
+// FOR WEB: localhost works normally
+// For Web, localhost is usually more reliable on the same machine
+// For native devices, use the specific IP address
+export const BASE_URL = Platform.OS === 'web'
+  ? 'http://localhost:5000'
+  : 'http://172.29.146.225:5000';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 
 export const API_URL = BASE_URL;
 

@@ -17,7 +17,10 @@ import AddGuideScreen from '../screens/Admin/AddGuideScreen';
 import CreateBlogScreen from '../screens/Blog/CreateBlogScreen';
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
 import EditGuideScreen from '../screens/Admin/EditGuideScreen';
+<<<<<<< HEAD
+=======
 import EditEquipmentScreen from '../screens/Admin/EditEquipmentScreen';
+>>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
 
 const Stack = createStackNavigator();
