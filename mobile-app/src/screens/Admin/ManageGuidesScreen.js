@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, Image, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '../../theme/colors';
 import axios from 'axios';
@@ -23,7 +23,9 @@ const ManageGuidesScreen = ({ navigation }) => {
       const response = await axios.get(`${API_URL}/api/guides/display`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setGuides(response.data.data || []);
+      // Handle both { data: [...] } and directly [...]
+      const data = response.data.data || (Array.isArray(response.data) ? response.data : []);
+      setGuides(data);
     } catch (err) {
       Alert.alert('Error', 'Failed to fetch guides');
     } finally {
@@ -114,6 +116,7 @@ const ManageGuidesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: Platform.OS === 'web' ? '100vh' : '100%',
     backgroundColor: '#f8fafc',
   },
   header: {

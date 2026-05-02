@@ -38,17 +38,12 @@ const MyBookingsScreen = ({ navigation }) => {
       }));
 
       // Fetch Guide Bookings
-      const guideRes = await apiClient.get('/guide-bookings/display');
-      // Filter for current user (backend might not have /my yet, so we filter here if needed, or assume display is filtered if authenticated)
-      // Actually /guide-bookings/display gets ALL. Let's see if there's a filter in controller.
-      // Controller getAllBookings gets ALL. I'll filter by userId if present in item.
-      const guideData = guideRes.data
-        .filter(b => b.userId === user?._id)
-        .map(item => ({
+      const guideRes = await apiClient.get('/guide-bookings/my-customer-bookings');
+      const guideData = guideRes.data.map(item => ({
           ...item,
           type: 'Guide',
           name: item.guideName || 'Guide Booking',
-          date: new Date(item.startDate).toLocaleDateString(),
+          date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
           amount: `Rs. ${item.amount}`,
           status: item.status
         }));

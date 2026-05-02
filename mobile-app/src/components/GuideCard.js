@@ -7,14 +7,15 @@ import { BASE_URL } from '../api/apiClient';
 const GuideCard = ({ item, onPress }) => {
   const getImageUrl = (path) => {
     if (!path) return null;
-    if (path.startsWith('http')) return path;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    if (path.startsWith('file:') || path.startsWith('content:')) return null;
     return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       <Image 
-        source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'G')}&background=166534&color=fff&size=256` }} 
+        source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }} 
         style={styles.avatar} 
         resizeMode="cover"
       />
@@ -48,6 +49,8 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     marginBottom: 10,
     backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   content: {
     alignItems: 'center',

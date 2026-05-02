@@ -43,7 +43,8 @@ const GuideListScreen = ({ navigation }) => {
 
   const getImageUrl = (path) => {
     if (!path) return null;
-    if (path.startsWith('http')) return path;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    if (path.startsWith('file:') || path.startsWith('content:')) return null;
     return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
@@ -54,7 +55,7 @@ const GuideListScreen = ({ navigation }) => {
     >
       <View style={styles.cardRow}>
         <Image 
-          source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'G')}&background=166534&color=fff&size=256` }} 
+          source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }} 
           style={styles.avatar} 
           resizeMode="cover"
         />
@@ -158,6 +159,9 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 15,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   info: {
     flex: 1,

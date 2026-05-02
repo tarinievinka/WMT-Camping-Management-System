@@ -27,11 +27,36 @@ const AddGuideScreen = ({ navigation }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.IMAGES,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.4,
+      base64: true,
     });
 
     if (!result.canceled && result.assets) {
-      setProfilePicture(result.assets[0].uri);
+      const asset = result.assets[0];
+      
+      if (Platform.OS === 'web') {
+        try {
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result;
+            console.log("[IMAGE_PICKER] Base64 conversion successful. Size:", Math.round(base64data.length / 1024), "KB");
+            setProfilePicture(base64data);
+          };
+          reader.readAsDataURL(blob);
+        } catch (e) {
+          console.error("[IMAGE_PICKER] Error converting image to base64:", e);
+          Alert.alert("Error", "Failed to process image. Please try a different one.");
+        }
+      } else {
+        const base64 = asset.base64;
+        if (base64) {
+          setProfilePicture(`data:image/jpeg;base64,${base64}`);
+        } else {
+          setProfilePicture(asset.uri);
+        }
+      }
     }
   };
 
@@ -223,6 +248,7 @@ const AddGuideScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: Platform.OS === 'web' ? '100vh' : '100%',
     backgroundColor: Colors.white,
     paddingTop: Platform.OS === 'android' ? 40 : (Platform.OS === 'ios' ? 50 : 10),
   },
