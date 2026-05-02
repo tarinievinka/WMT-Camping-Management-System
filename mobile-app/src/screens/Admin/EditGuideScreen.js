@@ -62,10 +62,29 @@ const EditGuideScreen = ({ route, navigation }) => {
   };
 
   const handleUpdate = async () => {
-    if (!formData.name || !formData.email || !formData.specialization || !formData.dailyRate) {
-      const msg = 'Please fill in all required fields';
+    const requiredFields = ['name', 'email', 'specialization', 'dailyRate', 'nic', 'age'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+
+    if (missingFields.length > 0) {
+      const msg = `Please fill in all required fields: ${missingFields.join(', ')}`;
       if (Platform.OS === 'web') alert(msg);
-      Alert.alert('Error', msg);
+      else Alert.alert('Error', msg);
+      return;
+    }
+
+    // Email validation
+    if (formData.email && !formData.email.includes('@')) {
+      const msg = 'Please enter a valid email address containing @';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Error', msg);
+      return;
+    }
+
+    // Phone number validation
+    if (formData.phone && (formData.phone.length > 10 || isNaN(formData.phone))) {
+      const msg = 'Phone number should not exceed 10 digits and must be numeric';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Error', msg);
       return;
     }
 

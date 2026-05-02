@@ -34,8 +34,16 @@ const AddCampsiteScreen = ({ navigation }) => {
   };
 
   const handleCreate = async () => {
-    if (!formData.name || !formData.location || !formData.pricePerNight || !formData.capacity) {
-      Alert.alert('Error', 'Please fill in required fields (Name, Location, Price, Capacity)');
+    const requiredFields = ['name', 'location', 'pricePerNight', 'capacity'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+
+    if (missingFields.length > 0) {
+      const msg = `Please fill in all required fields: ${missingFields.join(', ')}`;
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
