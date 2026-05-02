@@ -5,13 +5,16 @@ import {
   StyleSheet, 
   ActivityIndicator,
   TouchableOpacity,
-  Alert
+  Alert,
+  Image,
+  ScrollView,
+  Platform
 } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
-import apiClient from '../../../api/apiClient';
+import apiClient, { BASE_URL } from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 
 const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = null }) => {
@@ -47,23 +50,38 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = nu
   }, [refreshSignal]);
 
   const handleDelete = (id) => {
-    Alert.alert('Delete Feedback', 'Are you sure you want to delete this feedback?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/feedback/delete/${id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchFeedbacks();
-          } catch (error) {
-            Alert.alert('Error', 'Failed to delete feedback');
-          }
-        }
+    const confirmMsg = 'Are you sure you want to delete this feedback?';
+    
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMsg)) {
+        deleteFeedback(id);
       }
-    ]);
+    } else {
+      Alert.alert('Delete Feedback', confirmMsg, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteFeedback(id)
+        }
+      ]);
+    }
+  };
+
+  const deleteFeedback = async (id) => {
+    try {
+      await apiClient.delete(`/feedback/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchFeedbacks();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to delete feedback');
+      } else {
+        Alert.alert('Error', 'Failed to delete feedback');
+      }
+    }
   };
 
   const renderItem = ({ item }) => (
@@ -79,6 +97,18 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = nu
         </View>
       </View>
       <Text style={styles.comment}>"{item.comment || item.message}"</Text>
+      
+      {item.images && item.images.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+          {item.images.map((img, idx) => (
+            <Image 
+              key={idx} 
+              source={{ uri: img.startsWith('http') ? img : `${BASE_URL}${img}` }} 
+              style={styles.feedbackImage} 
+            />
+          ))}
+        </ScrollView>
+      )}
       <View style={styles.footerRow}>
         <Text style={styles.date}>
           {item.sessionDate ? new Date(item.sessionDate).toLocaleDateString() : new Date(item.createdAt).toLocaleDateString()}
@@ -267,6 +297,17 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 16,
   },
+  imageScroll: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  feedbackImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
+  }
 });
 
 export default FeedbackListScreen;

@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
+  Platform,
   ActivityIndicator,
   RefreshControl,
   Alert
@@ -84,26 +85,53 @@ const MyTicketsScreen = ({ navigation, route, isEmbedded = false, refreshSignal 
 
 
   const handleDelete = (id) => {
-    Alert.alert('Delete Ticket', 'Are you sure you want to delete this ticket?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/tickets/delete/${id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
-            Alert.alert('Deleted', 'Support ticket has been removed.');
+    console.log('[FRONTEND] Delete button pressed for ticket ID:', id);
+    const ticketId = id != null ? String(id) : '';
+    if (!ticketId) {
+      console.error('[FRONTEND] Delete failed: Invalid ID');
+      Alert.alert('Error', 'Invalid ticket.');
+      return;
+    }
 
-          } catch (error) {
-            const message = error?.response?.data?.error || 'Failed to delete ticket';
-            Alert.alert('Error', message);
-          }
-        }
+    const performDelete = async () => {
+      console.log('[FRONTEND] Proceeding with deletion of ID:', ticketId);
+      try {
+        const deleteUrl = `/tickets/delete/${encodeURIComponent(ticketId)}`;
+        console.log('[FRONTEND] Sending DELETE request to:', deleteUrl);
+        
+        await apiClient.delete(deleteUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        console.log('[FRONTEND] Deletion successful on server');
+        setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
+        Alert.alert('Deleted', 'Support ticket has been removed.');
+
+      } catch (error) {
+        console.error('[FRONTEND] Deletion error:', error?.response?.data || error.message);
+        const message = error?.response?.data?.error || 'Failed to delete ticket';
+        Alert.alert('Error', message);
       }
-    ]);
+    };
+
+    if (Platform.OS === 'web') {
+      console.log('[FRONTEND] Web detected, using window.confirm');
+      if (window.confirm('Are you sure you want to delete this ticket?')) {
+        performDelete();
+      } else {
+        console.log('[FRONTEND] Delete cancelled via browser confirm');
+      }
+    } else {
+      console.log('[FRONTEND] Mobile detected, using Alert.alert');
+      Alert.alert('Delete Ticket', 'Are you sure you want to delete this ticket?', [
+        { text: 'Cancel', style: 'cancel', onPress: () => console.log('[FRONTEND] Delete cancelled') },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: performDelete
+        }
+      ]);
+    }
   };
 
   const renderTicket = ({ item }) => (

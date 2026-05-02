@@ -34,6 +34,9 @@ const ticketSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'User'
   },
+  images: [{
+    type: String
+  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -60,6 +63,9 @@ const feedbackSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a comment']
   },
+  images: [{
+    type: String
+  }],
   sessionDate: {
     type: Date,
     default: Date.now

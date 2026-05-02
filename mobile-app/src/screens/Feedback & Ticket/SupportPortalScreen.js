@@ -23,7 +23,7 @@ const SupportPortalScreen = ({ navigation, route }) => {
     if (route.params?.activeTab) {
       setActiveTab(route.params.activeTab);
     }
-  }, [route.params?.activeTab]);
+  }, [route.params?.activeTab, route.params?.refreshAt]);
 
 
   return (

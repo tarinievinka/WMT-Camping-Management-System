@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
@@ -16,6 +17,8 @@ import Header from '../../../components/Header';
 import apiClient from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 
+
+import * as ImagePicker from 'expo-image-picker';
 
 const AddFeedbackScreen = ({ route, navigation }) => {
   const { booking, editMode = false } = route.params || {};
@@ -27,6 +30,7 @@ const AddFeedbackScreen = ({ route, navigation }) => {
   const [sessionDate, setSessionDate] = useState(editMode ? new Date(booking.sessionDate || Date.now()) : new Date());
   const [rating, setRating] = useState(editMode ? booking.rating : 5);
   const [comment, setComment] = useState(editMode ? (booking.comment || booking.message) : '');
+  const [images, setImages] = useState(editMode ? (booking.images || []) : []);
   const [loading, setLoading] = useState(false);
 
   const getRatingText = (r) => {
@@ -40,7 +44,28 @@ const AddFeedbackScreen = ({ route, navigation }) => {
     }
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
 
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      const selectedImages = result.assets.map(asset => asset.uri);
+      setImages([...images, ...selectedImages]);
+    }
+  };
+
+  const removeImage = (index) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (user?.role === 'admin') {
@@ -59,47 +84,85 @@ const AddFeedbackScreen = ({ route, navigation }) => {
     }
 
     setLoading(true);
+    console.log('[FRONTEND] Submitting feedback...');
     try {
-      const payload = {
-        userId: user?._id,
-        userName: user?.name,
-        targetId: booking?.targetId || booking?._id || user?._id, // Fallback if no specific entity
-        targetName: targetName?.trim() || booking?.targetName || booking?.name,
-        targetType: targetType,
-        rating,
-        comment: comment.trim(),
-        sessionDate: sessionDate.toISOString()
-      };
+      const formData = new FormData();
+      formData.append('userId', user?._id || user?.id);
+      formData.append('targetName', targetName.trim());
+      formData.append('targetType', targetType);
+      formData.append('rating', String(rating));
+      formData.append('comment', comment.trim());
+      formData.append('sessionDate', sessionDate.toISOString());
 
-      if (editMode) {
-        await apiClient.put(`/feedback/update/${booking._id}`, {
-          rating,
-          comment,
-          targetType,
-          targetName,
-          sessionDate: sessionDate.toISOString()
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } else {
-        await apiClient.post('/feedback/create', payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+      console.log('[FRONTEND] Feedback Data:', {
+        targetName, targetType, rating, comment, sessionDate: sessionDate.toISOString()
+      });
+
+      if (images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+          const uri = images[i];
+          if (!uri.startsWith('http')) {
+            if (Platform.OS === 'web') {
+              // On Web, we need to convert the URI to a Blob
+              const response = await fetch(uri);
+              const blob = await response.blob();
+              console.log(`[FRONTEND] Blob created: ${blob.size} bytes, type: ${blob.type}`);
+              formData.append('files', blob, `image_${i}.jpg`);
+            } else {
+              // On Mobile, use the object format
+              const filename = uri.split('/').pop();
+              const match = /\.(\w+)$/.exec(filename);
+              const type = match ? `image/${match[1]}` : `image/jpeg`;
+              formData.append('files', { uri, name: filename, type });
+            }
+            console.log(`[FRONTEND] Attaching image ${i}`);
+          }
+        }
       }
 
-
-
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
       
-      Alert.alert('Success', `Feedback ${editMode ? 'updated' : 'submitted'} successfully!`, [
-        { text: 'OK', onPress: () => navigation.navigate('Main', { 
+      if (Platform.OS !== 'web') {
+        config.headers['Content-Type'] = 'multipart/form-data';
+      }
+
+      const url = editMode ? `/feedback/update/${booking._id}` : '/feedback/create';
+      console.log(`[FRONTEND] Sending ${editMode ? 'PUT' : 'POST'} to ${url}`);
+
+      const response = await apiClient({
+        method: editMode ? 'put' : 'post',
+        url: url,
+        data: formData,
+        ...config
+      });
+
+      console.log('[FRONTEND] Submission Response:', response.data);
+      
+      const successMsg = `Feedback ${editMode ? 'updated' : 'submitted'} successfully!`;
+      
+      if (Platform.OS === 'web') {
+        window.alert(successMsg);
+        navigation.navigate('Main', { 
           screen: 'Support', 
           params: { activeTab: 'feedback', refreshAt: Date.now() } 
-        }) }
-      ]);
+        });
+      } else {
+        Alert.alert('Success', successMsg, [
+          { text: 'OK', onPress: () => navigation.navigate('Main', { 
+            screen: 'Support', 
+            params: { activeTab: 'feedback', refreshAt: Date.now() } 
+          }) }
+        ]);
+      }
 
     } catch (error) {
-      console.error('Error submitting feedback:', error);
-      Alert.alert('Error', 'Failed to submit feedback. Please try again.');
+      console.error('[FRONTEND] Error submitting feedback:', error);
+      console.error('[FRONTEND] Error Details:', error?.response?.data || error.message);
+      Alert.alert('Error', error?.response?.data?.error || 'Failed to submit feedback. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -196,10 +259,25 @@ const AddFeedbackScreen = ({ route, navigation }) => {
           {/* Photo Placeholder */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>ADD PHOTOS (OPTIONAL)</Text>
-            <TouchableOpacity style={styles.photoUpload}>
+            
+            {images.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagePreviewList}>
+                {images.map((uri, index) => (
+                  <View key={index} style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: uri.startsWith('http') ? uri : uri }} style={styles.imagePreview} />
+                    <TouchableOpacity style={styles.removeImageBtn} onPress={() => removeImage(index)}>
+                      <Ionicons name="close-circle" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            <TouchableOpacity style={styles.photoUpload} onPress={pickImage}>
               <Ionicons name="cloud-upload-outline" size={32} color="#15803d" />
               <Text style={styles.uploadText}>
-                Drag and drop your photos here or <Text style={styles.browseText}>Browse files</Text>
+                {images.length > 0 ? 'Add more photos' : 'Drag and drop your photos here or '}
+                <Text style={styles.browseText}>Browse files</Text>
               </Text>
               <Text style={styles.uploadLimit}>JPG, PNG UP TO 10MB</Text>
             </TouchableOpacity>
@@ -423,6 +501,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: 'bold',
+  },
+  imagePreviewList: {
+    marginBottom: 10,
+    flexDirection: 'row',
+  },
+  imagePreviewContainer: {
+    marginRight: 10,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#e2e8f0',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   }
 });
 

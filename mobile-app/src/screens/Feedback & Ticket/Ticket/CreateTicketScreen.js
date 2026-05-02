@@ -66,7 +66,11 @@ const CreateTicketScreen = ({ route, navigation }) => {
 
     } catch (error) {
       console.error('Error creating ticket:', error);
-      Alert.alert('Error', 'Failed to submit ticket. Please try again.');
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        'Failed to submit ticket. Please try again.';
+      Alert.alert('Error', String(message));
     } finally {
       setLoading(false);
     }
