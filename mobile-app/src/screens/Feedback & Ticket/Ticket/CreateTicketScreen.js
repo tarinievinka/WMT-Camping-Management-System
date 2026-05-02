@@ -54,12 +54,14 @@ const CreateTicketScreen = ({ route, navigation }) => {
         });
       }
 
-      Alert.alert('Success', `Ticket ${editTicket ? 'updated' : 'submitted'} successfully!`, [
-        { text: 'OK', onPress: () => navigation.navigate('Main', { 
-          screen: 'Support', 
-          params: { activeTab: 'ticket' } 
-        }) }
-      ]);
+      const refreshAt = Date.now();
+      // Return to Support tab ticket list (works from Support portal or stack)
+      navigation.navigate('Main', {
+        screen: 'Support',
+        params: { activeTab: 'ticket', refreshAt }
+      });
+
+      Alert.alert('Success', `Ticket ${editTicket ? 'updated' : 'submitted'} successfully!`);
 
 
     } catch (error) {

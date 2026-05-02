@@ -87,9 +87,17 @@ const SupportPortalScreen = ({ navigation, route }) => {
       {/* Content Area */}
       <View style={styles.content}>
         {activeTab === 'ticket' ? (
-          <MyTicketsScreen navigation={navigation} isEmbedded={true} />
+          <MyTicketsScreen
+            navigation={navigation}
+            isEmbedded={true}
+            refreshSignal={route.params?.refreshAt}
+          />
         ) : (
-          <FeedbackListScreen navigation={navigation} isEmbedded={true} />
+          <FeedbackListScreen
+            navigation={navigation}
+            isEmbedded={true}
+            refreshSignal={route.params?.refreshAt}
+          />
         )}
       </View>
     </SafeAreaView>

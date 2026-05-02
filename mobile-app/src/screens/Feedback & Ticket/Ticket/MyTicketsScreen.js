@@ -15,12 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import Header from '../../../components/Header';
 import apiClient from '../../../api/apiClient';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../../context/AuthContext';
 
 
 
-const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
+const MyTicketsScreen = ({ navigation, route, isEmbedded = false, refreshSignal = null }) => {
 
   const { token } = useAuth();
   const [tickets, setTickets] = useState([]);
@@ -42,13 +42,27 @@ const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
     }
   };
 
-  const isFocused = useIsFocused();
+  useFocusEffect(
+    useCallback(() => {
+      fetchTickets();
+    }, [token])
+  );
 
   useEffect(() => {
-    if (isFocused) {
+    if (refreshSignal) {
       fetchTickets();
     }
-  }, [isFocused]);
+  }, [refreshSignal]);
+
+  useEffect(() => {
+    if (route?.params?.refreshAt) {
+      fetchTickets();
+    }
+  }, [route?.params?.refreshAt]);
+  const getDisplayStatus = (status) => (
+    status === 'approved' || status === 'rejected' ? 'pending' : status
+  );
+
 
 
   const onRefresh = () => {
@@ -80,11 +94,12 @@ const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
             await apiClient.delete(`/tickets/delete/${id}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
+            setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
             Alert.alert('Deleted', 'Support ticket has been removed.');
-            fetchTickets();
 
           } catch (error) {
-            Alert.alert('Error', 'Failed to delete ticket');
+            const message = error?.response?.data?.error || 'Failed to delete ticket';
+            Alert.alert('Error', message);
           }
         }
       }
@@ -99,9 +114,9 @@ const MyTicketsScreen = ({ navigation, isEmbedded = false }) => {
       >
         <View style={styles.ticketHeader}>
           <Text style={styles.ticketTitle} numberOfLines={1}>{item.title}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-              {item.status.toUpperCase()}
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(getDisplayStatus(item.status)) + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(getDisplayStatus(item.status)) }]}>
+              {getDisplayStatus(item.status).toUpperCase()}
             </Text>
           </View>
         </View>

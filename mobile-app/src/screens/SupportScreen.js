@@ -98,7 +98,10 @@ const SupportScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Feedback & Ratings</Text>
           <TouchableOpacity 
             style={styles.feedbackCard}
-            onPress={() => navigation.navigate('MyBookings')}
+            onPress={() => navigation.navigate('Main', {
+              screen: 'Support',
+              params: { activeTab: 'feedback' }
+            })}
           >
             <View style={styles.feedbackIcon}>
               <Ionicons name="star" size={24} color="#fbbf24" />

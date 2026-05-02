@@ -77,19 +77,22 @@ const AdminTicketsScreen = ({ navigation }) => {
     }
 
     try {
-      await apiClient.put(`/tickets/admin/reply/${selectedTicket._id}`, {
+      const response = await apiClient.put(`/tickets/admin/reply/${selectedTicket._id}`, {
         status: newStatus,
         adminReply
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      setTickets((prev) =>
+        prev.map((ticket) => (ticket._id === selectedTicket._id ? response.data.data : ticket))
+      );
       Alert.alert('Success', `Ticket ${newStatus} successfully`);
       setReplyModalVisible(false);
       setAdminReply('');
-      fetchTickets();
     } catch (error) {
-      Alert.alert('Error', 'Failed to update ticket');
+      const message = error?.response?.data?.error || 'Failed to update ticket';
+      Alert.alert('Error', message);
     }
   };
 
@@ -112,9 +115,10 @@ const AdminTicketsScreen = ({ navigation }) => {
             await apiClient.delete(`/tickets/delete/${id}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            fetchTickets();
+            setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
           } catch (error) {
-            Alert.alert('Error', 'Failed to delete ticket');
+            const message = error?.response?.data?.error || 'Failed to delete ticket';
+            Alert.alert('Error', message);
           }
         }
 

@@ -19,7 +19,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 const AddFeedbackScreen = ({ route, navigation }) => {
   const { booking, editMode = false } = route.params || {};
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   
   // State for the new fields
   const [targetType, setTargetType] = useState(editMode ? booking.targetType : 'Campsite');
@@ -43,8 +43,18 @@ const AddFeedbackScreen = ({ route, navigation }) => {
 
 
   const handleSubmit = async () => {
+    if (user?.role === 'admin') {
+      Alert.alert('Not Allowed', 'Admins can only view reviews.');
+      return;
+    }
+
     if (!comment) {
       Alert.alert('Error', 'Please enter your feedback comment');
+      return;
+    }
+
+    if (!targetName?.trim()) {
+      Alert.alert('Error', 'Please enter what you are reviewing.');
       return;
     }
 
@@ -54,10 +64,10 @@ const AddFeedbackScreen = ({ route, navigation }) => {
         userId: user?._id,
         userName: user?.name,
         targetId: booking?.targetId || booking?._id || user?._id, // Fallback if no specific entity
-        targetName: targetName || booking?.targetName || booking?.name,
+        targetName: targetName?.trim() || booking?.targetName || booking?.name,
         targetType: targetType,
         rating,
-        comment,
+        comment: comment.trim(),
         sessionDate: sessionDate.toISOString()
       };
 
@@ -80,10 +90,10 @@ const AddFeedbackScreen = ({ route, navigation }) => {
 
 
       
-      Alert.alert('Success', 'Thank you for your feedback!', [
+      Alert.alert('Success', `Feedback ${editMode ? 'updated' : 'submitted'} successfully!`, [
         { text: 'OK', onPress: () => navigation.navigate('Main', { 
           screen: 'Support', 
-          params: { activeTab: 'feedback' } 
+          params: { activeTab: 'feedback', refreshAt: Date.now() } 
         }) }
       ]);
 

@@ -7,18 +7,17 @@ import {
   TouchableOpacity,
   Alert
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { useIsFocused } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import apiClient from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 
-const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
+const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = null }) => {
   const { user, token } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const isFocused = useIsFocused();
 
   const fetchFeedbacks = async () => {
     try {
@@ -35,11 +34,17 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchFeedbacks();
+    }, [token, user?.role])
+  );
+
   useEffect(() => {
-    if (isFocused) {
+    if (refreshSignal) {
       fetchFeedbacks();
     }
-  }, [isFocused]);
+  }, [refreshSignal]);
 
   const handleDelete = (id) => {
     Alert.alert('Delete Feedback', 'Are you sure you want to delete this feedback?', [
@@ -96,12 +101,21 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false }) => {
     <View style={styles.container}>
       {!isEmbedded && (
         <View style={styles.header}>
-          <Text style={styles.title}>My Feedbacks</Text>
-          <Text style={styles.subtitle}>Your shared adventures and reviews</Text>
+          {user?.role === 'admin' && (
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={22} color="#0f172a" />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.title}>{user?.role === 'admin' ? 'All Reviews' : 'My Feedbacks'}</Text>
+          <Text style={styles.subtitle}>
+            {user?.role === 'admin'
+              ? 'View all feedback submitted by users'
+              : 'Your shared adventures and reviews'}
+          </Text>
         </View>
       )}
 
-      {isEmbedded && (
+      {isEmbedded && user?.role !== 'admin' && (
         <View style={styles.embeddedHeader}>
           <TouchableOpacity 
             style={styles.submitBtn}
@@ -147,6 +161,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#0f172a',
+  },
+  backBtn: {
+    marginBottom: 10,
+    width: 28,
   },
   subtitle: {
     fontSize: 14,

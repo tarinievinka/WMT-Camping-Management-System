@@ -6,6 +6,7 @@ import ManageEquipmentScreen from '../screens/Admin/ManageEquipmentScreen';
 import ManageGuidesScreen from '../screens/Admin/ManageGuidesScreen';
 import ManageBlogsScreen from '../screens/Admin/ManageBlogsScreen';
 import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
+import FeedbackListScreen from '../screens/Feedback & Ticket/Feedback/FeedbackListScreen';
 
 
 import VerifyPaymentsScreen from '../screens/Admin/VerifyPaymentsScreen';
@@ -29,6 +30,7 @@ const AdminNavigator = () => {
       <Stack.Screen name="ManageGuides" component={ManageGuidesScreen} />
       <Stack.Screen name="ManageBlogs" component={ManageBlogsScreen} />
       <Stack.Screen name="ManageTickets" component={AdminTicketsScreen} />
+      <Stack.Screen name="ManageReviews" component={FeedbackListScreen} />
 
       <Stack.Screen name="VerifyPayments" component={VerifyPaymentsScreen} />
       <Stack.Screen name="AddCampsite" component={AddCampsiteScreen} />

@@ -25,7 +25,8 @@ const TicketDetailsScreen = ({ route, navigation }) => {
 
   const fetchTicketDetails = async () => {
     try {
-      const response = await apiClient.get('/tickets/all', {
+      const endpoint = user?.role === 'admin' ? '/tickets/all' : '/tickets/my-tickets';
+      const response = await apiClient.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const found = response.data.data.find(t => t._id === ticketId);
@@ -57,6 +58,10 @@ const TicketDetailsScreen = ({ route, navigation }) => {
       setUpdating(false);
     }
   };
+
+  const displayStatus = ticket?.status === 'approved' || ticket?.status === 'rejected'
+    ? 'pending'
+    : ticket?.status;
 
 
   if (loading) {
@@ -92,9 +97,9 @@ const TicketDetailsScreen = ({ route, navigation }) => {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.ticketTitle}>{ticket.title}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(ticket.status) + '20' }]}>
-              <Text style={[styles.statusText, { color: getStatusColor(ticket.status) }]}>
-                {ticket.status.toUpperCase()}
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(displayStatus) + '20' }]}>
+              <Text style={[styles.statusText, { color: getStatusColor(displayStatus) }]}>
+                {displayStatus.toUpperCase()}
               </Text>
             </View>
           </View>
