@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
 import { BASE_URL, getImageUrl } from '../api/apiClient';
@@ -215,11 +216,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#10b981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 10px rgba(16, 185, 129, 0.3)',
+      },
+      default: {
+        elevation: 3,
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      }
+    })
   },
   disabledBtn: {
     backgroundColor: '#cbd5e1',

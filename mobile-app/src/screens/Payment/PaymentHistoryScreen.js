@@ -8,9 +8,10 @@ import {
   Platform,
   TouchableOpacity,
   SafeAreaView,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import apiClient from '../../api/apiClient';
 
@@ -39,6 +40,37 @@ const PaymentHistoryScreen = ({ navigation }) => {
     }
   };
 
+  const handleCancelPayment = (id) => {
+    const performCancel = async () => {
+      try {
+        await apiClient.delete(`/payment/delete/${id}`);
+        setPayments(payments.filter(p => p._id !== id));
+        if (Platform.OS === 'web') {
+          alert('Your pending payment record has been removed.');
+        } else {
+          Alert.alert('Cancelled', 'Your pending payment record has been removed.');
+        }
+      } catch (err) {
+        Alert.alert('Error', 'Failed to cancel payment. It may have already been processed.');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to cancel this pending payment record? This will remove the transaction record.')) {
+        performCancel();
+      }
+    } else {
+      Alert.alert(
+        'Cancel Payment',
+        'Are you sure you want to cancel this pending payment record? This will remove the transaction record.',
+        [
+          { text: 'No, Keep it', style: 'cancel' },
+          { text: 'Yes, Cancel', style: 'destructive', onPress: performCancel }
+        ]
+      );
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'success':
@@ -61,10 +93,21 @@ const PaymentHistoryScreen = ({ navigation }) => {
           <Text style={styles.typeText}>{item.bookingType?.replace('Booking', '') || 'Payment'}</Text>
           <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.paymentStatus) + '15' }]}>
-          <Text style={[styles.statusText, { color: getStatusColor(item.paymentStatus) }]}>
-            {(item.paymentStatus || 'Pending').toUpperCase()}
-          </Text>
+        <View style={styles.statusSection}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.paymentStatus) + '15' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(item.paymentStatus) }]}>
+              {(item.paymentStatus || 'Pending').toUpperCase()}
+            </Text>
+          </View>
+          {item.paymentStatus === 'pending' && (
+            <TouchableOpacity 
+              style={styles.cancelBtn}
+              onPress={() => handleCancelPayment(item._id)}
+            >
+              <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
       <View style={styles.divider} />
@@ -89,7 +132,7 @@ const PaymentHistoryScreen = ({ navigation }) => {
         </TouchableOpacity>
         <View>
           <Text style={styles.title}>Payment History</Text>
-          <Text style={styles.subtitle}>Track your bookings and rentals</Text>
+          <Text style={styles.subtitle}>Track and manage your transactions</Text>
         </View>
       </View>
 
@@ -130,6 +173,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
     backgroundColor: Colors.white,
     flexDirection: 'row',
     alignItems: 'center',
@@ -150,7 +194,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   list: {
-    padding: 20,
+    padding: 16,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: Colors.white,
@@ -175,7 +220,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  statusSection: {
+    alignItems: 'flex-end',
   },
   id: {
     fontSize: 14,
@@ -201,6 +249,23 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  cancelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#fff1f2',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+  },
+  cancelBtnText: {
+    fontSize: 10,
+    color: '#ef4444',
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
   divider: {
     height: 1,

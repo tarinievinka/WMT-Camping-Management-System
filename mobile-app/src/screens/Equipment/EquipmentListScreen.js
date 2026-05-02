@@ -5,16 +5,19 @@ import {
   FlatList, 
   StyleSheet, 
   TouchableOpacity, 
-  ActivityIndicator,
-  TextInput,
-  SafeAreaView,
-  ScrollView,
-  Platform
+  ActivityIndicator, 
+  TextInput, 
+  SafeAreaView, 
+  ScrollView, 
+  Platform 
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
+import apiClient, { getImageUrl } from '../../api/apiClient';
+import EquipmentCard from '../../components/EquipmentCard';
+
+const CATEGORIES = ['All Gear', 'Tents', 'Sleeping', 'Cooking', 'Lighting', 'Clothing'];
 
 const EquipmentListScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
@@ -29,7 +32,7 @@ const EquipmentListScreen = ({ navigation }) => {
   const fetchEquipment = async () => {
     try {
       const response = await apiClient.get('/equipment/display');
-      setItems(response.data.data || []);
+      setItems(response.data || []);
     } catch (error) {
       console.error('Error fetching equipment:', error);
     } finally {
@@ -37,35 +40,15 @@ const EquipmentListScreen = ({ navigation }) => {
     }
   };
 
-  const filteredItems = items.filter(item => 
-    item.name?.toLowerCase().includes(search.toLowerCase()) ||
-    item.category?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name?.toLowerCase().includes(search.toLowerCase()) ||
+                         item.category?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = activeCategory === 'All Gear' || item.category === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={() => navigation.navigate('EquipmentDetail', { item })}
-    >
-      <Image 
-        source={{ uri: getImageUrl(item.imageUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'E')}&background=166534&color=fff&size=256` }} 
-        style={styles.image} 
-      />
-      <View style={styles.content}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.category}>{item.category}</Text>
-        <View style={styles.footer}>
-          <Text style={styles.price}>Rs. {item.rentalPrice}<Text style={styles.unit}>/day</Text></Text>
-          <View style={styles.rentButton}>
-            <Text style={styles.rentText}>Details</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  return (
-    <SafeAreaView style={styles.container}>
+  const renderHeader = () => (
+    <View>
       <View style={styles.searchContainer}>
         <Feather name="search" size={20} color={Colors.gray} style={styles.searchIcon} />
         <TextInput 
@@ -106,7 +89,6 @@ const EquipmentListScreen = ({ navigation }) => {
               <EquipmentCard 
                 item={item} 
                 onPress={() => navigation.navigate('EquipmentDetail', { item })} 
-                onAddToCart={(gear) => console.log('Add to cart:', gear.name)}
               />
             </View>
           )}
@@ -132,81 +114,69 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    backgroundColor: '#fff',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 15,
+    backgroundColor: '#f1f5f9',
+    margin: 20,
     paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    margin: 15,
+    borderRadius: 12,
+    height: 50,
   },
   searchIcon: {
     marginRight: 10,
   },
   searchBar: {
     flex: 1,
-    paddingVertical: 12,
     fontSize: 16,
     color: Colors.text,
   },
   categoryScroll: {
-    paddingHorizontal: 15,
-    marginBottom: 10,
+    paddingLeft: 20,
+    marginBottom: 20,
   },
   categoryBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#fff',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
+    backgroundColor: '#f1f5f9',
+    marginRight: 10,
   },
   activeCategoryBtn: {
     backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   categoryBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
+    color: Colors.gray,
+    fontWeight: '600',
   },
   activeCategoryBtnText: {
     color: '#fff',
   },
   list: {
-    paddingBottom: 40,
     paddingHorizontal: 10,
+    paddingBottom: 20,
   },
   columnWrapper: {
     justifyContent: 'space-between',
   },
   cardWrapper: {
-    flex: 1,
-    padding: 8,
-    maxWidth: '50%',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 0.5,
+    padding: 5,
   },
   emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 60,
+    marginTop: 50,
   },
   emptyText: {
+    marginTop: 10,
+    color: Colors.gray,
     fontSize: 16,
-    color: '#94a3b8',
-    marginTop: 15,
-    fontWeight: '600',
-  }
+  },
 });
 
 export default EquipmentListScreen;
