@@ -1,0 +1,27 @@
+<<<<<<< HEAD
+node_modules
+*.env
+ 
+=======
+# 1. Block environment variables (Security)
+.env
+.env.test
+.env.local
+
+# 2. Block dependencies
+node_modules/
+
+# 3. Logs and runtime data
+logs
+*.log
+npm-debug.log*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 4. OS and IDE files
+.DS_Store
+.vscode/
+.idea/
+>>>>>>> a3070cceda25516cacf67bb326a7dca882f75fe1

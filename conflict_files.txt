@@ -1,0 +1,12 @@
+backend/app.js
+backend/package-lock.json
+backend/package.json
+frontend/package-lock.json
+frontend/package.json
+frontend/src/App.js
+frontend/src/components/equipment-management/EquipmentManagement.jsx
+frontend/src/components/guides-management/GuidesManagement.jsx
+frontend/src/components/payment-management/PaymentManagement.jsx
+frontend/src/components/user-and-identity-management/UserAndIdentityManagement.jsx
+frontend/src/index.css
+frontend/src/index.js

@@ -1,0 +1,47 @@
+[
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "targetType": "Campsite",
+    "targetId": "507f1f77bcf86cd799439012",
+    "rating": 5,
+    "title": "Amazing place",
+    "comment": "The campsite was clean and very enjoyable.",
+    "isVisible": true
+  },
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "targetType": "Equipment",
+    "targetId": "507f1f77bcf86cd799439020",
+    "rating": 3,
+    "title": "Average equipment",
+    "comment": "Equipment quality was okay but can improve.",
+    "isVisible": true
+  },
+  {
+    "userId": "507f1f77bcf86cd799439011",
+    "targetType": "Guide",
+    "targetId": "507f1f77bcf86cd799439030",
+    "rating": 5,
+    "title": "Excellent guide",
+    "comment": "Very friendly and knowledgeable guide!",
+    "isVisible": true
+  },
+  {
+    "userId": "507f1f77bcf86cd799439012",
+    "targetType": "Campsite",
+    "targetId": "507f1f77bcf86cd799439040",
+    "rating": 4,
+    "title": "Good experience",
+    "comment": "Nice location but facilities can be better.",
+    "isVisible": true
+  },
+  {
+    "userId": "507f1f77bcf86cd799439012",
+    "targetType": "Equipment",
+    "targetId": "507f1f77bcf86cd799439050",
+    "rating": 2,
+    "title": "Not satisfied",
+    "comment": "Equipment was damaged and not well maintained.",
+    "isVisible": false
+  }
+]
