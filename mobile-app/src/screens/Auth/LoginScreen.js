@@ -25,11 +25,18 @@ const LoginScreen = ({ navigation }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+    setErrors({});
+    let newErrors = {};
+
+    if (!email) newErrors.email = 'Email is required';
+    if (!password) newErrors.password = 'Password is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -38,7 +45,7 @@ const LoginScreen = ({ navigation }) => {
     setLoading(false);
 
     if (!result.success) {
-      Alert.alert('Login Failed', result.error || 'Invalid email or password. Please try again.');
+      setErrors({ form: result.error || 'Invalid email or password. Please try again.' });
     }
   };
 
@@ -77,11 +84,12 @@ const LoginScreen = ({ navigation }) => {
                   placeholder="Enter your email"
                   placeholderTextColor="#94a3b8"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => { setEmail(text); setErrors({ ...errors, email: null }); }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
               </View>
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -93,14 +101,22 @@ const LoginScreen = ({ navigation }) => {
                   placeholder="Enter your password"
                   placeholderTextColor="#94a3b8"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => { setPassword(text); setErrors({ ...errors, password: null }); }}
                   secureTextEntry
                 />
               </View>
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
               <TouchableOpacity style={styles.forgotPassword}>
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
+
+            {errors.form && (
+              <View style={styles.formErrorContainer}>
+                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Text style={styles.formErrorText}>{errors.form}</Text>
+              </View>
+            )}
 
             <TouchableOpacity 
               style={[styles.loginButton, loading && styles.disabledButton]} 
@@ -317,6 +333,30 @@ const styles = StyleSheet.create({
   registerLinkText: {
     color: Colors.primary,
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  formErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  formErrorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: '600',
+    flex: 1,
   },
 });
 

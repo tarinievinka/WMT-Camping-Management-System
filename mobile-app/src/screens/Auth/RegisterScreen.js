@@ -26,11 +26,22 @@ const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+    setErrors({});
+    setSuccess(false);
+    let newErrors = {};
+
+    if (!name) newErrors.name = 'Full name is required';
+    if (!email) newErrors.email = 'Email address is required';
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -39,9 +50,10 @@ const RegisterScreen = ({ navigation }) => {
     setLoading(false);
 
     if (result.success) {
-      Alert.alert('Registration Successful', 'Welcome! Your account has been created. You can now start exploring campsites.');
+      setSuccess(true);
+      setTimeout(() => navigation.navigate('Login'), 2000);
     } else {
-      Alert.alert('Registration Failed', result.error || 'Could not create account. Please try again.');
+      setErrors({ form: result.error || 'Could not create account. Please try again.' });
     }
   };
 
@@ -80,9 +92,10 @@ const RegisterScreen = ({ navigation }) => {
                   placeholder="John Doe"
                   placeholderTextColor="#94a3b8"
                   value={name}
-                  onChangeText={setName}
+                  onChangeText={(text) => { setName(text); setErrors({ ...errors, name: null }); }}
                 />
               </View>
+              {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -94,11 +107,12 @@ const RegisterScreen = ({ navigation }) => {
                   placeholder="john@example.com"
                   placeholderTextColor="#94a3b8"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => { setEmail(text); setErrors({ ...errors, email: null }); }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
               </View>
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -110,11 +124,26 @@ const RegisterScreen = ({ navigation }) => {
                   placeholder="••••••••"
                   placeholderTextColor="#94a3b8"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => { setPassword(text); setErrors({ ...errors, password: null }); }}
                   secureTextEntry
                 />
               </View>
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
             </View>
+
+            {errors.form && (
+              <View style={styles.formErrorContainer}>
+                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Text style={styles.formErrorText}>{errors.form}</Text>
+              </View>
+            )}
+
+            {success && (
+              <View style={styles.successContainer}>
+                <Ionicons name="checkmark-circle" size={18} color="#166534" />
+                <Text style={styles.successText}>Registration successful! Redirecting...</Text>
+              </View>
+            )}
 
             <TouchableOpacity 
               style={[styles.registerButton, loading && styles.disabledButton]} 
@@ -319,6 +348,47 @@ const styles = StyleSheet.create({
   loginLinkText: {
     color: Colors.primary,
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  formErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  formErrorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: '600',
+    flex: 1,
+  },
+  successContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  successText: {
+    color: '#166534',
+    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: '600',
+    flex: 1,
   },
 });
 
