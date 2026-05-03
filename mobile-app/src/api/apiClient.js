@@ -1,18 +1,28 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-// FOR PHYSICAL DEVICES: Replace with your machine's IP (e.g. 'http://192.168.1.5:5000/api')
+// FOR PHYSICAL DEVICES: Replace with your machine's IP (e.g. 'http://192.168.1.5:5000')
 // FOR EMULATOR: 10.0.2.2 is the alias for localhost
 // FOR WEB: localhost works normally
+<<<<<<< HEAD
 export const BASE_URL = Platform.OS === 'web' 
   ? 'http://localhost:5000' 
   : 'http://172.29.146.155:5000';
+=======
+export const BASE_URL = Platform.OS === 'web'
+  ? 'http://localhost:5000'
+  : 'http://172.29.146.225:5000';
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+<<<<<<< HEAD
   timeout: 15000,
+=======
+  timeout: 30000,
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
   headers: {
     'Content-Type': 'application/json',
   },
@@ -20,6 +30,7 @@ export const apiClient = axios.create({
 
 export const getImageUrl = (path) => {
   if (!path) return null;
+  if (typeof path !== 'string') return null;
   if (path.startsWith('http') || path.startsWith('data:')) return path;
   return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
 };

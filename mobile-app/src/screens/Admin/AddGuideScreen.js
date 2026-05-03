@@ -148,7 +148,6 @@ const AddGuideScreen = ({ navigation }) => {
         style={styles.scrollView} 
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={true}
       >
         <TouchableOpacity style={styles.avatarPicker} onPress={pickImage}>
           {profilePicture ? (

@@ -34,7 +34,11 @@ const campsiteSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    rating: {
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    numReviews: {
       type: Number,
       default: 0,
     },

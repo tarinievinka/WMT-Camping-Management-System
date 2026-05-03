@@ -4,9 +4,14 @@ const paymentService = require('../../services/payment-service/paymentService');
 exports.createPayment = async (req, res) => {
   try {
     const paymentData = { ...req.body };
-    console.log('[PAYMENT DATA RECEIVED]', paymentData);
+    console.log('[PAYMENT_DEBUG] Body:', req.body);
+    console.log('[PAYMENT_DEBUG] File:', req.file);
+
     if (req.file) {
       paymentData.receiptUrl = `/uploads/${req.file.filename}`;
+      console.log('[PAYMENT_DEBUG] Saved Receipt URL:', paymentData.receiptUrl);
+    } else {
+      console.log('[PAYMENT_DEBUG] No file received in req.file');
     }
     const payment = await paymentService.createPayment(paymentData);
     res.status(201).json(payment);
@@ -64,6 +69,7 @@ exports.updatePayment = async (req, res) => {
 
 // Delete a payment by ID
 exports.deletePayment = async (req, res) => {
+  console.log(`[PAYMENT_CONTROLLER] Deletion requested for ID: ${req.params.id}`);
   try {
     const payment = await paymentService.deletePayment(req.params.id);
     if (!payment) return res.status(404).json({ error: 'Payment not found' });

@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import Header from '../../../components/Header';
-import apiClient from '../../../api/apiClient';
+import apiClient, { getImageUrl } from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -22,13 +22,16 @@ const AddFeedbackScreen = ({ route, navigation }) => {
   const { booking, editMode = false } = route.params || {};
   const { user, token } = useAuth();
   
-  const [targetType, setTargetType] = useState(editMode ? booking.targetType : 'Campsite');
-  const [targetName, setTargetName] = useState(editMode ? booking.targetName : '');
-  const [sessionDate, setSessionDate] = useState(editMode ? new Date(booking.sessionDate || Date.now()) : new Date());
+  const [targetType, setTargetType] = useState(booking?.targetType || 'Campsite');
+  const [targetName, setTargetName] = useState(booking?.targetName || '');
+  const [sessionDate, setSessionDate] = useState(booking?.sessionDate ? new Date(booking.sessionDate) : new Date());
   const [rating, setRating] = useState(editMode ? booking.rating : 5);
   const [comment, setComment] = useState(editMode ? (booking.comment || booking.message) : '');
-  const [images, setImages] = useState(editMode ? (booking.images || []) : []);
+  const [images, setImages] = useState(editMode ? (booking.imageUrls || booking.images || []) : []);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  
+  const isLocked = !!booking?.targetId || editMode;
 
   const getRatingText = (r) => {
     switch(r) {
@@ -72,17 +75,19 @@ const AddFeedbackScreen = ({ route, navigation }) => {
       return;
     }
 
-    if (!comment) {
-      if (Platform.OS === 'web') window.alert('Please enter your feedback comment');
-      else Alert.alert('Error', 'Please enter your feedback comment');
-      return;
+    const newErrors = {};
+    if (!comment || comment.trim().length < 10) {
+      newErrors.comment = 'Please enter at least 10 characters for your review.';
+    }
+    if (!targetName?.trim()) {
+      newErrors.targetName = 'Please select or enter the item you are reviewing.';
     }
 
-    if (!targetName?.trim()) {
-      if (Platform.OS === 'web') window.alert('Please enter what you are reviewing.');
-      else Alert.alert('Error', 'Please enter what you are reviewing.');
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+    setErrors({});
 
     setLoading(true);
     try {
@@ -90,14 +95,24 @@ const AddFeedbackScreen = ({ route, navigation }) => {
       formData.append('userId', user?._id || user?.id);
       formData.append('targetName', targetName.trim());
       formData.append('targetType', targetType);
+      
+      const targetId = booking?.targetId || booking?._id || booking?.target?._id || booking?.target;
+      if (targetId && targetId !== 'undefined') {
+        formData.append('targetId', String(targetId));
+      }
       formData.append('rating', String(rating));
       formData.append('comment', comment.trim());
       formData.append('sessionDate', sessionDate.toISOString());
 
+      formData.append('imageUrlsUpdated', 'true');
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           const uri = images[i];
-          if (!uri.startsWith('http')) {
+          if (uri.startsWith('/uploads/')) {
+            // This is an existing image, send it as a string
+            formData.append('existingImageUrls', uri);
+          } else {
+            // This is a new image, send it as a file
             if (Platform.OS === 'web') {
               const response = await fetch(uri);
               const blob = await response.blob();
@@ -118,17 +133,30 @@ const AddFeedbackScreen = ({ route, navigation }) => {
         }
       };
       
-      if (Platform.OS !== 'web') {
+      if (Platform.OS === 'web') {
+        // On web, setting Content-Type to undefined allows the browser to set it with the correct boundary
+        config.headers['Content-Type'] = undefined;
+      } else {
         config.headers['Content-Type'] = 'multipart/form-data';
       }
 
       const url = editMode ? `/feedback/update/${booking._id}` : '/feedback/create';
-      await apiClient({
+      
+      console.log('[DEBUG] Submitting Feedback:', {
+        url,
+        method: editMode ? 'PUT' : 'POST',
+        imageCount: images.length,
+        formDataKeys: Array.from(formData.keys())
+      });
+
+      const response = await apiClient({
         method: editMode ? 'put' : 'post',
         url: url,
         data: formData,
-        ...config
+        headers: config.headers
       });
+
+      console.log('[DEBUG] Submission Success:', response.data);
 
       const successMsg = `Feedback ${editMode ? 'updated' : 'submitted'} successfully!`;
       if (Platform.OS === 'web') {
@@ -168,24 +196,28 @@ const AddFeedbackScreen = ({ route, navigation }) => {
             <View style={styles.pickerContainer}>
               <Ionicons name="location-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
               <TextInput
-                style={styles.pickerInput}
+                style={[styles.pickerInput, isLocked && styles.disabledInput]}
                 placeholder="Select a campsite, equipment, or guide..."
                 value={targetName}
                 onChangeText={setTargetName}
+                editable={!isLocked}
               />
-              <Ionicons name="chevron-down" size={20} color="#94a3b8" />
+              {!isLocked && <Ionicons name="chevron-down" size={20} color="#94a3b8" />}
             </View>
-            <View style={styles.typeToggle}>
-              {['Campsite', 'Equipment', 'Guide'].map((type) => (
-                <TouchableOpacity 
-                  key={type}
-                  style={[styles.typeBtn, targetType === type && styles.typeBtnActive]}
-                  onPress={() => setTargetType(type)}
-                >
-                  <Text style={[styles.typeText, targetType === type && styles.typeTextActive]}>{type}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {errors.targetName && <Text style={styles.errorText}>{errors.targetName}</Text>}
+            {!isLocked && (
+              <View style={styles.typeToggle}>
+                {['Campsite', 'Equipment', 'Guide'].map((type) => (
+                  <TouchableOpacity 
+                    key={type}
+                    style={[styles.typeBtn, targetType === type && styles.typeBtnActive]}
+                    onPress={() => setTargetType(type)}
+                  >
+                    <Text style={[styles.typeText, targetType === type && styles.typeTextActive]}>{type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -228,8 +260,12 @@ const AddFeedbackScreen = ({ route, navigation }) => {
               multiline
               numberOfLines={6}
               value={comment}
-              onChangeText={setComment}
+              onChangeText={(text) => {
+                setComment(text);
+                if (errors.comment) setErrors({ ...errors, comment: null });
+              }}
             />
+            {errors.comment && <Text style={styles.errorText}>{errors.comment}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
@@ -238,7 +274,7 @@ const AddFeedbackScreen = ({ route, navigation }) => {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagePreviewList}>
                 {images.map((uri, index) => (
                   <View key={index} style={styles.imagePreviewContainer}>
-                    <Image source={{ uri }} style={styles.imagePreview} />
+                    <Image source={{ uri: uri.startsWith('/uploads/') ? getImageUrl(uri) : uri }} style={styles.imagePreview} />
                     <TouchableOpacity style={styles.removeImageBtn} onPress={() => removeImage(index)}>
                       <Ionicons name="close-circle" size={20} color="#ef4444" />
                     </TouchableOpacity>
@@ -286,6 +322,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 11, fontWeight: '700', color: '#64748b', marginBottom: 10, letterSpacing: 0.5 },
   pickerContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 12, height: 50, backgroundColor: '#f8fafc' },
   pickerInput: { flex: 1, fontSize: 14, color: '#0f172a', paddingLeft: 8 },
+  disabledInput: { color: '#94a3b8', backgroundColor: 'transparent' },
   typeToggle: { flexDirection: 'row', gap: 8, marginTop: 10 },
   typeBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#e2e8f0' },
   typeBtnActive: { backgroundColor: '#15803d', borderColor: '#15803d' },
@@ -308,7 +345,8 @@ const styles = StyleSheet.create({
   imagePreviewList: { marginBottom: 10, flexDirection: 'row' },
   imagePreviewContainer: { marginRight: 10, position: 'relative' },
   imagePreview: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#e2e8f0' },
-  removeImageBtn: { position: 'absolute', top: -8, right: -8, backgroundColor: '#fff', borderRadius: 10 }
+  removeImageBtn: { position: 'absolute', top: -8, right: -8, backgroundColor: '#fff', borderRadius: 10 },
+  errorText: { color: '#ef4444', fontSize: 12, marginTop: 4, fontWeight: '500' }
 });
 
 export default AddFeedbackScreen;

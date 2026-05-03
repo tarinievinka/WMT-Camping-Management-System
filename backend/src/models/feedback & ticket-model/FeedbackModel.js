@@ -13,14 +13,14 @@ const feedbackSchema = new mongoose.Schema({
 
   targetType: {
     type: String,
-    enum: ["Campsite", "Equipment", "Guide"],
+    enum: ["Campsite", "Equipment", "Guide", "General"],
     required: true
   },
 
   targetId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    refPath: "targetType"   // Dynamic reference (same like bookingType)
+    required: false,
+    refPath: "targetType"
   },
 
   targetName: {

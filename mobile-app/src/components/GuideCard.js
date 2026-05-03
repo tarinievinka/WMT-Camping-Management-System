@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
 import { BASE_URL, getImageUrl } from '../api/apiClient';
@@ -18,6 +19,12 @@ const GuideCard = ({ item, onPress }) => {
         <Text style={styles.expertise} numberOfLines={1}>
           {item.specialties?.join(', ') || 'Expert Guide'}
         </Text>
+        <View style={styles.ratingRow}>
+          <Ionicons name="star" size={12} color="#f59e0b" />
+          <Text style={styles.ratingText}>
+            {item.averageRating ? item.averageRating.toFixed(1) : '0.0'} ({item.numReviews || 0})
+          </Text>
+        </View>
         <View style={styles.footer}>
           <Text style={styles.price}>Rs. {item.dailyRate}<Text style={styles.unit}>/day</Text></Text>
         </View>
@@ -55,6 +62,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
     textAlign: 'center',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 11,
+    color: Colors.gray,
+    fontWeight: '600',
   },
   expertise: {
     fontSize: 11,

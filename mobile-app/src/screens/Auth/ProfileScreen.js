@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { 
   View, 
   Text, 
@@ -11,14 +12,31 @@ import {
   FlatList, 
   Platform, 
   StatusBar 
+=======
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  StatusBar
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
+<<<<<<< HEAD
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+=======
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -28,6 +46,14 @@ const ProfileScreen = ({ route, navigation }) => {
   const [profileData, setProfileData] = useState(null);
   const [userBlogs, setUserBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const user = {
+    name: authUser?.name || 'Happy Camper',
+    email: authUser?.email || 'camper@example.com',
+    avatar: authUser?.profilePicture
+      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
 
   useEffect(() => {
     fetchProfileData();
@@ -39,6 +65,7 @@ const ProfileScreen = ({ route, navigation }) => {
       if (isOwnProfile) {
         setProfileData(authUser);
       } else {
+<<<<<<< HEAD
         const blogRes = await axios.get(`${API_URL}/api/blogs`);
         const authorBlog = blogRes.data.find(b => (b.author?._id || b.author) === authorId);
         if (authorBlog) {
@@ -48,12 +75,29 @@ const ProfileScreen = ({ route, navigation }) => {
             role: authorBlog.authorRole || authorBlog.author?.role,
             email: 'author@camptrail360.com',
             profilePicture: authorBlog.authorAvatar || authorBlog.author?.profilePicture
+=======
+        const response = await apiClient.get('/blogs');
+        const blogs = response.data.data || response.data;
+        const authorBlog = blogs.find(b => (b.author?._id || b.author) === authorId);
+        if (authorBlog) {
+          setProfileData({
+            _id: authorId,
+            name: authorBlog.authorName || (authorBlog.author?.name),
+            role: authorBlog.authorRole || (authorBlog.author?.role),
+            email: 'author@camptrail360.com',
+            profilePicture: authorBlog.authorAvatar
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
           });
         }
       }
 
+<<<<<<< HEAD
       const response = await axios.get(`${API_URL}/api/blogs`);
       const blogs = Array.isArray(response.data) ? response.data : (response.data.data || []);
+=======
+      const response = await apiClient.get('/blogs');
+      const blogs = response.data.data || response.data;
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
       const filtered = blogs.filter(b => (b.author?._id || b.author) === (authorId || authUser?._id || authUser?.id));
       setUserBlogs(filtered);
     } catch (err) {
@@ -65,11 +109,15 @@ const ProfileScreen = ({ route, navigation }) => {
 
   const userDisplayName = profileData?.name || authUser?.name || 'Happy Camper';
   const userEmail = profileData?.email || authUser?.email || 'camper@example.com';
+<<<<<<< HEAD
   const userAvatar = profileData?.profilePicture 
     ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
     : authUser?.profilePicture 
     ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
     : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+=======
+  const userAvatar = getImageUrl(profileData?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
 
   const menuItems = [
     { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
@@ -80,13 +128,13 @@ const ProfileScreen = ({ route, navigation }) => {
   ];
 
   const renderBlogItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.blogCard}
       onPress={() => navigation.navigate('BlogDetail', { blog: item })}
     >
-      <Image 
-        source={{ uri: item.image?.startsWith('http') ? item.image : `${BASE_URL}${item.image}` }} 
-        style={styles.blogThumb} 
+      <Image
+        source={{ uri: getImageUrl(item.image) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=600' }}
+        style={styles.blogThumb}
       />
       <View style={styles.blogInfo}>
         <Text style={styles.blogCategory}>{item.category?.toUpperCase()}</Text>
@@ -105,6 +153,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
       {/* Camptrail 360 Green Header */}
@@ -112,20 +161,30 @@ const ProfileScreen = ({ route, navigation }) => {
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             {!isOwnProfile && (
+=======
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      {isOwnProfile ? (
+        <Header />
+      ) : (
+        <View style={styles.greenHeader}>
+          <View style={styles.headerRow}>
+            <View style={styles.headerLeft}>
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
-            )}
-            <Ionicons name="leaf" size={20} color="#fff" />
-            <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
-            <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
+              <Ionicons name="leaf" size={20} color="#fff" />
+              <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
+              <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
+<<<<<<< HEAD
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Profile Info Section */}
         <View style={styles.profileSection}>
@@ -136,15 +195,69 @@ const ProfileScreen = ({ route, navigation }) => {
           <Text style={styles.userName}>{userDisplayName}</Text>
           <Text style={styles.userEmail}>{userEmail}</Text>
           
+=======
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Profile Info Section */}
+        <View style={styles.profileSection}>
+          <Image source={{ uri: userAvatar }} style={styles.avatar} />
+          <Text style={styles.userName}>{userDisplayName}</Text>
+          <Text style={styles.userEmail}>{userEmail}</Text>
+
+            {isOwnProfile && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate('EditProfile')}
+              >
+                <Ionicons name="pencil-sharp" size={16} color="#fff" />
+                <Text style={styles.editButtonText}>Edit Profile</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
           {isOwnProfile && (
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => navigation.navigate('EditProfile')}
+            <View style={styles.menuContainer}>
+              {menuItems.map((item, index) => (
+                <TouchableOpacity key={index} style={styles.menuItem} onPress={item.action}>
+                  <View style={styles.menuItemLeft}>
+                    <Ionicons name={item.icon} size={22} color={Colors.text} />
+                    <Text style={styles.menuLabel}>{item.label}</Text>
+                  </View>
+                  <View style={styles.menuItemRight}>
+                    {item.count && <Text style={styles.badge}>{item.count}</Text>}
+                    <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.blogsSection}>
+            <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
+            {userBlogs.length > 0 ? (
+              userBlogs.map(item => (
+                <React.Fragment key={item._id || Math.random().toString()}>
+                  {renderBlogItem({ item })}
+                </React.Fragment>
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No blogs found.</Text>
+            )}
+          </View>
+
+          {isOwnProfile && (
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={logout}
             >
-              <Ionicons name="pencil-sharp" size={16} color="#fff" />
-              <Text style={styles.editButtonText}>Edit Profile</Text>
+              <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
+              <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
           )}
+<<<<<<< HEAD
         </View>
 
         {isOwnProfile && (
@@ -188,6 +301,14 @@ const ProfileScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+=======
+        </ScrollView>
+      </View>
+    );
+};
+
+      const styles = StyleSheet.create({
+>>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -290,6 +411,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  badge: {
+    backgroundColor: '#065f46',
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 10,
+  },
   blogsSection: {
     padding: 20,
     marginTop: 10,
@@ -322,7 +453,7 @@ const styles = StyleSheet.create({
   blogCategory: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#065f46',
+    color: Colors.primary,
     marginBottom: 2,
   },
   blogTitle: {
@@ -339,7 +470,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   logoutText: {
-    color: '#ef4444',
+    color: Colors.danger,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
@@ -351,4 +482,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+      export default ProfileScreen;

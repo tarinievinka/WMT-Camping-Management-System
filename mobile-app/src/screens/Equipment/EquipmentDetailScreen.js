@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
@@ -18,16 +19,32 @@ import { useAuth } from '../../context/AuthContext';
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
-  const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
+  const [equipmentData, setEquipmentData] = useState(item);
   const [reviews, setReviews] = useState([]);
-  const [isEligible, setIsEligible] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-    checkEligibility();
-  }, []);
+  const { user } = useAuth();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+      fetchEquipmentData();
+    }, [])
+  );
+
+  const fetchEquipmentData = async () => {
+    try {
+      const response = await apiClient.get(`/equipment/${item._id}`);
+      if (response.data.data) {
+        setEquipmentData(response.data.data);
+      } else if (response.data) {
+        setEquipmentData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching equipment data:', error);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -40,28 +57,26 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const checkEligibility = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.get(`/feedback/check-eligibility?targetId=${item._id}&targetType=Equipment&userId=${user._id || user.id}`);
-      setIsEligible(response.data.eligible);
-    } catch (error) {
-      console.error('Error checking eligibility:', error);
-    }
+
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         {/* Product Image */}
         <View style={styles.imageSection}>
-          <Image 
-            source={{ uri: getImageUrl(item.imageUrl) || 'https://images.unsplash.com/photo-1504215680045-29eee485e9be?auto=format&fit=crop&w=600&q=80' }} 
-            style={styles.image} 
+          <Image
+            source={{ uri: getImageUrl(item.imageUrl) || 'https://images.unsplash.com/photo-1504215680045-29eee485e9be?auto=format&fit=crop&w=600&q=80' }}
+            style={styles.image}
             resizeMode="contain"
           />
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
@@ -72,10 +87,21 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{item.category || 'CAMPING GEAR'}</Text>
           </View>
-          
-          <Text style={styles.title}>{item.name}</Text>
-          <Text style={styles.price}>Rs. {item.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
-          <Text style={styles.salePrice}>Purchase: Rs. {item.salePrice}</Text>
+
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{equipmentData.name}</Text>
+              <Text style={styles.price}>Rs. {equipmentData.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
+              <Text style={styles.salePrice}>Purchase: Rs. {equipmentData.salePrice}</Text>
+            </View>
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={16} color="#fbbf24" />
+              <Text style={styles.ratingText}>
+                {equipmentData.averageRating ? equipmentData.averageRating.toFixed(1) : '0.0'}
+                <Text style={styles.reviewCount}> ({equipmentData.numReviews || 0})</Text>
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.divider} />
 
@@ -87,15 +113,15 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
           <View style={styles.quantitySection}>
             <Text style={styles.sectionTitle}>Quantity</Text>
             <View style={styles.quantityControl}>
-              <TouchableOpacity 
-                style={styles.qtyBtn} 
+              <TouchableOpacity
+                style={styles.qtyBtn}
                 onPress={() => setQuantity(Math.max(1, quantity - 1))}
               >
                 <Feather name="minus" size={20} color={Colors.text} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{quantity}</Text>
-              <TouchableOpacity 
-                style={styles.qtyBtn} 
+              <TouchableOpacity
+                style={styles.qtyBtn}
                 onPress={() => setQuantity(quantity + 1)}
               >
                 <Feather name="plus" size={20} color={Colors.text} />
@@ -107,21 +133,7 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
 
           {/* Reviews Section */}
           <View style={styles.reviewsHeader}>
-            <Text style={styles.sectionTitle}>User Reviews</Text>
-            {isEligible && (
-              <TouchableOpacity 
-                style={styles.addReviewBtn}
-                onPress={() => navigation.navigate('AddFeedback', { 
-                  booking: { 
-                    targetId: item._id, 
-                    targetName: item.name, 
-                    targetType: 'Equipment' 
-                  } 
-                })}
-              >
-                <Text style={styles.addReviewText}>Add Review</Text>
-              </TouchableOpacity>
-            )}
+            <Text style={styles.sectionTitle}>Community Reviews</Text>
           </View>
 
           {loadingReviews ? (
@@ -147,10 +159,21 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.reviewComment}>"{review.comment}"</Text>
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+                    {review.imageUrls.map((img, i) => (
+                      <Image 
+                        key={i} 
+                        source={{ uri: getImageUrl(img) }} 
+                        style={styles.reviewImage} 
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             ))
           ) : (
-            <Text style={styles.noReviews}>No reviews yet. {isEligible ? 'Be the first to review!' : 'Purchase or rent this item to share your feedback.'}</Text>
+            <Text style={styles.noReviews}>No reviews yet. Buy or rent this gear to share your experience.</Text>
           )}
 
           <View style={styles.divider} />
@@ -161,13 +184,13 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
               <Text style={styles.totalValue}>Rs. {item.rentalPrice * quantity}</Text>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.buyButton}
                 onPress={() => navigation.navigate('Booking', { item, type: 'equipment', mode: 'buy' })}
               >
                 <Text style={styles.buyButtonText}>Buy Now</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.rentButton}
                 onPress={() => navigation.navigate('Booking', { item, type: 'equipment', mode: 'rent' })}
               >
@@ -225,6 +248,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  ratingText: {
+    marginLeft: 4,
+    fontWeight: 'bold',
+    color: '#92400e',
+    fontSize: 14,
+  },
+  reviewCount: {
+    fontSize: 11,
+    color: '#b45309',
+    fontWeight: '600',
   },
   title: {
     fontSize: 24,
@@ -349,17 +397,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
+    marginTop: 10,
   },
   addReviewBtn: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#fffbeb',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dcfce7',
+    borderColor: '#fef3c7',
   },
   addReviewText: {
-    color: Colors.primary,
+    color: '#92400e',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -433,6 +482,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 20,
+  },
+  reviewImages: {
+    marginTop: 12,
+    flexDirection: 'row',
+  },
+  reviewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
   }
 });
 

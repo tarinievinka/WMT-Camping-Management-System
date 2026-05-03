@@ -28,12 +28,4 @@ router.put('/tickets/admin/reply/:id', protect, adminOnly, adminReplyTicket);
 
 
 
-// Feedback Routes
-router.post('/feedback/create', protect, upload.array('files', 5), createFeedback);
-router.get('/feedback/my-feedback', protect, getMyFeedback);
-router.get('/feedback/all', protect, adminOnly, getAllFeedback);
-router.put('/feedback/update/:id', protect, upload.array('files', 5), updateFeedback);
-router.delete('/feedback/delete/:id', protect, deleteFeedback);
-
-
 module.exports = router;
