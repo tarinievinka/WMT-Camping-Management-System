@@ -11,7 +11,7 @@ const ManageEquipmentScreen = ({ navigation }) => {
   const { token } = useAuth();
   const [equipment, setEquipment] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Equipment List');
+
 
   useFocusEffect(
     useCallback(() => {
@@ -98,7 +98,7 @@ const ManageEquipmentScreen = ({ navigation }) => {
               <View style={styles.rentBadge}>
                 <Text style={styles.badgeText}>RENT</Text>
               </View>
-              <Text style={styles.priceValue}>${item.rentalPrice}/day</Text>
+              <Text style={styles.priceValue}>LKR {item.rentalPrice}/day</Text>
             </View>
           </View>
           <View style={styles.priceColumn}>
@@ -107,7 +107,7 @@ const ManageEquipmentScreen = ({ navigation }) => {
               <View style={styles.buyBadge}>
                 <Text style={styles.badgeText}>BUY</Text>
               </View>
-              <Text style={styles.priceValue}>${item.salePrice}</Text>
+              <Text style={styles.priceValue}>LKR {item.salePrice}</Text>
             </View>
           </View>
         </View>
@@ -174,28 +174,11 @@ const ManageEquipmentScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Equipment List' && styles.activeTab]}
-          onPress={() => setActiveTab('Equipment List')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Equipment List' && styles.activeTabText]}>
-            Equipment List
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Notify Requests' && styles.activeTab]}
-          onPress={() => setActiveTab('Notify Requests')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Notify Requests' && styles.activeTabText]}>
-            Notify Requests
-          </Text>
-        </TouchableOpacity>
-      </View>
+
 
       {isLoading ? (
         <ActivityIndicator size="large" color={Colors.primary} style={styles.loader} />
-      ) : activeTab === 'Equipment List' ? (
+      ) : (
         <FlatList
           data={equipment}
           renderItem={renderItem}
@@ -203,10 +186,6 @@ const ManageEquipmentScreen = ({ navigation }) => {
           contentContainerStyle={styles.list}
           ListEmptyComponent={<Text style={styles.empty}>No equipment found.</Text>}
         />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.empty}>No notify requests.</Text>
-        </View>
       )}
     </View>
   );

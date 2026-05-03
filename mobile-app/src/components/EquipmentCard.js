@@ -76,7 +76,7 @@ const EquipmentCard = ({ item, onPress, onAddToCart }) => {
         <View style={styles.footer}>
           <View>
             <Text style={styles.rateLabel}>Daily Rate</Text>
-            <Text style={styles.price}>Rs. {item.rentalPrice}</Text>
+            <Text style={styles.price}>LKR {item.rentalPrice}</Text>
           </View>
           
           <TouchableOpacity 
