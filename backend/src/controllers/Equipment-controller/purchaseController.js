@@ -75,3 +75,29 @@ exports.updatePurchaseStatus = async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 };
+
+// Delete/Cancel purchase
+exports.deletePurchase = async (req, res) => {
+    try {
+        const purchase = await EquipmentPurchase.findById(req.params.id);
+        if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
+        
+        // Only allow user to cancel their own purchase or admin
+        if (purchase.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        // Restore stock
+        for (const item of purchase.items) {
+            await Equipment.findByIdAndUpdate(item.equipmentId, {
+                $inc: { quantity: item.quantity }
+            });
+        }
+
+        await EquipmentPurchase.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: 'Purchase cancelled successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
