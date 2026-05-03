@@ -13,11 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
-<<<<<<< HEAD
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
-=======
-import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
->>>>>>> 01ada11721e5deb8afbcc489420db66c68a07190
 import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
