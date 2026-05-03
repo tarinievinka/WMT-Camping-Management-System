@@ -158,8 +158,8 @@ exports.updateFeedback = async (req, res) => {
       const uploaded = req.files.map(f => `/uploads/${f.filename}`);
       urls = [...urls, ...uploaded];
     }
-    // Only update imageUrls if there were any provided, else do not overwrite
-    if (urls.length > 0 || req.body.clearImages === 'true') {
+    // Update imageUrls if the frontend explicitly asked for it
+    if (req.body.imageUrlsUpdated === 'true' || urls.length > 0 || req.body.clearImages === 'true') {
       req.body.imageUrls = urls;
     }
 

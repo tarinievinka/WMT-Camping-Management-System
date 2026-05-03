@@ -27,7 +27,7 @@ const AddFeedbackScreen = ({ route, navigation }) => {
   const [sessionDate, setSessionDate] = useState(booking?.sessionDate ? new Date(booking.sessionDate) : new Date());
   const [rating, setRating] = useState(editMode ? booking.rating : 5);
   const [comment, setComment] = useState(editMode ? (booking.comment || booking.message) : '');
-  const [images, setImages] = useState(editMode ? (booking.images || []) : []);
+  const [images, setImages] = useState(editMode ? (booking.imageUrls || booking.images || []) : []);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   
@@ -104,6 +104,7 @@ const AddFeedbackScreen = ({ route, navigation }) => {
       formData.append('comment', comment.trim());
       formData.append('sessionDate', sessionDate.toISOString());
 
+      formData.append('imageUrlsUpdated', 'true');
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           const uri = images[i];
