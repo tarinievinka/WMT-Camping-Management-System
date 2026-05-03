@@ -29,6 +29,7 @@ const BookingScreen = ({ route, navigation }) => {
   const [guests, setGuests] = useState('1');
   const [bookedDates, setBookedDates] = useState({});
   const [bookingStatus, setBookingStatus] = useState(null);
+  const [errors, setErrors] = useState({});
 
   React.useEffect(() => {
     if (type === 'campsite') {
@@ -126,8 +127,19 @@ const BookingScreen = ({ route, navigation }) => {
   const serviceFee = 250;
 
   const handleConfirmBooking = async () => {
+    setErrors({});
+    let newErrors = {};
+
     if (mode !== 'buy' && (!startDate || !endDate)) {
-      Alert.alert('Error', 'Please enter both check-in and check-out dates');
+      newErrors.dates = 'Please select both check-in and check-out dates';
+    }
+
+    if (!guests || isNaN(parseInt(guests)) || parseInt(guests) <= 0) {
+      newErrors.guests = 'Please enter a valid number of guests';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -155,16 +167,19 @@ const BookingScreen = ({ route, navigation }) => {
           amount: subtotal + serviceFee,
           customerName: user?.name,
           userId: user?._id,
-          status: 'Pending' // Force Pending for guide verification
+          status: 'Pending'
         };
       } else {
-        endpoint = mode === 'buy' ? '/payment/add' : '/payment/add'; // Simplified
+        endpoint = '/purchases';
         bookingData = {
-          itemId: item._id,
-          startDate: mode === 'buy' ? new Date() : startDate,
-          endDate: mode === 'buy' ? new Date() : endDate,
-          amount: subtotal + serviceFee,
-          mode
+          items: [{
+            equipmentId: item._id,
+            name: item.name,
+            quantity: parseInt(guests || 1),
+            price: price
+          }],
+          totalPrice: subtotal + serviceFee,
+          shippingAddress: mode === 'buy' ? 'Customer Address' : 'To be collected at site'
         };
       }
 
@@ -172,29 +187,25 @@ const BookingScreen = ({ route, navigation }) => {
       setLoading(false);
       
       if (type === 'guide') {
-        setBookingStatus('pending');
-        Alert.alert(
-          'Request Sent', 
-          'Your guide booking request has been sent to the guide. You will be notified once it is approved.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        navigation.navigate('Payment', { 
-          item, 
-          type, 
-          mode, 
-          startDate: startDate, 
-          endDate: endDate, 
-          totalAmount: subtotal + serviceFee,
-          guests,
-          bookingId: response.data._id
-        });
+        navigation.navigate('PaymentSuccess', { type: 'guide', pending: true });
+        return;
       }
+
+      navigation.navigate('Payment', { 
+        item, 
+        type, 
+        mode, 
+        startDate: startDate, 
+        endDate: endDate, 
+        totalAmount: subtotal + serviceFee,
+        guests,
+        bookingId: response.data._id
+      });
     } catch (error) {
       setLoading(false);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to process booking.';
       console.error('Booking error:', error.response?.data || error);
-      Alert.alert('Booking Failed', errorMsg);
+      setErrors({ form: errorMsg });
     }
   };
 
@@ -211,12 +222,11 @@ const BookingScreen = ({ route, navigation }) => {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={true}
       >
         <View style={styles.itemCard}>
           <Text style={styles.itemType}>{type.toUpperCase()}</Text>
           <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemPrice}>Rs. {price} / {mode === 'buy' ? 'unit' : 'day'}</Text>
+          <Text style={styles.itemPrice}>LKR {price} / {mode === 'buy' ? 'unit' : 'day'}</Text>
         </View>
 
         <View style={styles.form}>
@@ -252,6 +262,7 @@ const BookingScreen = ({ route, navigation }) => {
                   <Text style={styles.dateValue}>{endDate || 'Select Date'}</Text>
                 </View>
               </View>
+              {errors.dates && <Text style={styles.errorText}>{errors.dates}</Text>}
             </View>
           ) : (
             <Text style={styles.buyNote}>Direct purchase - No date range required.</Text>
@@ -262,25 +273,32 @@ const BookingScreen = ({ route, navigation }) => {
             style={styles.input}
             keyboardType="numeric"
             value={guests}
-            onChangeText={setGuests}
+            onChangeText={(text) => { setGuests(text); setErrors({ ...errors, guests: null }); }}
           />
+          {errors.guests && <Text style={styles.errorText}>{errors.guests}</Text>}
 
           <View style={styles.summary}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
                 {mode === 'buy' ? 'Item Price' : `Price x ${totalDays} days`}
               </Text>
-              <Text style={styles.summaryValue}>Rs. {subtotal}</Text>
+              <Text style={styles.summaryValue}>LKR {subtotal}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Service Fee</Text>
-              <Text style={styles.summaryValue}>Rs. {serviceFee}</Text>
+              <Text style={styles.summaryValue}>LKR {serviceFee}</Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>Rs. {subtotal + serviceFee}</Text>
+              <Text style={styles.totalValue}>LKR {subtotal + serviceFee}</Text>
             </View>
           </View>
+          {errors.form && (
+            <View style={styles.formErrorContainer}>
+              <Ionicons name="alert-circle" size={18} color="#ef4444" />
+              <Text style={styles.formErrorText}>{errors.form}</Text>
+            </View>
+          )}
         </View>
 
         {type === 'guide' && bookingStatus === 'pending' && (
@@ -327,7 +345,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 25,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
@@ -491,6 +511,29 @@ const styles = StyleSheet.create({
     color: '#d97706',
     marginLeft: 8,
     fontWeight: '500',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 5,
+    fontWeight: '600',
+  },
+  formErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  formErrorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: '600',
+    flex: 1,
   },
 });
 

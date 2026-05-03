@@ -34,7 +34,11 @@ const campsiteSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    rating: {
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    numReviews: {
       type: Number,
       default: 0,
     },
@@ -46,6 +50,14 @@ const campsiteSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
       required: false,
+    },
+    ownerName: {
+      type: String,
+      trim: true,
+    },
+    ownerPhone: {
+      type: String,
+      trim: true,
     },
     status: {
       type: String,

@@ -1,86 +1,81 @@
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  StyleSheet, 
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Image,
+  Platform,
   ScrollView,
-  Platform
+  Image
 } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
-import apiClient, { BASE_URL } from '../../../api/apiClient';
+import apiClient, { getImageUrl } from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 
-const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = null }) => {
+const FeedbackListScreen = ({ navigation, refreshSignal }) => {
   const { user, token } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const isAdmin = user?.role === 'admin';
+
+  useEffect(() => {
+    if (user) fetchFeedbacks();
+  }, [user, refreshSignal, activeCategory]);
 
   const fetchFeedbacks = async () => {
+    setLoading(true);
     try {
-      const endpoint = user?.role === 'admin' ? '/feedback/all' : '/feedback/my-feedback';
-      const response = await apiClient.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFeedbacks(response.data.data || []);
+      const query = isAdmin ? '' : `userId=${user._id || user.id}`;
+      const response = await apiClient.get(`/feedback/display?${query}`);
+      setFeedbacks(response.data.data || response.data || []);
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
-      // Alert.alert('Error', 'Failed to fetch feedbacks');
     } finally {
       setLoading(false);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchFeedbacks();
-    }, [token, user?.role])
-  );
+  const filteredFeedbacks = feedbacks.filter(fb => {
+    if (activeCategory === 'All') return true;
+    return fb.targetType === activeCategory;
+  });
 
-  useEffect(() => {
-    if (refreshSignal) {
-      fetchFeedbacks();
-    }
-  }, [refreshSignal]);
-
-  const handleDelete = (id) => {
-    const confirmMsg = 'Are you sure you want to delete this feedback?';
+  const handleDelete = async (id) => {
+    if (isAdmin) return;
     
+    const confirmDelete = async () => {
+      try {
+        await apiClient.delete(`/feedback/delete/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        fetchFeedbacks();
+      } catch (error) {
+        console.error('Error deleting feedback:', error);
+        const msg = error.response?.data?.error || 'Failed to delete feedback';
+        if (Platform.OS === 'web') window.alert(msg);
+        else Alert.alert('Error', msg);
+      }
+    };
+
     if (Platform.OS === 'web') {
-      if (window.confirm(confirmMsg)) {
-        deleteFeedback(id);
+      if (window.confirm("Are you sure you want to delete this feedback?")) {
+        confirmDelete();
       }
     } else {
-      Alert.alert('Delete Feedback', confirmMsg, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => deleteFeedback(id)
-        }
-      ]);
-    }
-  };
-
-  const deleteFeedback = async (id) => {
-    try {
-      await apiClient.delete(`/feedback/delete/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchFeedbacks();
-    } catch (error) {
-      console.error('Error deleting feedback:', error);
-      if (Platform.OS === 'web') {
-        window.alert('Failed to delete feedback');
-      } else {
-        Alert.alert('Error', 'Failed to delete feedback');
-      }
+      Alert.alert(
+        "Delete Feedback",
+        "Are you sure you want to delete this feedback?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Delete", style: "destructive", onPress: confirmDelete }
+        ]
+      );
     }
   };
 
@@ -88,38 +83,50 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = nu
     <View style={styles.card}>
       <View style={styles.row}>
         <View>
-          <Text style={styles.target}>{item.targetName || 'General Feedback'}</Text>
-          <Text style={styles.targetType}>{item.targetType}</Text>
+          <Text style={styles.target}>{item.targetName || 'Campsite'}</Text>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{item.targetType || 'Campsite'}</Text>
+          </View>
         </View>
         <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={12} color="#854d0e" />
+          <Text style={styles.star}>⭐</Text>
           <Text style={styles.rating}>{item.rating}/5</Text>
         </View>
       </View>
-      <Text style={styles.comment}>"{item.comment || item.message}"</Text>
       
-      {item.images && item.images.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-          {item.images.map((img, idx) => (
+      {isAdmin && (
+        <Text style={styles.userName}>By: {item.userId?.name || item.userName || 'Anonymous User'}</Text>
+      )}
+      
+      <Text style={styles.comment}>"{item.comment}"</Text>
+      
+      {item.imageUrls && item.imageUrls.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+          {item.imageUrls.map((img, i) => (
             <Image 
-              key={idx} 
-              source={{ uri: img.startsWith('http') ? img : `${BASE_URL}${img}` }} 
-              style={styles.feedbackImage} 
+              key={i} 
+              source={{ uri: getImageUrl(img) }} 
+              style={styles.reviewImage} 
             />
           ))}
         </ScrollView>
       )}
-      <View style={styles.footerRow}>
-        <Text style={styles.date}>
-          {item.sessionDate ? new Date(item.sessionDate).toLocaleDateString() : new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-        {user?.role !== 'admin' && (
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}>
-              <Ionicons name="create-outline" size={20} color={Colors.primary} />
+
+      <View style={styles.footer}>
+        <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+        {!isAdmin && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}
+            >
+              <Ionicons name="create-outline" size={18} color={Colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDelete(item._id)}>
-              <Ionicons name="trash-outline" size={20} color="#ef4444" />
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => handleDelete(item._id)}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
             </TouchableOpacity>
           </View>
         )}
@@ -129,47 +136,44 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = nu
 
   return (
     <View style={styles.container}>
-      {!isEmbedded && (
-        <View style={styles.header}>
-          {user?.role === 'admin' && (
-            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={22} color="#0f172a" />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.title}>{user?.role === 'admin' ? 'All Reviews' : 'My Feedbacks'}</Text>
-          <Text style={styles.subtitle}>
-            {user?.role === 'admin'
-              ? 'View all feedback submitted by users'
-              : 'Your shared adventures and reviews'}
-          </Text>
-        </View>
-      )}
-
-      {isEmbedded && user?.role !== 'admin' && (
-        <View style={styles.embeddedHeader}>
-          <TouchableOpacity 
-            style={styles.submitBtn}
-            onPress={() => navigation.navigate('AddFeedback')} 
-          >
-            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
-            <Text style={styles.submitBtnText}>Share New Feedback</Text>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={28} color={Colors.text} />
           </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>{isAdmin ? 'Manage Reviews' : 'My Feedbacks'}</Text>
+            <Text style={styles.subtitle}>
+              {isAdmin ? 'View and monitor all community reviews' : 'Your shared experiences'}
+            </Text>
+          </View>
         </View>
-      )}
+
+        <View style={styles.tabContainer}>
+          {['All', 'Campsite', 'Equipment', 'Guide'].map((cat) => (
+            <TouchableOpacity 
+              key={cat}
+              style={[styles.tab, activeCategory === cat && styles.activeTab]}
+              onPress={() => setActiveCategory(cat)}
+            >
+              <Text style={[styles.tabText, activeCategory === cat && styles.activeTabText]}>
+                {cat === 'All' ? 'All' : cat + 's'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 50 }} />
       ) : (
         <FlatList
-          data={feedbacks}
+          data={filteredFeedbacks}
           renderItem={renderItem}
           keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="chatbox-outline" size={48} color="#94a3b8" />
-              <Text style={styles.emptyText}>No feedbacks yet.</Text>
-            </View>
+            <Text style={styles.emptyText}>No reviews found.</Text>
           }
         />
       )}
@@ -180,21 +184,33 @@ const FeedbackListScreen = ({ navigation, isEmbedded = false, refreshSignal = nu
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#f8fafc',
   },
   header: {
     padding: 24,
-    backgroundColor: '#fff',
-    paddingTop: 60,
+    backgroundColor: Colors.white,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 0 : 20,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  backBtn: {
-    marginBottom: 10,
-    width: 28,
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 14,
@@ -203,20 +219,19 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 20,
-    paddingBottom: 40,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#15803d',
+    borderLeftColor: Colors.primary,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
   },
   row: {
     flexDirection: 'row',
@@ -227,34 +242,62 @@ const styles = StyleSheet.create({
   target: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
   },
-  targetType: {
-    fontSize: 11,
+  categoryBadge: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  categoryBadgeText: {
+    fontSize: 10,
+    color: Colors.primary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  userName: {
+    fontSize: 13,
     color: '#64748b',
-    marginTop: 2,
+    fontWeight: '600',
+    marginBottom: 10,
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef9c3',
+    backgroundColor: '#fffbeb',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
+    borderRadius: 8,
+  },
+  star: {
+    fontSize: 12,
+    marginRight: 4,
   },
   rating: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#854d0e',
+    color: '#92400e',
   },
   comment: {
     fontSize: 14,
     color: '#475569',
-    lineHeight: 20,
+    fontStyle: 'italic',
+    lineHeight: 22,
     marginBottom: 12,
   },
-  footerRow: {
+  date: {
+    fontSize: 11,
+    color: '#94a3b8',
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -262,48 +305,53 @@ const styles = StyleSheet.create({
     borderTopColor: '#f1f5f9',
     paddingTop: 12,
   },
-  date: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  actions: {
+  actionRow: {
     flexDirection: 'row',
     gap: 15,
   },
-  embeddedHeader: {
-    padding: 15,
-  },
-  submitBtn: {
-    backgroundColor: '#15803d',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
-    elevation: 2,
-  },
-  submitBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 60,
+  actionBtn: {
+    padding: 5,
   },
   emptyText: {
-    marginTop: 12,
-    color: '#94a3b8',
+    textAlign: 'center',
+    marginTop: 50,
+    color: '#64748b',
     fontSize: 16,
   },
-  imageScroll: {
+  tabContainer: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginTop: 20,
+    gap: 8,
+    flexWrap: 'wrap',
   },
-  feedbackImage: {
-    width: 100,
-    height: 100,
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activeTab: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  reviewImages: {
+    marginTop: 8,
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  reviewImage: {
+    width: 80,
+    height: 80,
     borderRadius: 8,
     marginRight: 10,
     backgroundColor: '#f1f5f9',

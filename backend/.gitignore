@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-node_modules
-*.env
- 
-=======
 # 1. Block environment variables (Security)
 .env
 .env.test
@@ -24,4 +19,6 @@ pids
 .DS_Store
 .vscode/
 .idea/
->>>>>>> a3070cceda25516cacf67bb326a7dca882f75fe1
+
+# 5. Uploads
+uploads/

@@ -58,30 +58,21 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Header />
       <ScrollView 
         style={styles.container} 
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
       >
         {/* Hero Section */}
         <ImageBackground 
           source={require('../../assets/hero-bg.png')} 
           style={styles.hero}
         >
-          <Header />
           <View style={styles.heroOverlay}>
 
             <View style={styles.heroContent}>
               <Text style={styles.heroTitle}>Gateway to the</Text>
               <Text style={styles.heroTitleHighlight}>Outdoors</Text>
-              
-              <View style={styles.weatherBadge}>
-                <Text style={styles.weatherText}>☀️ Sunny, 24°C</Text>
-              </View>
-
-              <TouchableOpacity style={styles.planButton} onPress={() => navigation.navigate('Store')}>
-                <Text style={styles.planButtonText}>Plan Adventure</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </ImageBackground>
@@ -93,7 +84,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Discover Sites</Text>
               <Text style={styles.sectionSubtitle}>Real-time availability</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Store')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Equipment')}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -124,7 +115,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Top Guides</Text>
               <Text style={styles.sectionSubtitle}>Professional wilderness experts</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Store')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Equipment')}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -155,7 +146,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Camping Gear</Text>
               <Text style={styles.sectionSubtitle}>Premium rental equipment</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Store')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Equipment', { activeTab: 'gear' })}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -169,10 +160,13 @@ const HomeScreen = ({ navigation }) => {
               showsHorizontalScrollIndicator={false}
               keyExtractor={item => item._id}
               renderItem={({ item }) => (
-                <EquipmentCard 
-                  item={item} 
-                  onPress={() => navigation.navigate('EquipmentDetail', { item })} 
-                />
+                <View style={{ width: 220, marginRight: 16 }}>
+                  <EquipmentCard 
+                    item={item} 
+                    onPress={() => navigation.navigate('EquipmentDetail', { item })} 
+                    onAddToCart={(gear) => console.log('Added to cart:', gear.name)}
+                  />
+                </View>
               )}
               contentContainerStyle={styles.horizontalList}
             />
@@ -248,32 +242,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#10b981',
     marginTop: -5,
-  },
-  weatherBadge: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginTop: 15,
-  },
-  weatherText: {
-    color: Colors.white,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  planButton: {
-    backgroundColor: '#166534',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 25,
-  },
-  planButtonText: {
-    color: Colors.white,
-    fontWeight: 'bold',
-    fontSize: 14,
   },
   section: {
     marginTop: 25,

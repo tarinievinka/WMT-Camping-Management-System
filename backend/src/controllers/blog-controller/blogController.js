@@ -32,6 +32,10 @@ exports.getAllBlogs = async (req, res) => {
             if (blogObj.authorRole === 'admin') {
                 blogObj.authorName = 'Admin';
             }
+            // Ensure images is always an array (backward compatibility)
+            if (blogObj.image && (!blogObj.images || blogObj.images.length === 0)) {
+                blogObj.images = [blogObj.image];
+            }
             return blogObj;
         });
         res.status(200).json(formattedBlogs);
@@ -56,6 +60,11 @@ exports.getBlogById = async (req, res) => {
             blogObj.authorName = 'Admin';
         }
 
+        // Ensure images is always an array
+        if (blogObj.image && (!blogObj.images || blogObj.images.length === 0)) {
+            blogObj.images = [blogObj.image];
+        }
+
         res.status(200).json(blogObj);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -65,7 +74,7 @@ exports.getBlogById = async (req, res) => {
 // Create blog
 exports.createBlog = async (req, res) => {
     try {
-        const { title, content, image, tags, category } = req.body;
+        const { title, content, images, image, tags, category } = req.body;
         const blog = new Blog({
             title,
             content,
@@ -73,8 +82,9 @@ exports.createBlog = async (req, res) => {
             authorName: req.user.role === 'admin' ? 'Admin' : (req.user.name || req.user.username || 'Anonymous'),
             authorRole: req.user.role || 'user',
             category: category || 'General',
-            image,
-            tags
+            images: images && images.length > 0 ? images : (image ? [image] : []),
+            image: (images && images.length > 0) ? images[0] : (image || ''),
+            tags: tags || []
         });
         await blog.save();
         res.status(201).json(blog);
@@ -89,9 +99,16 @@ exports.updateBlog = async (req, res) => {
         let blog = await Blog.findById(req.params.id);
         if (!blog) return res.status(404).json({ error: 'Blog not found' });
 
-        // Check ownership or admin
-        if (blog.author.toString() !== req.user.id && req.user.role !== 'admin') {
+        // Check ownership (Strict: Only author can update)
+        const authorId = blog.author._id ? blog.author._id.toString() : blog.author.toString();
+        if (authorId !== req.user.id) {
             return res.status(401).json({ error: 'Not authorized' });
+        }
+
+
+        // If images are provided, update the legacy 'image' field too
+        if (req.body.images && req.body.images.length > 0) {
+            req.body.image = req.body.images[0];
         }
 
         blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -107,8 +124,9 @@ exports.deleteBlog = async (req, res) => {
         const blog = await Blog.findById(req.params.id);
         if (!blog) return res.status(404).json({ error: 'Blog not found' });
 
-        // Check ownership or admin
-        if (blog.author.toString() !== req.user.id && req.user.role !== 'admin') {
+        // Check ownership (Strict: Only author can delete)
+        const authorId = blog.author._id ? blog.author._id.toString() : blog.author.toString();
+        if (authorId !== req.user.id) {
             return res.status(401).json({ error: 'Not authorized' });
         }
 

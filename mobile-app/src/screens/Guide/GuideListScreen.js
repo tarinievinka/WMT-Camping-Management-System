@@ -10,19 +10,22 @@ import {
   TextInput,
   SafeAreaView
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { apiClient, BASE_URL } from '../../api/apiClient';
+import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
 
 const GuideListScreen = ({ navigation }) => {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetchGuides();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchGuides();
+    }, [])
+  );
 
   const fetchGuides = async () => {
     try {
@@ -41,13 +44,6 @@ const GuideListScreen = ({ navigation }) => {
     guide.languages?.some(lang => lang.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    if (path.startsWith('file:') || path.startsWith('content:')) return null;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
-
   const renderItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.card}
@@ -61,7 +57,14 @@ const GuideListScreen = ({ navigation }) => {
         />
         <View style={styles.info}>
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.expertise}>{item.description?.substring(0, 50)}...</Text>
+          <View style={styles.ratingRow}>
+            <Ionicons name="star" size={12} color="#fbbf24" />
+            <Text style={styles.ratingValue}>
+              {item.averageRating ? item.averageRating.toFixed(1) : '0.0'}
+              <Text style={styles.numReviews}> ({item.numReviews || 0})</Text>
+            </Text>
+          </View>
+          <Text style={styles.expertise} numberOfLines={1}>{item.description}</Text>
           <View style={styles.langContainer}>
             {item.specialties?.map((spec, idx) => (
               <View key={idx} style={styles.langBadge}>
@@ -71,7 +74,7 @@ const GuideListScreen = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.priceInfo}>
-          <Text style={styles.price}>Rs. {item.dailyRate}</Text>
+          <Text style={styles.price}>LKR {item.dailyRate}</Text>
           <Text style={styles.unit}>/day</Text>
         </View>
       </View>
@@ -174,7 +177,23 @@ const styles = StyleSheet.create({
   expertise: {
     fontSize: 13,
     color: Colors.gray,
-    marginVertical: 4,
+    marginVertical: 2,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 4,
+  },
+  ratingValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400e',
+  },
+  numReviews: {
+    fontSize: 11,
+    color: Colors.gray,
+    fontWeight: 'normal',
   },
   langContainer: {
     flexDirection: 'row',

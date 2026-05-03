@@ -16,6 +16,10 @@ const GuideProfileScreen = ({ navigation }) => {
     specialties: '',
     dailyRate: '',
     description: '',
+    experience: '',
+    tagline: '',
+    languages: '',
+    skills: '',
   });
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [gallery, setGallery] = useState([]);
@@ -44,6 +48,10 @@ const GuideProfileScreen = ({ navigation }) => {
           specialties: myProfile.specialties?.join(', ') || '',
           dailyRate: myProfile.dailyRate?.toString() || '',
           description: myProfile.description || '',
+          experience: myProfile.experience?.toString() || '',
+          tagline: myProfile.tagline || '',
+          languages: myProfile.languages?.join(', ') || '',
+          skills: myProfile.skills?.join(', ') || '',
         });
         setProfilePhoto(myProfile.profilePhoto || null);
         setGallery(myProfile.gallery || []);
@@ -113,7 +121,10 @@ const GuideProfileScreen = ({ navigation }) => {
       const data = {
         ...formData,
         dailyRate: parseFloat(formData.dailyRate),
+        experience: parseInt(formData.experience) || 0,
         specialties: formData.specialties.split(',').map(s => s.trim()).filter(s => s),
+        languages: formData.languages.split(',').map(s => s.trim()).filter(s => s),
+        skills: formData.skills.split(',').map(s => s.trim()).filter(s => s),
         profilePhoto,
         gallery
       };
@@ -144,7 +155,7 @@ const GuideProfileScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>My Guide Profile</Text>
+        <Text style={styles.title}>Edit Profile</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -159,6 +170,16 @@ const GuideProfileScreen = ({ navigation }) => {
             </View>
           )}
         </TouchableOpacity>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Profile Tagline (Key Description)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.tagline}
+            onChangeText={(val) => setFormData({ ...formData, tagline: val })}
+            placeholder="e.g. Solo Hiker and Trail Expert"
+          />
+        </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Full Name</Text>
@@ -186,6 +207,37 @@ const GuideProfileScreen = ({ navigation }) => {
             value={formData.dailyRate}
             onChangeText={(val) => setFormData({ ...formData, dailyRate: val })}
             keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Years of Experience</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.experience}
+            onChangeText={(val) => setFormData({ ...formData, experience: val })}
+            keyboardType="numeric"
+            placeholder="e.g. 5"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Languages (comma separated)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.languages}
+            onChangeText={(val) => setFormData({ ...formData, languages: val })}
+            placeholder="e.g. English, Sinhala, Tamil"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Other Skills (comma separated)</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.skills}
+            onChangeText={(val) => setFormData({ ...formData, skills: val })}
+            placeholder="e.g. First Aid, Navigation, Cooking"
           />
         </View>
 
@@ -262,6 +314,23 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 40,
+  },
+  viewPublicBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginBottom: 20,
+    gap: 8,
+  },
+  viewPublicText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   avatarPicker: {
     alignSelf: 'center',

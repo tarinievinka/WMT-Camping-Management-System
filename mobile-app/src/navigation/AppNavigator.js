@@ -13,6 +13,7 @@ import GuideTabNavigator from './GuideTabNavigator';
 import OnboardingScreen from '../screens/Auth/OnboardingScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import EditProfileScreen from '../screens/Auth/EditProfileScreen';
+import SplashScreen from '../screens/SplashScreen';
 
 // Detail Screens
 import CampsiteDetailScreen from '../screens/CampingSite/CampsiteDetailScreen';
@@ -27,6 +28,9 @@ import MyTicketsScreen from '../screens/Feedback & Ticket/Ticket/MyTicketsScreen
 import CreateTicketScreen from '../screens/Feedback & Ticket/Ticket/CreateTicketScreen';
 import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
 import SubmitFeedbackScreen from '../screens/Feedback & Ticket/Feedback/SubmitFeedbackScreen';
+import PaymentHistoryScreen from '../screens/Payment/PaymentHistoryScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+
 
 import AdminTicketsScreen from '../screens/Feedback & Ticket/Ticket/AdminTicketsScreen';
 
@@ -34,20 +38,18 @@ import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
 
 import CreateBlogScreen from '../screens/Blog/CreateBlogScreen';
 import CartScreen from '../screens/CartScreen';
+import GuideProfileScreen from '../screens/GuideDashboard/GuideProfileScreen';
 
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   const { user, isLoading } = useAuth();
+  const [isSplashFinished, setIsSplashFinished] = React.useState(false);
   
   console.log('[NAV] AppNavigator rendering for role:', user?.role);
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+  if (isLoading || !isSplashFinished) {
+    return <SplashScreen onFinish={() => setIsSplashFinished(true)} />;
   }
 
   return (
@@ -65,19 +67,26 @@ const AppNavigator = () => {
             <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
-        ) : user.role === 'admin' ? (
-          // Admin Stack
-          <Stack.Screen name="AdminRoot" component={AdminNavigator} />
-        ) : user.role === 'guide' ? (
-          // Guide Stack
-          <Stack.Screen name="GuideRoot" component={GuideTabNavigator} />
         ) : (
-          // User Stack
+          // Authenticated Stack (Admin, Guide, or User)
           <>
-            <Stack.Screen name="Main" component={MainTabNavigator} />
+            {user.role === 'admin' ? (
+              <Stack.Screen name="AdminRoot" component={AdminNavigator} />
+            ) : user.role === 'guide' ? (
+              <Stack.Screen name="GuideRoot" component={GuideTabNavigator} />
+            ) : (
+              <Stack.Screen name="Main" component={MainTabNavigator} />
+            )}
+
+            {/* Common Screens accessible to all roles */}
             <Stack.Screen name="CampsiteDetail" component={CampsiteDetailScreen} />
             <Stack.Screen name="GuideDetail" component={GuideDetailScreen} />
             <Stack.Screen name="EquipmentDetail" component={EquipmentDetailScreen} />
+            <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            
+            {/* User & Guide Shared flow screens */}
             <Stack.Screen name="Booking" component={BookingScreen} />
             <Stack.Screen name="Payment" component={PaymentScreen} />
             <Stack.Screen name="MyBookings" component={MyBookingsScreen} />
@@ -88,11 +97,10 @@ const AppNavigator = () => {
             <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
             <Stack.Screen name="SubmitFeedback" component={SubmitFeedbackScreen} />
             <Stack.Screen name="AdminTickets" component={AdminTicketsScreen} />
-            <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
-
             <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
+            <Stack.Screen name="GuideProfile" component={GuideProfileScreen} />
           </>
         )}
       </Stack.Navigator>

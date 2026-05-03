@@ -8,7 +8,7 @@ import { Colors } from '../theme/colors';
 import HomeScreen from '../screens/HomeScreen';
 import StoreScreen from '../screens/StoreScreen';
 import BlogListScreen from '../screens/Blog/BlogListScreen';
-import GuideListScreen from '../screens/Guide/GuideListScreen';
+
 import ProfileScreen from '../screens/Auth/ProfileScreen';
 import SupportPortalScreen from '../screens/Feedback & Ticket/SupportPortalScreen';
 
@@ -27,12 +27,10 @@ const MainTabNavigator = () => {
           if (route.name === 'Campsites') {
             iconName = focused ? 'home' : 'home-outline';
             return <Ionicons name={iconName} size={size} color={color} />;
-          } else if (route.name === 'Equipment') {
+          } else if (route.name === 'Store') {
             iconName = focused ? 'cart' : 'cart-outline';
             return <Ionicons name={iconName} size={size} color={color} />;
-          } else if (route.name === 'Guides') {
-            iconName = focused ? 'people' : 'people-outline';
-            return <Ionicons name={iconName} size={size} color={color} />;
+
           } else if (route.name === 'Blogs') {
             iconName = focused ? 'newspaper' : 'newspaper-outline';
             return <Ionicons name={iconName} size={size} color={color} />;
@@ -69,8 +67,12 @@ const MainTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Campsites" component={HomeScreen} />
-      <Tab.Screen name="Equipment" component={StoreScreen} />
-      <Tab.Screen name="Guides" component={GuideListScreen} />
+      <Tab.Screen 
+        name="Store" 
+        component={StoreScreen} 
+        options={{ tabBarLabel: 'Store' }} 
+      />
+
       <Tab.Screen name="Blogs" component={BlogListScreen} />
       <Tab.Screen name="Support" component={SupportPortalScreen} />
 

@@ -63,7 +63,7 @@ const GuideDashboardScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* Header */}
         <View style={styles.header}>
@@ -129,7 +129,7 @@ const GuideDashboardScreen = ({ navigation }) => {
 
         <TouchableOpacity 
           style={styles.secondaryAction}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => navigation.navigate('GuideProfile')}
         >
           <View style={styles.actionLeft}>
             <Ionicons name="person-outline" size={22} color={Colors.text} />

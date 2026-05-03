@@ -1,22 +1,76 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
-  Platform
+  Platform,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
-import { BASE_URL } from '../../api/apiClient';
+import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
   const [quantity, setQuantity] = useState(1);
+  const [equipmentData, setEquipmentData] = useState(item);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  const { user } = useAuth();
+  const { addToCart, cartItems } = useCart();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+      fetchEquipmentData();
+    }, [])
+  );
+
+  const fetchEquipmentData = async () => {
+    try {
+      const response = await apiClient.get(`/equipment/${item._id}`);
+      if (response.data.data) {
+        setEquipmentData(response.data.data);
+      } else if (response.data) {
+        setEquipmentData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching equipment data:', error);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await apiClient.get(`/feedback/display?targetId=${item._id}&targetType=Equipment`);
+      setReviews(response.data);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleAddToCart = (mode) => {
+    addToCart(equipmentData, 'equipment', mode, quantity);
+    Alert.alert(
+      'Success',
+      `${quantity} ${equipmentData.name} added to cart for ${mode}.`,
+      [
+        { text: 'Continue Shopping', style: 'cancel' },
+        { text: 'View Cart', onPress: () => navigation.navigate('Cart') }
+      ]
+    );
+  };
 
   const getImageUrl = (path) => {
     if (!path) return null;
@@ -26,19 +80,31 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         {/* Product Image */}
         <View style={styles.imageSection}>
-          <Image 
-            source={{ uri: getImageUrl(item.imageUrl) || 'https://images.unsplash.com/photo-1504215680045-29eee485e9be?auto=format&fit=crop&w=600&q=80' }} 
-            style={styles.image} 
+          <Image
+            source={{ uri: getImageUrl(item.imageUrl) || 'https://images.unsplash.com/photo-1504215680045-29eee485e9be?auto=format&fit=crop&w=600&q=80' }}
+            style={styles.image}
             resizeMode="contain"
           />
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Cart')}
+          >
+            <Ionicons name="cart-outline" size={24} color={Colors.text} />
+            {cartItems.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -46,10 +112,21 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{item.category || 'CAMPING GEAR'}</Text>
           </View>
-          
-          <Text style={styles.title}>{item.name}</Text>
-          <Text style={styles.price}>Rs. {item.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
-          <Text style={styles.salePrice}>Purchase: Rs. {item.salePrice}</Text>
+
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{equipmentData.name}</Text>
+              <Text style={styles.price}>LKR {equipmentData.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
+              <Text style={styles.salePrice}>Purchase: LKR {equipmentData.salePrice}</Text>
+            </View>
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={16} color="#fbbf24" />
+              <Text style={styles.ratingText}>
+                {equipmentData.averageRating ? equipmentData.averageRating.toFixed(1) : '0.0'}
+                <Text style={styles.reviewCount}> ({equipmentData.numReviews || 0})</Text>
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.divider} />
 
@@ -61,15 +138,15 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
           <View style={styles.quantitySection}>
             <Text style={styles.sectionTitle}>Quantity</Text>
             <View style={styles.quantityControl}>
-              <TouchableOpacity 
-                style={styles.qtyBtn} 
+              <TouchableOpacity
+                style={styles.qtyBtn}
                 onPress={() => setQuantity(Math.max(1, quantity - 1))}
               >
                 <Feather name="minus" size={20} color={Colors.text} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{quantity}</Text>
-              <TouchableOpacity 
-                style={styles.qtyBtn} 
+              <TouchableOpacity
+                style={styles.qtyBtn}
                 onPress={() => setQuantity(quantity + 1)}
               >
                 <Feather name="plus" size={20} color={Colors.text} />
@@ -77,23 +154,72 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
             </View>
           </View>
 
+          <View style={styles.divider} />
+
+          {/* Reviews Section */}
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.sectionTitle}>Community Reviews</Text>
+          </View>
+
+          {loadingReviews ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <View key={index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewerInfo}>
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarText}>
+                        {(review.userId?.name || review.userName || 'A')[0].toUpperCase()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous User'}</Text>
+                      <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.reviewRating}>
+                    <Ionicons name="star" size={12} color="#fbbf24" />
+                    <Text style={styles.ratingValue}>{review.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.reviewComment}>"{review.comment}"</Text>
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+                    {review.imageUrls.map((img, i) => (
+                      <Image 
+                        key={i} 
+                        source={{ uri: getImageUrl(img) }} 
+                        style={styles.reviewImage} 
+                      />
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noReviews}>No reviews yet. Buy or rent this gear to share your experience.</Text>
+          )}
+
+          <View style={styles.divider} />
+
           <View style={styles.footer}>
             <View style={styles.totalSection}>
-              <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>Rs. {item.rentalPrice * quantity}</Text>
+              <Text style={styles.totalLabel}>Subtotal</Text>
+              <Text style={styles.totalValue}>LKR {equipmentData.rentalPrice * quantity}</Text>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.buyButton}
-                onPress={() => navigation.navigate('Booking', { item, type: 'equipment', mode: 'buy' })}
+                onPress={() => handleAddToCart('buy')}
               >
-                <Text style={styles.buyButtonText}>Buy Now</Text>
+                <Text style={styles.buyButtonText}>Add Buy</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.rentButton}
-                onPress={() => navigation.navigate('Booking', { item, type: 'equipment', mode: 'rent' })}
+                onPress={() => handleAddToCart('rent')}
               >
-                <Text style={styles.rentButtonText}>Rent Now</Text>
+                <Text style={styles.rentButtonText}>Add Rent</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -131,6 +257,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...Shadows.small,
   },
+  cartButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.small,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ef4444',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
+  },
   content: {
     padding: 24,
   },
@@ -147,6 +303,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  ratingText: {
+    marginLeft: 4,
+    fontWeight: 'bold',
+    color: '#92400e',
+    fontSize: 14,
+  },
+  reviewCount: {
+    fontSize: 11,
+    color: '#b45309',
+    fontWeight: '600',
   },
   title: {
     fontSize: 24,
@@ -266,6 +447,108 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  addReviewBtn: {
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+  },
+  addReviewText: {
+    color: '#92400e',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  reviewCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginTop: 1,
+  },
+  reviewRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  ratingValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#92400e',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  noReviews: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: 20,
+  },
+  reviewImages: {
+    marginTop: 12,
+    flexDirection: 'row',
+  },
+  reviewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
+  }
 });
 
 export default EquipmentDetailScreen;

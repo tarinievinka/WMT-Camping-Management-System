@@ -19,15 +19,27 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
-import { BASE_URL } from '../api/apiClient';
+import { BASE_URL, getImageUrl } from '../api/apiClient';
 import apiClient from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const PaymentScreen = ({ route, navigation }) => {
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const { item, type, mode, startDate: rawStartDate, endDate: rawEndDate, totalAmount, guests, bookingId } = route.params;
-  const startDate = new Date(rawStartDate).toISOString().split('T')[0];
-  const endDate = new Date(rawEndDate).toISOString().split('T')[0];
+  
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    try {
+      return new Date(date).toISOString().split('T')[0];
+    } catch (e) {
+      return 'N/A';
+    }
+  };
+
+  const startDate = formatDate(rawStartDate);
+  const endDate = formatDate(rawEndDate);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [receiptImage, setReceiptImage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -40,12 +52,7 @@ const PaymentScreen = ({ route, navigation }) => {
   const [expiryDate, setExpiryDate] = useState(new Date());
   const [cvv, setCvv] = useState('');
   const [showExpiry, setShowExpiry] = useState(false);
-
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
+  const [errors, setErrors] = useState({});
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -78,7 +85,7 @@ const PaymentScreen = ({ route, navigation }) => {
           amount: totalAmount,
           paymentMethod: 'google-pay',
           userId: user?._id,
-          status: 'success'
+          paymentStatus: 'success'
         };
 
         await apiClient.post('/payment/add', paymentData);
@@ -90,6 +97,7 @@ const PaymentScreen = ({ route, navigation }) => {
         setTimeout(() => {
           setShowGPayModal(false);
           setGpayStep('summary'); // reset for next time
+          if (mode === 'bulk') clearCart();
           navigation.navigate('PaymentSuccess', { type, pending: false });
         }, 1500);
       } catch (error) {
@@ -102,28 +110,46 @@ const PaymentScreen = ({ route, navigation }) => {
   };
 
   const handlePayment = async () => {
+    setErrors({});
+
     if (paymentMethod === 'gpay') {
       setShowGPayModal(true);
       return;
     }
 
     if (paymentMethod === 'deposit' && !receiptImage) {
-      Alert.alert('Receipt Required', 'Please upload your bank transfer receipt to continue.');
+      setErrors({ deposit: 'Please upload your bank transfer receipt to continue.' });
       return;
     }
 
     if (paymentMethod === 'card') {
+      let newErrors = {};
+
       if (cardNumber.replace(/\s/g, '').length !== 16) {
-        Alert.alert('Invalid Card', 'Card number must be 16 digits.');
-        return;
+        newErrors.cardNumber = 'Card number must be 16 digits.';
       }
       if (cvv.length !== 3) {
-        Alert.alert('Invalid CVV', 'CVV must be 3 digits.');
+        newErrors.cvv = 'CVV must be 3 digits.';
+      }
+
+      // Expiry Date Validation
+      const now = new Date();
+      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const selectedMonth = new Date(expiryDate.getFullYear(), expiryDate.getMonth(), 1);
+      
+      if (selectedMonth < currentMonth) {
+        newErrors.expiry = 'The card has already expired.';
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
     }
 
     setLoading(true);
+    console.log('[PAYMENT_DEBUG] Attempting payment to:', `${apiClient.defaults.baseURL}/payment/add`);
+    console.log('[PAYMENT_DEBUG] Method:', paymentMethod);
     try {
       if (paymentMethod === 'deposit') {
         // Handle Bank Deposit with Receipt Upload
@@ -135,32 +161,56 @@ const PaymentScreen = ({ route, navigation }) => {
         formData.append('userId', user?._id);
         
         if (receiptImage) {
-          const uri = receiptImage.uri;
-          const name = uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(name);
-          const type = match ? `image/${match[1]}` : `image`;
-          
-          formData.append('receipt', { uri, name, type });
+          if (Platform.OS === 'web') {
+            // For Web, we need to fetch the blob from the URI
+            const response = await fetch(receiptImage.uri);
+            const blob = await response.blob();
+            formData.append('receipt', blob, receiptImage.fileName || `receipt_${Date.now()}.jpg`);
+          } else {
+            // For Mobile (Native)
+            const uri = receiptImage.uri;
+            const name = uri.split('/').pop() || 'receipt.jpg';
+            const match = /\.(\w+)$/.exec(name);
+            const fileType = match ? `image/${match[1]}` : `image/jpeg`;
+            
+            formData.append('receipt', { 
+              uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''), 
+              name, 
+              type: fileType 
+            });
+          }
         }
 
-        await apiClient.post('/payment/add', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await apiClient.post('/payment/add', formData);
 
         setLoading(false);
+        if (mode === 'bulk') clearCart();
         navigation.navigate('PaymentSuccess', { type, pending: true });
+      } else if (paymentMethod === 'card') {
+        const paymentData = {
+          bookingId: bookingId || item._id,
+          bookingType: type === 'guide' ? 'GuideBooking' : type === 'equipment' ? 'EquipmentBooking' : 'CampsiteBooking',
+          amount: totalAmount,
+          paymentMethod: 'card',
+          userId: user?._id,
+          paymentStatus: 'success'
+        };
+        await apiClient.post('/payment/add', paymentData);
+        setLoading(false);
+        if (mode === 'bulk') clearCart();
+        navigation.navigate('PaymentSuccess', { type, pending: false });
       } else {
-        // Handle other payment methods (simulated)
+        // Handle other simulated methods
         setTimeout(() => {
           setLoading(false);
+          if (mode === 'bulk') clearCart();
           navigation.navigate('PaymentSuccess', { type, pending: false });
         }, 2000);
-        return; // Exit here since we set timeout
       }
     } catch (error) {
       console.error('Payment Error:', error);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Something went wrong during the payment process.';
-      Alert.alert('Payment Failed', errorMsg);
+      setErrors({ form: errorMsg });
     } finally {
       setLoading(false);
     }
@@ -179,7 +229,6 @@ const PaymentScreen = ({ route, navigation }) => {
       <ScrollView 
         style={{ flex: 1, ...Platform.select({ web: { maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' } }) }}
         contentContainerStyle={[styles.content, { flexGrow: 1 }]}
-        showsVerticalScrollIndicator={true}
       >
         {/* Order Summary Section */}
         <View style={styles.section}>
@@ -192,7 +241,9 @@ const PaymentScreen = ({ route, navigation }) => {
             />
             <View style={styles.summaryInfo}>
               <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemType}>{type?.toUpperCase() || 'BOOKING'} - {mode === 'buy' ? 'PURCHASE' : 'RENTAL'}</Text>
+              <Text style={styles.itemType}>
+                {type?.toUpperCase() || 'BOOKING'} - {mode === 'buy' ? 'PURCHASE' : (type === 'guide' ? 'BOOKING' : 'RENTAL')}
+              </Text>
               {mode !== 'buy' && (
                 <Text style={styles.itemDates}>{startDate} to {endDate}</Text>
               )}
@@ -200,7 +251,7 @@ const PaymentScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>Rs. {totalAmount}</Text>
+              <Text style={styles.totalValue}>LKR {totalAmount}</Text>
             </View>
           </View>
         </View>
@@ -262,35 +313,46 @@ const PaymentScreen = ({ route, navigation }) => {
                 placeholder="XXXX XXXX XXXX XXXX"
                 keyboardType="numeric"
                 value={cardNumber}
-                onChangeText={(text) => setCardNumber(text.replace(/[^0-9]/g, '').substring(0, 16))}
+                onChangeText={(text) => { setCardNumber(text.replace(/[^0-9]/g, '').substring(0, 16)); setErrors({ ...errors, cardNumber: null }); }}
                 maxLength={16}
               />
+              {errors.cardNumber && <Text style={styles.errorText}>{errors.cardNumber}</Text>}
             </View>
             <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: 15 }]}>
                 <Text style={styles.label}>Expiry Date</Text>
                 {Platform.OS === 'web' ? (
-                  <input
-                    type="month"
-                    value={`${expiryDate.getFullYear()}-${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}`}
-                    onChange={(e) => {
-                      const [y, m] = e.target.value.split('-');
-                      setExpiryDate(new Date(parseInt(y), parseInt(m) - 1));
-                    }}
-                    style={{
-                      padding: 15,
-                      borderRadius: 12,
-                      border: '1px solid #f1f5f9',
-                      backgroundColor: '#f8fafc',
-                      fontSize: 16,
-                      width: '100%',
-                      fontFamily: 'inherit'
-                    }}
-                  />
+                  <View style={[styles.input, { padding: 0, overflow: 'hidden' }]}>
+                    <input
+                      type="month"
+                      value={`${expiryDate.getFullYear()}-${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}`}
+                      onChange={(e) => {
+                        const [y, m] = e.target.value.split('-');
+                        setExpiryDate(new Date(parseInt(y), parseInt(m) - 1));
+                      }}
+                      style={{
+                        padding: '12px 15px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        fontSize: '15px',
+                        width: '100%',
+                        height: '100%',
+                        fontFamily: 'inherit',
+                        outline: 'none',
+                        color: Colors.text
+                      }}
+                    />
+                  </View>
                 ) : (
                   <>
-                    <TouchableOpacity style={styles.input} onPress={() => setShowExpiry(true)}>
-                      <Text>{(expiryDate.getMonth() + 1).toString().padStart(2, '0')}/{expiryDate.getFullYear().toString().substring(2)}</Text>
+                    <TouchableOpacity 
+                      style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]} 
+                      onPress={() => setShowExpiry(true)}
+                    >
+                      <Text style={{ fontSize: 16, color: Colors.text }}>
+                        {(expiryDate.getMonth() + 1).toString().padStart(2, '0')} / {expiryDate.getFullYear().toString().substring(2)}
+                      </Text>
+                      <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
                     </TouchableOpacity>
                     {showExpiry && (
                       <DateTimePicker
@@ -305,6 +367,7 @@ const PaymentScreen = ({ route, navigation }) => {
                     )}
                   </>
                 )}
+                {errors.expiry && <Text style={styles.errorText}>{errors.expiry}</Text>}
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.label}>CVV</Text>
@@ -314,11 +377,18 @@ const PaymentScreen = ({ route, navigation }) => {
                   keyboardType="numeric"
                   secureTextEntry
                   value={cvv}
-                  onChangeText={(text) => setCvv(text.replace(/[^0-9]/g, '').substring(0, 3))}
+                  onChangeText={(text) => { setCvv(text.replace(/[^0-9]/g, '').substring(0, 3)); setErrors({ ...errors, cvv: null }); }}
                   maxLength={3}
                 />
+                {errors.cvv && <Text style={styles.errorText}>{errors.cvv}</Text>}
               </View>
             </View>
+            {errors.form && (
+              <View style={styles.formErrorContainer}>
+                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Text style={styles.formErrorText}>{errors.form}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -367,7 +437,7 @@ const PaymentScreen = ({ route, navigation }) => {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.payButtonText}>
-              {paymentMethod === 'deposit' ? 'Confirm Booking' : paymentMethod === 'gpay' ? 'Pay with Google Pay' : `Pay Rs. ${totalAmount}`}
+              {paymentMethod === 'deposit' ? 'Confirm Booking' : paymentMethod === 'gpay' ? 'Pay with Google Pay' : `Pay LKR ${totalAmount}`}
             </Text>
           )}
         </TouchableOpacity>
@@ -396,7 +466,7 @@ const PaymentScreen = ({ route, navigation }) => {
               {gpayStep === 'summary' && (
                 <View>
                   <View style={styles.gpayContent}>
-                    <Text style={styles.gpayTotal}>Rs. {totalAmount}</Text>
+                    <Text style={styles.gpayTotal}>LKR {totalAmount}</Text>
                     <Text style={styles.gpayTo}>to Smart Camping System</Text>
                     
                     <View style={styles.gpayUser}>
@@ -592,6 +662,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    width: '100%',
   },
   label: {
     fontSize: 12,

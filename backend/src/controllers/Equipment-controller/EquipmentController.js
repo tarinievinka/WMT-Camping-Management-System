@@ -4,7 +4,7 @@ const {
   getAllEquipment,
   getEquipmentById,
   updateEquipment,
-  deleteEquipment,
+  deleteEquipment: serviceDeleteEquipment,
   updateAvailabilityStatus,
   reduceStock,
 } = require('../../services/Equipment-service/EquipmentService');
@@ -73,7 +73,7 @@ exports.deleteEquipment = async (req, res) => {
   if (!isValidId(req.params.id))
     return res.status(400).json({ error: 'Invalid equipment ID' });
   try {
-    const equipment = await deleteEquipment(req.params.id);
+    const equipment = await serviceDeleteEquipment(req.params.id);
     if (!equipment) return res.status(404).json({ error: 'Equipment not found' });
     res.json({ message: 'Equipment deleted' });
   } catch (err) {

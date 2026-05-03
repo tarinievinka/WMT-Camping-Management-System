@@ -39,9 +39,9 @@ const guideSchema = new mongoose.Schema(
       required: [true, "Age is required"],
       min: [18, "Age must be at least 18"],
     },
-    language: {
-      type: String,
-      trim: true,
+    languages: {
+      type: [String],
+      default: [],
     },
     cv: {
       type: String,
@@ -56,6 +56,11 @@ const guideSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
+    },
+    tagline: {
+      type: String,
+      trim: true,
+      default: ""
     },
 
     coverPhoto: { type: String, default: "" },
@@ -78,6 +83,14 @@ const guideSchema = new mongoose.Schema(
     /** Optional: when guide expects to accept bookings again (shown when paused + admin unavailable) */
     availableAgainAt: { type: Date, default: null },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true, // creates createdAt & updatedAt automatically

@@ -3,14 +3,9 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Shadows } from '../theme/shadows';
-import { BASE_URL } from '../api/apiClient';
+import { BASE_URL, getImageUrl } from '../api/apiClient';
 
 const CampsiteCard = ({ item, onPress }) => {
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   const getForecastColor = (type) => {
     switch (type?.toLowerCase()) {
@@ -45,10 +40,27 @@ const CampsiteCard = ({ item, onPress }) => {
 
       <View style={styles.content}>
         <Text style={styles.title}>{item.name}</Text>
-        <Text style={styles.price}>Rs. {item.pricePerNight}<Text style={styles.unit}>/night</Text></Text>
+        <Text style={styles.price}>LKR {item.pricePerNight}<Text style={styles.unit}>/night</Text></Text>
         <View style={styles.locationRow}>
           <Ionicons name="location-outline" size={14} color={Colors.gray} />
           <Text style={styles.location}>{item.location}</Text>
+        </View>
+
+        <View style={styles.ratingRow}>
+          <View style={styles.stars}>
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Ionicons 
+                key={s} 
+                name={s <= Math.round(item.averageRating || 0) ? "star" : "star-outline"} 
+                size={12} 
+                color="#f59e0b" 
+                style={{marginRight: 2}} 
+              />
+            ))}
+          </View>
+          <Text style={styles.ratingText}>
+            {item.averageRating ? item.averageRating.toFixed(1) : '0.0'} ({item.numReviews || 0})
+          </Text>
         </View>
 
       </View>
@@ -116,6 +128,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.gray,
     marginLeft: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  stars: {
+    flexDirection: 'row',
+    marginRight: 6,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: Colors.gray,
+    fontWeight: '600',
   },
   price: {
     fontSize: 16,

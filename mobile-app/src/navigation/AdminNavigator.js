@@ -14,12 +14,11 @@ import AddCampsiteScreen from '../screens/Admin/AddCampsiteScreen';
 import EditCampsiteScreen from '../screens/Admin/EditCampsiteScreen';
 import AddEquipmentScreen from '../screens/Admin/AddEquipmentScreen';
 import AddGuideScreen from '../screens/Admin/AddGuideScreen';
-<<<<<<< HEAD
 import CreateBlogScreen from '../screens/Blog/CreateBlogScreen';
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
-=======
 import EditGuideScreen from '../screens/Admin/EditGuideScreen';
->>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
+import EditEquipmentScreen from '../screens/Admin/EditEquipmentScreen';
+import TicketDetailsScreen from '../screens/Feedback & Ticket/Ticket/TicketDetailsScreen';
 
 const Stack = createStackNavigator();
 
@@ -42,13 +41,12 @@ const AdminNavigator = () => {
       <Stack.Screen name="AddCampsite" component={AddCampsiteScreen} />
       <Stack.Screen name="EditCampsite" component={EditCampsiteScreen} />
       <Stack.Screen name="AddEquipment" component={AddEquipmentScreen} />
+      <Stack.Screen name="EditEquipment" component={EditEquipmentScreen} />
       <Stack.Screen name="AddGuide" component={AddGuideScreen} />
-<<<<<<< HEAD
       <Stack.Screen name="CreateBlog" component={CreateBlogScreen} />
       <Stack.Screen name="BlogDetail" component={BlogDetailScreen} />
-=======
       <Stack.Screen name="EditGuide" component={EditGuideScreen} />
->>>>>>> 0e5e60ea9d644b65fa53668e7d4d60869fdc8c50
+      <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
     </Stack.Navigator>
   );
 };
