@@ -110,7 +110,7 @@ const BlogListScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState([]);
-  const { user } = useAuth();
+  const { user, unreadCount } = useAuth();
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const searchWidth = useRef(new Animated.Value(0)).current;
@@ -247,6 +247,16 @@ const BlogListScreen = ({ navigation }) => {
           <TouchableOpacity style={styles.headerIcon} onPress={() => setIsSearchActive(!isSearchActive)}>
             <Ionicons name="search" size={24} color="#fff" />
           </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('Notifications')}>
+            <View>
+              <Ionicons name="notifications-outline" size={24} color="#fff" />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('Profile')}>
             <Ionicons name="person-circle" size={28} color="#fff" />
           </TouchableOpacity>
@@ -378,6 +388,24 @@ const styles = StyleSheet.create({
   headerBrand: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
   headerIcon: { marginLeft: 15 },
+  badge: {
+    position: 'absolute',
+    right: -6,
+    top: -4,
+    backgroundColor: '#ef4444',
+    borderRadius: 9,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#065f46',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   searchOverlay: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 100 : (StatusBar.currentHeight || 40) + 80,

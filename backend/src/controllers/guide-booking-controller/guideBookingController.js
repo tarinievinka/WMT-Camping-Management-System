@@ -1,6 +1,7 @@
 const GuideBooking = require("../../models/guide-booking-model/guideBookingModel");
 const Guide = require("../../models/guide-model/guidemodel");
 const CustomerNotification = require("../../models/customer-notification-model/customerNotificationModel");
+const User = require("../../models/user-models/User");
 
 function escapeRegex(s) {
     return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -100,17 +101,47 @@ exports.updateBooking = async (req, res) => {
         const prevStatus = String(existing.status || "").toLowerCase();
         const updated = await GuideBooking.findByIdAndUpdate(id, req.body, { new: true });
         const newStatus = String(updated.status || "").toLowerCase();
-        if (prevStatus === "pending" && newStatus === "confirmed") {
+
+        console.log(`[GUIDE_BOOKING] Status change: ${prevStatus} -> ${newStatus} for booking ${id}`);
+
+        if (prevStatus !== newStatus) {
             try {
-                await CustomerNotification.create({
-                    customerName: updated.customerName || "Anonymous",
-                    bookingId: updated._id,
-                    title: "Booking confirmed",
-                    body: "Your guide confirmed your trip request. See details under My Bookings.",
-                    read: false,
-                });
+                // Find the user to get their email
+                let user = null;
+                if (updated.userId) {
+                    user = await User.findById(updated.userId);
+                }
+
+                if (user) {
+                    let title = "Booking Update";
+                    let body = `Your booking status for ${updated.guideName || 'your guide'} has changed to ${updated.status}.`;
+                    
+                    if (newStatus === "confirmed" || newStatus === "payment confirmed" || newStatus === "paid") {
+                        title = "Booking Confirmed! ✅";
+                        body = `Great news! Your booking with guide ${updated.guideName || ''} has been confirmed.`;
+                    } else if (newStatus === "cancelled" || newStatus === "failed" || newStatus === "rejected") {
+                        title = "Booking Rejected/Cancelled ❌";
+                        body = `Your booking request for guide ${updated.guideName || ''} was not successful.`;
+                    } else if (newStatus === "completed") {
+                        title = "Trip Completed! 🏔️";
+                        body = `Hope you had a great trip with ${updated.guideName || ''}! Please leave a review.`;
+                    }
+
+                    console.log(`[NOTIFY] Creating notification for ${user.email}: ${title}`);
+
+                    await CustomerNotification.create({
+                        customerName: user.username || user.name || updated.customerName || "Valued Camper",
+                        customerEmail: user.email,
+                        bookingId: updated._id,
+                        title: title,
+                        body: body,
+                        read: false,
+                    });
+                } else {
+                    console.warn(`[NOTIFY] User not found for userId: ${updated.userId}. Cannot send notification.`);
+                }
             } catch (e) {
-                console.error("Customer notification create failed:", e.message);
+                console.error("[NOTIFY_ERROR] Customer notification create failed:", e.message);
             }
         }
         res.json(updated);

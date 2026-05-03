@@ -308,7 +308,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.white },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 25,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.text },
   galleryContainer: { position: 'relative', width: '100%', overflow: 'hidden' },
