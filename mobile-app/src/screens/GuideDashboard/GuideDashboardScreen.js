@@ -129,7 +129,7 @@ const GuideDashboardScreen = ({ navigation }) => {
 
         <TouchableOpacity 
           style={styles.secondaryAction}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => navigation.navigate('GuideProfile')}
         >
           <View style={styles.actionLeft}>
             <Ionicons name="person-outline" size={22} color={Colors.text} />

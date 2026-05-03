@@ -39,9 +39,9 @@ const guideSchema = new mongoose.Schema(
       required: [true, "Age is required"],
       min: [18, "Age must be at least 18"],
     },
-    language: {
-      type: String,
-      trim: true,
+    languages: {
+      type: [String],
+      default: [],
     },
     cv: {
       type: String,
