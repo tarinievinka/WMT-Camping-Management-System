@@ -42,6 +42,9 @@ const MyBookingsScreen = ({ navigation }) => {
         ...item,
         type: 'Campsite',
         name: item.campsite?.name || 'Campsite Booking',
+        targetId: item.campsite?._id || item.campsiteId,
+        targetName: item.campsite?.name || 'Campsite Booking',
+        targetType: 'Campsite',
         date: new Date(item.checkInDate).toLocaleDateString(),
         displayAmount: `Rs. ${item.totalPrice}`,
         status: item.status === 'Payment Confirmed' ? 'Confirmed' : item.status
@@ -53,6 +56,9 @@ const MyBookingsScreen = ({ navigation }) => {
           ...item,
           type: 'Guide',
           name: item.guideName || 'Guide Booking',
+          targetId: item.guideId,
+          targetName: item.guideName || 'Guide Booking',
+          targetType: 'Guide',
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
           displayAmount: `Rs. ${item.amount}`,
           status: item.status
@@ -64,6 +70,9 @@ const MyBookingsScreen = ({ navigation }) => {
         ...item,
         type: 'Equipment',
         name: item.items?.length > 0 ? item.items[0].name : 'Equipment Purchase',
+        targetId: item.items?.length > 0 ? item.items[0].equipmentId : null,
+        targetName: item.items?.length > 0 ? item.items[0].name : 'Equipment Purchase',
+        targetType: 'Equipment',
         date: new Date(item.createdAt).toLocaleDateString(),
         displayAmount: `Rs. ${item.totalPrice}`,
         status: item.status === 'paid' ? 'Confirmed' : (item.status === 'pending' ? 'Pending' : item.status)
@@ -189,13 +198,17 @@ const MyBookingsScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.cardFooter}>
-          <TouchableOpacity 
-            style={styles.reviewBtn}
-            onPress={() => navigation.navigate('AddFeedback', { booking: item })}
-          >
-            <Ionicons name="star-outline" size={16} color={Colors.primary} />
-            <Text style={styles.reviewBtnText}>Review</Text>
-          </TouchableOpacity>
+          {(item.status?.toLowerCase() === 'confirmed' || 
+            item.status?.toLowerCase() === 'completed' || 
+            item.status?.toLowerCase() === 'paid') && (
+            <TouchableOpacity 
+              style={styles.reviewBtn}
+              onPress={() => navigation.navigate('AddFeedback', { booking: item })}
+            >
+              <Ionicons name="star-outline" size={16} color={Colors.primary} />
+              <Text style={styles.reviewBtnText}>Leave a Review</Text>
+            </TouchableOpacity>
+          )}
 
           {item.type === 'Guide' && item.status === 'Confirmed' && (
             <TouchableOpacity 

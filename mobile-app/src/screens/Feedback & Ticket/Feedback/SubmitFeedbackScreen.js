@@ -33,8 +33,10 @@ const SubmitFeedbackScreen = ({ navigation }) => {
     setLoading(true);
     try {
       await apiClient.post('/feedback/create', {
-        message,
-        rating
+        comment: message, // Model uses 'comment', not 'message'
+        rating,
+        targetType: 'General',
+        targetName: 'App Experience'
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

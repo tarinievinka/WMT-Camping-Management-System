@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
   Platform,
   ActivityIndicator
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
@@ -18,15 +19,29 @@ import { useAuth } from '../../context/AuthContext';
 
 const GuideDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
-  const { user } = useAuth();
+  const [guideData, setGuideData] = useState(item);
   const [reviews, setReviews] = useState([]);
-  const [isEligible, setIsEligible] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-    checkEligibility();
-  }, []);
+  const { user } = useAuth();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchGuideData();
+      fetchReviews();
+    }, [])
+  );
+
+  const fetchGuideData = async () => {
+    try {
+      const response = await apiClient.get(`/guide/update/${item._id}`);
+      if (response.data) {
+        setGuideData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching guide data:', error);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -39,25 +54,18 @@ const GuideDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const checkEligibility = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.get(`/feedback/check-eligibility?targetId=${item._id}&targetType=Guide&userId=${user._id || user.id}`);
-      setIsEligible(response.data.eligible);
-    } catch (error) {
-      console.error('Error checking eligibility:', error);
-    }
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
       >
         {/* Profile Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
@@ -67,29 +75,30 @@ const GuideDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }} 
-            style={styles.avatar} 
+          <Image
+            source={{ uri: getImageUrl(guideData.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(guideData.name || 'Guide')}&background=166534&color=fff&size=200` }}
+            style={styles.avatar}
             resizeMode="cover"
           />
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.username}>{item.email?.split('@')[0] || 'guide'}</Text>
-          <Text style={styles.expertise}>{item.tagline || 'Expert Wilderness Guide'}</Text>
-          
+          <Text style={styles.name}>{guideData.name}</Text>
+          <Text style={styles.expertise}>{guideData.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
+
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{item.rating || '4.8'}</Text>
-              <Text style={styles.statLabel}>Rating</Text>
+              <Text style={styles.statValue}>
+                {guideData.averageRating ? guideData.averageRating.toFixed(1) : '0.0'}
+              </Text>
+              <Text style={styles.statLabel}>Rating ({guideData.numReviews || 0})</Text>
             </View>
-            <View style={statDividerStyles.statDivider} />
+            <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{item.pastTours?.length || '10+'}</Text>
-              <Text style={styles.statLabel}>Tours</Text>
-            </View>
-            <View style={statDividerStyles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{item.experience ? `${item.experience} yrs` : 'New'}</Text>
+              <Text style={styles.statValue}>{guideData.experience || '5'}+ yrs</Text>
               <Text style={styles.statLabel}>Exp.</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{guideData.age || '25'}</Text>
+              <Text style={styles.statLabel}>Age</Text>
             </View>
           </View>
         </View>
@@ -97,55 +106,23 @@ const GuideDetailScreen = ({ route, navigation }) => {
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>About Me</Text>
           <Text style={styles.bio}>
-            {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
+            {guideData.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
           </Text>
+
           <Text style={styles.sectionTitle}>Specialties</Text>
           <View style={styles.langContainer}>
-            {(item.specialties || ['General Camping']).map((spec, idx) => (
+            {(guideData.specialties || ['General Camping']).map((spec, idx) => (
               <View key={idx} style={styles.langBadge}>
                 <Text style={styles.langText}>{spec}</Text>
               </View>
             ))}
           </View>
 
-          {item.gallery && item.gallery.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Past Tours Gallery</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
-                contentContainerStyle={styles.galleryContainer}
-              >
-                {item.gallery.map((img, idx) => (
-                  <Image 
-                    key={idx} 
-                    source={{ uri: getImageUrl(img) }} 
-                    style={styles.galleryImage} 
-                  />
-                ))}
-              </ScrollView>
-            </>
-          )}
-
           <View style={styles.divider} />
 
           {/* Reviews Section */}
           <View style={styles.reviewsHeader}>
             <Text style={styles.sectionTitle}>Client Reviews</Text>
-            {isEligible && (
-              <TouchableOpacity 
-                style={styles.addReviewBtn}
-                onPress={() => navigation.navigate('AddFeedback', { 
-                  booking: { 
-                    targetId: item._id, 
-                    targetName: item.name, 
-                    targetType: 'Guide' 
-                  } 
-                })}
-              >
-                <Text style={styles.addReviewText}>Add Review</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
           {loadingReviews ? (
@@ -161,7 +138,7 @@ const GuideDetailScreen = ({ route, navigation }) => {
                       </Text>
                     </View>
                     <View>
-                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous User'}</Text>
+                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous'}</Text>
                       <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</Text>
                     </View>
                   </View>
@@ -171,23 +148,34 @@ const GuideDetailScreen = ({ route, navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.reviewComment}>"{review.comment}"</Text>
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+                    {review.imageUrls.map((img, i) => (
+                      <Image 
+                        key={i} 
+                        source={{ uri: getImageUrl(img) }} 
+                        style={styles.reviewImage} 
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             ))
           ) : (
-            <Text style={styles.noReviews}>No reviews yet. {isEligible ? 'Be the first to review!' : 'Book a session with this guide to share your feedback.'}</Text>
+            <Text style={styles.noReviews}>No reviews yet. Book a session with this guide to share your experience.</Text>
           )}
 
           <View style={styles.divider} />
 
-          {/* Pricing & Booking */}
+          {/* Pricing & Booking Summary */}
           <View style={styles.bookingCard}>
             <View>
               <Text style={styles.priceLabel}>Daily Rate</Text>
-              <Text style={styles.priceValue}>Rs. {item.dailyRate}</Text>
+              <Text style={styles.priceValue}>Rs. {guideData.dailyRate}</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.bookButton}
-              onPress={() => navigation.navigate('Booking', { item, type: 'guide' })}
+              onPress={() => navigation.navigate('Booking', { item: guideData, type: 'guide' })}
             >
               <Text style={styles.bookButtonText}>Book Guide</Text>
             </TouchableOpacity>
@@ -197,14 +185,6 @@ const GuideDetailScreen = ({ route, navigation }) => {
     </SafeAreaView>
   );
 };
-
-const statDividerStyles = StyleSheet.create({
-  statDivider: {
-    width: 1,
-    height: '100%',
-    backgroundColor: '#f1f5f9',
-  }
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -253,17 +233,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
   },
-  username: {
-    fontSize: 14,
-    color: Colors.gray,
-    marginBottom: 8,
-  },
   expertise: {
     fontSize: 14,
     color: Colors.gray,
     marginTop: 4,
-    textAlign: 'center',
-    paddingHorizontal: 20,
   },
   statsRow: {
     flexDirection: 'row',
@@ -324,51 +297,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   langText: {
+    fontSize: 12,
+    color: Colors.primary,
     fontWeight: 'bold',
-  },
-  galleryContainer: {
-    paddingVertical: 10,
-    marginBottom: 10,
-  },
-  galleryImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 15,
-    marginRight: 15,
-    backgroundColor: '#f1f5f9',
   },
   divider: {
     height: 1,
     backgroundColor: '#f1f5f9',
     marginVertical: 20,
-  },
-  bookingCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    padding: 20,
-    borderRadius: 24,
-  },
-  priceLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  priceValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  bookButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  bookButtonText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-    fontSize: 15,
   },
   reviewsHeader: {
     flexDirection: 'row',
@@ -390,13 +326,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   reviewCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#f1f5f9',
-    ...Shadows.small,
   },
   reviewHeader: {
     flexDirection: 'row',
@@ -460,7 +395,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 20,
-  }
+  },
+  reviewImages: {
+    marginTop: 12,
+    flexDirection: 'row',
+  },
+  reviewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
+  },
+  bookingCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    padding: 20,
+    borderRadius: 24,
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  priceValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  bookButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  bookButtonText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
 });
 
 export default GuideDetailScreen;

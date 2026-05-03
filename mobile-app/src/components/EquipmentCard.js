@@ -44,14 +44,22 @@ const EquipmentCard = ({ item, onPress, onAddToCart }) => {
         </Text>
         <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
         
-        {/* Mock Ratings */}
+        {/* Real Ratings */}
         <View style={styles.ratingRow}>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map((s) => (
-              <FontAwesome key={s} name={s <= 4 ? "star" : "star-o"} size={10} color="#f59e0b" style={{marginRight: 2}} />
+              <FontAwesome 
+                key={s} 
+                name={s <= Math.round(item.averageRating || 0) ? "star" : "star-o"} 
+                size={10} 
+                color="#f59e0b" 
+                style={{marginRight: 2}} 
+              />
             ))}
           </View>
-          <Text style={styles.ratingText}>4.0 (12)</Text>
+          <Text style={styles.ratingText}>
+            {item.averageRating ? item.averageRating.toFixed(1) : '0.0'} ({item.numReviews || 0})
+          </Text>
         </View>
 
         <View style={styles.modeRow}>

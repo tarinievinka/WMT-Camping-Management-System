@@ -197,14 +197,20 @@ const MyTicketsScreen = ({ navigation, route, isEmbedded = false, refreshSignal 
           </View>
         )}
 
-        {isEmbedded && tickets.length > 0 && (
-          <TouchableOpacity
-            style={styles.embeddedAddBtn}
-            onPress={() => navigation.navigate('CreateTicket')}
-          >
-            <Ionicons name="add-circle" size={20} color={Colors.primary} />
-            <Text style={styles.embeddedAddText}>Raise New Ticket</Text>
-          </TouchableOpacity>
+        {isEmbedded && (
+          <View style={styles.pageHeader}>
+            <View>
+              <Text style={styles.title}>My Tickets</Text>
+              <Text style={styles.subtitle}>Track your support requests</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.headerAddBtn}
+              onPress={() => navigation.navigate('CreateTicket')}
+            >
+              <Ionicons name="add-circle-outline" size={20} color="#fff" />
+              <Text style={styles.headerAddText}>New</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
 
@@ -262,6 +268,25 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: Colors.text,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: Colors.gray,
+    marginTop: 2,
+  },
+  headerAddBtn: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+  },
+  headerAddText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   addBtn: {
     backgroundColor: Colors.primary,

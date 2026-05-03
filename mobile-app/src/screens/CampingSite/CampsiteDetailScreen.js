@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
   Dimensions,
   Platform,
   ActivityIndicator
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
-import { apiClient, BASE_URL, getImageUrl } from '../../api/apiClient';
+import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -21,14 +22,29 @@ const { width } = Dimensions.get('window');
 const CampsiteDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
   const { user } = useAuth();
+  const [siteData, setSiteData] = useState(item);
   const [reviews, setReviews] = useState([]);
-  const [isEligible, setIsEligible] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-    checkEligibility();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+      fetchSiteData();
+    }, [])
+  );
+
+  const fetchSiteData = async () => {
+    try {
+      const response = await apiClient.get(`/campsite/${item._id}`);
+      if (response.data.data) {
+        setSiteData(response.data.data);
+      } else if (response.data) {
+        setSiteData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching site data:', error);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -41,30 +57,22 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const checkEligibility = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.get(`/feedback/check-eligibility?targetId=${item._id}&targetType=Campsite&userId=${user._id || user.id}`);
-      setIsEligible(response.data.eligible);
-    } catch (error) {
-      console.error('Error checking eligibility:', error);
-    }
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
       >
         {/* Header Image */}
         <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: getImageUrl(item.image) || item.images?.[0] || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1000' }} 
-            style={styles.image} 
+          <Image
+            source={{ uri: getImageUrl(item.image) || item.images?.[0] || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=1000' }}
+            style={styles.image}
             resizeMode="cover"
           />
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
@@ -83,7 +91,10 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.ratingBadge}>
               <Ionicons name="star" size={16} color="#fbbf24" />
-              <Text style={styles.ratingText}>{item.averageRating?.toFixed(1) || '4.8'}</Text>
+              <Text style={styles.ratingText}>
+                {siteData.averageRating ? siteData.averageRating.toFixed(1) : '0.0'}
+                <Text style={styles.reviewCount}> ({siteData.numReviews || 0})</Text>
+              </Text>
             </View>
           </View>
 
@@ -113,20 +124,6 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
           {/* Reviews Section */}
           <View style={styles.reviewsHeader}>
             <Text style={styles.sectionTitle}>Community Reviews</Text>
-            {isEligible && (
-              <TouchableOpacity 
-                style={styles.addReviewBtn}
-                onPress={() => navigation.navigate('AddFeedback', { 
-                  booking: { 
-                    targetId: item._id, 
-                    targetName: item.name, 
-                    targetType: 'Campsite' 
-                  } 
-                })}
-              >
-                <Text style={styles.addReviewText}>Add Review</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
           {loadingReviews ? (
@@ -152,10 +149,21 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.reviewComment}>"{review.comment}"</Text>
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+                    {review.imageUrls.map((img, i) => (
+                      <Image 
+                        key={i} 
+                        source={{ uri: getImageUrl(img) }} 
+                        style={styles.reviewImage} 
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             ))
           ) : (
-            <Text style={styles.noReviews}>No reviews yet. {isEligible ? 'Be the first to review!' : 'Book this site to share your experience.'}</Text>
+            <Text style={styles.noReviews}>No reviews yet. Book this site to share your experience.</Text>
           )}
 
           <View style={styles.divider} />
@@ -166,7 +174,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
               <Text style={styles.priceLabel}>Price per night</Text>
               <Text style={styles.priceValue}>Rs. {item.pricePerNight}</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.bookButton}
               onPress={() => navigation.navigate('Booking', { item, type: 'campsite' })}
             >
@@ -245,6 +253,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#92400e',
     fontSize: 14,
+  },
+  reviewCount: {
+    fontSize: 11,
+    color: '#b45309',
+    fontWeight: '600',
   },
   divider: {
     height: 1,
@@ -404,6 +417,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 20,
+  },
+  reviewImages: {
+    marginTop: 12,
+    flexDirection: 'row',
+  },
+  reviewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
   }
 });
 

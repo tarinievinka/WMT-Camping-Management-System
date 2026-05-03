@@ -9,41 +9,44 @@ const connectDB = async () => {
   }
 
   try {
-    // In some Windows or corporate networks Node's DNS resolver may fail SRV lookups.
-    // Optionally override DNS servers for this process to public resolvers to
-    // ensure SRV records for MongoDB Atlas can be resolved. Set
-    // `MONGO_DNS_OVERRIDE=false` in the environment to skip this.
-    try {
-      if (process.env.MONGO_DNS_OVERRIDE !== 'false') {
-        dns.setServers(['8.8.8.8', '1.1.1.1']);
-        console.log('Overrode DNS servers to 8.8.8.8,1.1.1.1 for SRV resolution');
-      }
-    } catch (dnsErr) {
-      console.warn('Failed to override DNS servers:', dnsErr && dnsErr.message ? dnsErr.message : dnsErr);
+    if (process.env.MONGO_DNS_OVERRIDE !== 'false') {
+      dns.setServers(['8.8.8.8', '1.1.1.1']);
+      console.log('Overrode DNS servers to 8.8.8.8, 1.1.1.1 for SRV resolution');
     }
-    // Mongoose 7+ and 9+ use sensible defaults; do not pass deprecated connection options
+  } catch (dnsErr) {
+    console.warn('Failed to override DNS servers:', dnsErr && dnsErr.message ? dnsErr.message : dnsErr);
+  }
+
+  try {
     await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // 10s for initial connection
       socketTimeoutMS: 45000,
     });
-    console.log(' MongoDB connected successfully');
+    console.log('✅ MongoDB connected successfully');
   } catch (err) {
-    console.error(' MongoDB connection error:', err.message || err);
+    console.error('❌ MongoDB connection error:', err.message || err);
     
     if (err.name === 'MongooseServerSelectionError' || err.message.includes('Could not connect to any servers')) {
       console.log('\n>>> DIAGNOSIS: This is likely an IP Whitelist issue in MongoDB Atlas.');
       console.log('>>> ACTION: Go to https://cloud.mongodb.com/ and add your current IP to Network Access.');
     }
 
-    console.log(' Current MONGO_URI:', uri.replace(/\/\/.*@/, '//****:****@'));
+    // Start retry loop in background but DON'T block the entire server start
+    console.log('⚠️ Server will continue to start, but DB features will fail until connected.');
     
-    // Retry logic
-    if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-        setTimeout(() => {
-          console.log(' Retrying MongoDB connection...');
-          connectDB();
-        }, 5000);
-    }
+    const retryConnection = () => {
+      setTimeout(async () => {
+        console.log('🔄 Retrying MongoDB connection...');
+        try {
+          await mongoose.connect(uri);
+          console.log('✅ MongoDB connected successfully (after retry)');
+        } catch (retryErr) {
+          retryConnection();
+        }
+      }, 5000);
+    };
+    
+    retryConnection();
   }
 };
 
