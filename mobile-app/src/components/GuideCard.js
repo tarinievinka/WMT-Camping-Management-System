@@ -26,7 +26,7 @@ const GuideCard = ({ item, onPress }) => {
           </Text>
         </View>
         <View style={styles.footer}>
-          <Text style={styles.price}>Rs. {item.dailyRate}<Text style={styles.unit}>/day</Text></Text>
+          <Text style={styles.price}>LKR {item.dailyRate}<Text style={styles.unit}>/day</Text></Text>
         </View>
       </View>
     </TouchableOpacity>

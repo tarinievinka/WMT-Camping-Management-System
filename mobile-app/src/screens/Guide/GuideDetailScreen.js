@@ -171,7 +171,7 @@ const GuideDetailScreen = ({ route, navigation }) => {
           <View style={styles.bookingCard}>
             <View>
               <Text style={styles.priceLabel}>Daily Rate</Text>
-              <Text style={styles.priceValue}>Rs. {guideData.dailyRate}</Text>
+              <Text style={styles.priceValue}>LKR {guideData.dailyRate}</Text>
             </View>
             <TouchableOpacity
               style={styles.bookButton}

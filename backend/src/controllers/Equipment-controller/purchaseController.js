@@ -4,12 +4,13 @@ const Equipment = require('../../models/Equipment-model/EquipmentModel');
 // Create purchase
 exports.createPurchase = async (req, res) => {
     try {
-        const { items, totalPrice, shippingAddress } = req.body;
+        const { items, totalPrice, shippingAddress, startDate, endDate } = req.body;
         
         // Basic stock check
         for (const item of items) {
             const equipment = await Equipment.findById(item.equipmentId);
             if (!equipment) throw new Error(`Equipment ${item.equipmentId} not found`);
+            // We only check stock for buying, or you might want to check availability for renting
             if (equipment.quantity < item.quantity) {
                 throw new Error(`Insufficient stock for ${equipment.name}`);
             }
@@ -19,7 +20,9 @@ exports.createPurchase = async (req, res) => {
             userId: req.user.id,
             items,
             totalPrice,
-            shippingAddress
+            shippingAddress,
+            startDate,
+            endDate
         });
 
         await purchase.save();

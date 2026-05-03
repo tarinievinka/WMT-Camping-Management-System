@@ -40,7 +40,7 @@ const CampsiteCard = ({ item, onPress }) => {
 
       <View style={styles.content}>
         <Text style={styles.title}>{item.name}</Text>
-        <Text style={styles.price}>Rs. {item.pricePerNight}<Text style={styles.unit}>/night</Text></Text>
+        <Text style={styles.price}>LKR {item.pricePerNight}<Text style={styles.unit}>/night</Text></Text>
         <View style={styles.locationRow}>
           <Ionicons name="location-outline" size={14} color={Colors.gray} />
           <Text style={styles.location}>{item.location}</Text>

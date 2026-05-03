@@ -198,7 +198,7 @@ const AddEquipmentScreen = ({ navigation }) => {
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>RENT PRICE/DAY</Text>
             <View style={styles.iconInputContainer}>
-              <Text style={styles.inputIcon}>$</Text>
+              <Text style={styles.inputIcon}>LKR</Text>
               <TextInput
                 style={styles.iconInput}
                 placeholder="0.00"
@@ -212,7 +212,7 @@ const AddEquipmentScreen = ({ navigation }) => {
           <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
             <Text style={styles.label}>SALE PRICE</Text>
             <View style={styles.iconInputContainer}>
-              <Text style={styles.inputIcon}>$</Text>
+              <Text style={styles.inputIcon}>LKR</Text>
               <TextInput
                 style={styles.iconInput}
                 placeholder="0.00"

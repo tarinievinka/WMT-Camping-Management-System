@@ -45,7 +45,7 @@ const MyBookingsScreen = ({ navigation }) => {
         targetName: item.campsite?.name || 'Campsite Booking',
         targetType: 'Campsite',
         date: new Date(item.checkInDate).toLocaleDateString(),
-        displayAmount: `Rs. ${item.totalPrice}`,
+        displayAmount: `LKR ${item.totalPrice}`,
         status: item.status === 'Payment Confirmed' ? 'Confirmed' : item.status
       }));
 
@@ -59,7 +59,7 @@ const MyBookingsScreen = ({ navigation }) => {
           targetName: item.guideName || 'Guide Booking',
           targetType: 'Guide',
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
-          displayAmount: `Rs. ${item.amount}`,
+          displayAmount: `LKR ${item.amount}`,
           status: item.status
         }));
 
@@ -73,7 +73,7 @@ const MyBookingsScreen = ({ navigation }) => {
         targetName: item.items?.length > 0 ? item.items[0].name : 'Equipment Purchase',
         targetType: 'Equipment',
         date: new Date(item.createdAt).toLocaleDateString(),
-        displayAmount: `Rs. ${item.totalPrice}`,
+        displayAmount: `LKR ${item.totalPrice}`,
         status: item.status === 'paid' ? 'Confirmed' : (item.status === 'pending' ? 'Pending' : item.status)
       }));
 

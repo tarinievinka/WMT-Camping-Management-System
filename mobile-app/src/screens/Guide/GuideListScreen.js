@@ -74,7 +74,7 @@ const GuideListScreen = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.priceInfo}>
-          <Text style={styles.price}>Rs. {item.dailyRate}</Text>
+          <Text style={styles.price}>LKR {item.dailyRate}</Text>
           <Text style={styles.unit}>/day</Text>
         </View>
       </View>

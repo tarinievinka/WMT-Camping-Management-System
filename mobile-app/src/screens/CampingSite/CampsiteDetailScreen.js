@@ -172,7 +172,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
           <View style={styles.priceCard}>
             <View>
               <Text style={styles.priceLabel}>Price per night</Text>
-              <Text style={styles.priceValue}>Rs. {item.pricePerNight}</Text>
+              <Text style={styles.priceValue}>LKR {item.pricePerNight}</Text>
             </View>
             <TouchableOpacity
               style={styles.bookButton}

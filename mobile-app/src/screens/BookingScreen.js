@@ -226,7 +226,7 @@ const BookingScreen = ({ route, navigation }) => {
         <View style={styles.itemCard}>
           <Text style={styles.itemType}>{type.toUpperCase()}</Text>
           <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemPrice}>Rs. {price} / {mode === 'buy' ? 'unit' : 'day'}</Text>
+          <Text style={styles.itemPrice}>LKR {price} / {mode === 'buy' ? 'unit' : 'day'}</Text>
         </View>
 
         <View style={styles.form}>
@@ -282,15 +282,15 @@ const BookingScreen = ({ route, navigation }) => {
               <Text style={styles.summaryLabel}>
                 {mode === 'buy' ? 'Item Price' : `Price x ${totalDays} days`}
               </Text>
-              <Text style={styles.summaryValue}>Rs. {subtotal}</Text>
+              <Text style={styles.summaryValue}>LKR {subtotal}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Service Fee</Text>
-              <Text style={styles.summaryValue}>Rs. {serviceFee}</Text>
+              <Text style={styles.summaryValue}>LKR {serviceFee}</Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>Rs. {subtotal + serviceFee}</Text>
+              <Text style={styles.totalValue}>LKR {subtotal + serviceFee}</Text>
             </View>
           </View>
           {errors.form && (
