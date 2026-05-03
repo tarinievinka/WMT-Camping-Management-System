@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl, Platform, Dimensions, TextInput, Animated, StatusBar, Alert } from 'react-native';
+import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl, Platform, Dimensions, TextInput, Animated, StatusBar, Alert, ImageBackground } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '../../theme/colors';
 import axios from 'axios';
@@ -10,6 +10,17 @@ import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
+
+const categories = [
+  { name: 'All', color: '#1a1a1a', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800' },
+  { name: 'Smart Gear', color: '#1e3a8a', image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800' },
+  { name: 'Destinations', color: '#065f46', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800' },
+  { name: 'Campfire Recipes', color: '#92400e', image: 'https://images.unsplash.com/photo-1681400798468-d738a42c7faa?w=800' },
+  { name: 'Eco Camping', color: '#166534', image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800' },
+  { name: 'Safety & Tips', color: '#3730a3', image: 'https://images.unsplash.com/photo-1600966114525-bec6bb8e5a80?w=800' }
+];
+
+
 
 const BlogCard = ({ item, index, navigation, isBookmarked, onBookmark }) => {
   const scale = useRef(new Animated.Value(1)).current;
@@ -40,7 +51,7 @@ const BlogCard = ({ item, index, navigation, isBookmarked, onBookmark }) => {
         onPress={() => navigation.navigate('BlogDetail', { blog: item })}
       >
         <Image 
-          source={{ uri: (item.images && item.images.length > 0) ? item.images[0] : (item.image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400') }} 
+          source={{ uri: getImageUrl((item.images && item.images.length > 0) ? item.images[0] : item.image) || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400' }} 
           style={styles.bookmarkThumb} 
         />
         <View style={styles.bookmarkInfo}>
@@ -66,35 +77,27 @@ const BlogCard = ({ item, index, navigation, isBookmarked, onBookmark }) => {
 };
 
 const CollectionCard = ({ item, isSelected, onSelect }) => {
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const onPressIn = () => {
-    Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start();
-  };
-  const onPressOut = () => {
-    Animated.spring(scale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }).start();
-  };
-
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        style={[
-          styles.collectionCard,
-          isSelected && styles.collectionCardSelected
-        ]}
-        onPress={() => onSelect(item.name)}
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={[
+        styles.collectionCard,
+        isSelected && styles.collectionCardSelected
+      ]}
+      onPress={() => onSelect(item.name)}
+    >
+      <ImageBackground
+        source={{ uri: item.image, cache: 'force-cache' }}
+        style={styles.collectionImage}
+        imageStyle={{ borderRadius: 20 }}
       >
-        <Image source={{ uri: item.image }} style={styles.collectionImage} />
-        <View style={[styles.collectionOverlay, { backgroundColor: 'rgba(0,0,0,0.4)' }]}>
+        <View style={styles.collectionOverlay}>
           <Text style={styles.collectionLabel}>
             {item.name.toUpperCase()}
           </Text>
         </View>
-      </TouchableOpacity>
-    </Animated.View>
+      </ImageBackground>
+    </TouchableOpacity>
   );
 };
 
@@ -168,14 +171,7 @@ const BlogListScreen = ({ navigation }) => {
     }
   }, [isSearchActive]);
 
-  const categories = [
-    { name: 'All', color: '#1a1a1a', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800' },
-    { name: 'Smart Gear', color: '#1e3a8a', image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800' },
-    { name: 'Destinations', color: '#065f46', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800' },
-    { name: 'Campfire Recipes', color: '#92400e', image: 'https://images.unsplash.com/photo-1681400798468-d738a42c7faa?w=800' },
-    { name: 'Eco Camping', color: '#166534', image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800' },
-    { name: 'Safety & Tips', color: '#3730a3', image: 'https://images.unsplash.com/photo-1600966114525-bec6bb8e5a80?w=800' }
-  ];
+
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -297,6 +293,10 @@ const BlogListScreen = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => item.name}
             contentContainerStyle={styles.horizontalGrid}
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
+            windowSize={5}
+            removeClippedSubviews={false}
           />
         </Animated.View>
 
@@ -391,15 +391,20 @@ const styles = StyleSheet.create({
   mainHeading: { fontSize: 34, fontWeight: 'bold', color: '#1a1a1a', paddingHorizontal: 20, marginBottom: 20 },
   horizontalGrid: { paddingLeft: 20, paddingBottom: 20 },
   collectionCard: {
-    width: 160, height: 160, borderRadius: 20, marginRight: 16, overflow: 'hidden',
-    backgroundColor: '#f5f5f5', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8,
+    width: 160, height: 160, borderRadius: 20, marginRight: 16,
+    backgroundColor: '#1a1a1a', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8,
   },
   collectionCardSelected: {
     borderWidth: 4, borderColor: '#065f46', transform: [{ scale: 1.05 }],
     elevation: 12, shadowColor: '#065f46', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 12, zIndex: 10,
   },
-  collectionImage: { width: '100%', height: '100%' },
-  collectionOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
+  collectionImage: { width: '100%', height: '100%', resizeMode: 'cover', position: 'absolute' },
+  collectionOverlay: { 
+    ...StyleSheet.absoluteFillObject, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)' 
+  },
   collectionLabel: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold', letterSpacing: 1.5, textAlign: 'center', paddingHorizontal: 10 },
   listSection: { paddingHorizontal: 20 },
   tabContainer: {

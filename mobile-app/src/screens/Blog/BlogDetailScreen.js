@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+import { getImageUrl } from '../../api/apiClient';
 
 const BlogDetailScreen = ({ route, navigation }) => {
   const { blog: initialBlog } = route.params;
@@ -141,7 +142,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
   const canEdit = user && currentUserId === blogAuthorId;
 
   const renderImageItem = ({ item }) => (
-    <Image source={{ uri: item }} style={[styles.galleryImage, { width: containerWidth }]} />
+    <Image source={{ uri: getImageUrl(item) }} style={[styles.galleryImage, { width: containerWidth }]} />
   );
 
   const handleScroll = (event) => {
