@@ -7,11 +7,13 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Platform
+  Platform,
+  ScrollView,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
-import apiClient from '../../../api/apiClient';
+import apiClient, { getImageUrl } from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 
 const FeedbackListScreen = ({ navigation, refreshSignal }) => {
@@ -29,7 +31,6 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
   const fetchFeedbacks = async () => {
     setLoading(true);
     try {
-      // If admin, fetch all. If user, fetch only their own.
       const query = isAdmin ? '' : `userId=${user._id || user.id}`;
       const response = await apiClient.get(`/feedback/display?${query}`);
       setFeedbacks(response.data.data || response.data || []);
@@ -46,7 +47,7 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
   });
 
   const handleDelete = async (id) => {
-    if (isAdmin) return; // Admins can't delete
+    if (isAdmin) return;
     
     const confirmDelete = async () => {
       try {
@@ -98,6 +99,19 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
       )}
       
       <Text style={styles.comment}>"{item.comment}"</Text>
+      
+      {item.imageUrls && item.imageUrls.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+          {item.imageUrls.map((img, i) => (
+            <Image 
+              key={i} 
+              source={{ uri: getImageUrl(img) }} 
+              style={styles.reviewImage} 
+            />
+          ))}
+        </ScrollView>
+      )}
+
       <View style={styles.footer}>
         <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         {!isAdmin && (
@@ -176,16 +190,6 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: Colors.white,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-  },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,6 +209,38 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  list: {
+    padding: 20,
+  },
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  target: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text,
   },
@@ -308,6 +344,18 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: '#fff',
   },
+  reviewImages: {
+    marginTop: 8,
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  reviewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
+  }
 });
 
 export default FeedbackListScreen;

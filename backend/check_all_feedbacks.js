@@ -10,7 +10,8 @@ async function checkAllFeedbacks() {
     const feedbacks = await Feedback.find();
     console.log(`Total Feedbacks: ${feedbacks.length}`);
     feedbacks.forEach(f => {
-      console.log(`ID: ${f._id}, Target: ${f.targetName}, Type: ${f.targetType}, ID: ${f.targetId}, Rating: ${f.rating}`);
+      console.log(`ID: ${f._id}, Target: ${f.targetName}, Type: ${f.targetType}, Rating: ${f.rating}, Images: ${f.imageUrls.length}, Date: ${f.createdAt}`);
+      if (f.imageUrls.length > 0) console.log(`   URLs: ${JSON.stringify(f.imageUrls)}`);
     });
     
     process.exit(0);

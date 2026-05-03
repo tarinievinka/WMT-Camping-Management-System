@@ -16,6 +16,8 @@ const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
 // Create
 exports.createFeedback = async (req, res) => {
   try {
+    console.log('[DEBUG] Create Feedback Request Body:', req.body);
+    console.log('[DEBUG] Create Feedback Files:', req.files);
     const { targetType, comment } = req.body;
     const rating = Number(req.body.rating);
     req.body.rating = rating;

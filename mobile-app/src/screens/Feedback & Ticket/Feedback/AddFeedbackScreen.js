@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../theme/colors';
 import Header from '../../../components/Header';
-import apiClient from '../../../api/apiClient';
+import apiClient, { getImageUrl } from '../../../api/apiClient';
 import { useAuth } from '../../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -107,7 +107,11 @@ const AddFeedbackScreen = ({ route, navigation }) => {
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           const uri = images[i];
-          if (!uri.startsWith('http')) {
+          if (uri.startsWith('/uploads/')) {
+            // This is an existing image, send it as a string
+            formData.append('existingImageUrls', uri);
+          } else {
+            // This is a new image, send it as a file
             if (Platform.OS === 'web') {
               const response = await fetch(uri);
               const blob = await response.blob();
@@ -128,17 +132,30 @@ const AddFeedbackScreen = ({ route, navigation }) => {
         }
       };
       
-      if (Platform.OS !== 'web') {
+      if (Platform.OS === 'web') {
+        // On web, setting Content-Type to undefined allows the browser to set it with the correct boundary
+        config.headers['Content-Type'] = undefined;
+      } else {
         config.headers['Content-Type'] = 'multipart/form-data';
       }
 
       const url = editMode ? `/feedback/update/${booking._id}` : '/feedback/create';
-      await apiClient({
+      
+      console.log('[DEBUG] Submitting Feedback:', {
+        url,
+        method: editMode ? 'PUT' : 'POST',
+        imageCount: images.length,
+        formDataKeys: Array.from(formData.keys())
+      });
+
+      const response = await apiClient({
         method: editMode ? 'put' : 'post',
         url: url,
         data: formData,
-        ...config
+        headers: config.headers
       });
+
+      console.log('[DEBUG] Submission Success:', response.data);
 
       const successMsg = `Feedback ${editMode ? 'updated' : 'submitted'} successfully!`;
       if (Platform.OS === 'web') {
@@ -256,7 +273,7 @@ const AddFeedbackScreen = ({ route, navigation }) => {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagePreviewList}>
                 {images.map((uri, index) => (
                   <View key={index} style={styles.imagePreviewContainer}>
-                    <Image source={{ uri }} style={styles.imagePreview} />
+                    <Image source={{ uri: uri.startsWith('/uploads/') ? getImageUrl(uri) : uri }} style={styles.imagePreview} />
                     <TouchableOpacity style={styles.removeImageBtn} onPress={() => removeImage(index)}>
                       <Ionicons name="close-circle" size={20} color="#ef4444" />
                     </TouchableOpacity>

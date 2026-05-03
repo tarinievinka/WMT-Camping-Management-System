@@ -159,6 +159,17 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.reviewComment}>"{review.comment}"</Text>
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+                    {review.imageUrls.map((img, i) => (
+                      <Image 
+                        key={i} 
+                        source={{ uri: getImageUrl(img) }} 
+                        style={styles.reviewImage} 
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             ))
           ) : (
@@ -472,6 +483,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingVertical: 20,
   },
+  reviewImages: {
+    marginTop: 12,
+    flexDirection: 'row',
+  },
+  reviewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f1f5f9',
+  }
 });
 
 export default EquipmentDetailScreen;
