@@ -11,6 +11,7 @@ import {
   ScrollView, 
   Platform 
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
@@ -25,9 +26,11 @@ const EquipmentListScreen = ({ navigation }) => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All Gear');
 
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEquipment();
+    }, [])
+  );
 
   const fetchEquipment = async () => {
     try {

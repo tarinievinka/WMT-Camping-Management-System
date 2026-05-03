@@ -7,9 +7,11 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
@@ -18,6 +20,44 @@ import { useAuth } from '../../context/AuthContext';
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
   const [quantity, setQuantity] = useState(1);
+  const [equipmentData, setEquipmentData] = useState(item);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  const { user } = useAuth();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+      fetchEquipmentData();
+    }, [])
+  );
+
+  const fetchEquipmentData = async () => {
+    try {
+      const response = await apiClient.get(`/equipment/${item._id}`);
+      if (response.data.data) {
+        setEquipmentData(response.data.data);
+      } else if (response.data) {
+        setEquipmentData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching equipment data:', error);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await apiClient.get(`/feedback/display?targetId=${item._id}&targetType=Equipment`);
+      setReviews(response.data);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+
 
   const getImageUrl = (path) => {
     if (!path) return null;
@@ -48,9 +88,20 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
             <Text style={styles.badgeText}>{item.category || 'CAMPING GEAR'}</Text>
           </View>
 
-          <Text style={styles.title}>{item.name}</Text>
-          <Text style={styles.price}>Rs. {item.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
-          <Text style={styles.salePrice}>Purchase: Rs. {item.salePrice}</Text>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{equipmentData.name}</Text>
+              <Text style={styles.price}>Rs. {equipmentData.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
+              <Text style={styles.salePrice}>Purchase: Rs. {equipmentData.salePrice}</Text>
+            </View>
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={16} color="#fbbf24" />
+              <Text style={styles.ratingText}>
+                {equipmentData.averageRating ? equipmentData.averageRating.toFixed(1) : '0.0'}
+                <Text style={styles.reviewCount}> ({equipmentData.numReviews || 0})</Text>
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.divider} />
 
@@ -77,6 +128,44 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
+
+          <View style={styles.divider} />
+
+          {/* Reviews Section */}
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.sectionTitle}>Community Reviews</Text>
+          </View>
+
+          {loadingReviews ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <View key={index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewerInfo}>
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarText}>
+                        {(review.userId?.name || review.userName || 'A')[0].toUpperCase()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous User'}</Text>
+                      <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.reviewRating}>
+                    <Ionicons name="star" size={12} color="#fbbf24" />
+                    <Text style={styles.ratingValue}>{review.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.reviewComment}>"{review.comment}"</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noReviews}>No reviews yet. Buy or rent this gear to share your experience.</Text>
+          )}
+
+          <View style={styles.divider} />
 
           <View style={styles.footer}>
             <View style={styles.totalSection}>
@@ -148,6 +237,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  ratingText: {
+    marginLeft: 4,
+    fontWeight: 'bold',
+    color: '#92400e',
+    fontSize: 14,
+  },
+  reviewCount: {
+    fontSize: 11,
+    color: '#b45309',
+    fontWeight: '600',
   },
   title: {
     fontSize: 24,
@@ -266,6 +380,97 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  addReviewBtn: {
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+  },
+  addReviewText: {
+    color: '#92400e',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  reviewCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginTop: 1,
+  },
+  reviewRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  ratingValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#92400e',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  noReviews: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: 20,
   },
 });
 

@@ -46,6 +46,23 @@ const CampsiteCard = ({ item, onPress }) => {
           <Text style={styles.location}>{item.location}</Text>
         </View>
 
+        <View style={styles.ratingRow}>
+          <View style={styles.stars}>
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Ionicons 
+                key={s} 
+                name={s <= Math.round(item.averageRating || 0) ? "star" : "star-outline"} 
+                size={12} 
+                color="#f59e0b" 
+                style={{marginRight: 2}} 
+              />
+            ))}
+          </View>
+          <Text style={styles.ratingText}>
+            {item.averageRating ? item.averageRating.toFixed(1) : '0.0'} ({item.numReviews || 0})
+          </Text>
+        </View>
+
       </View>
     </TouchableOpacity>
   );
@@ -111,6 +128,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.gray,
     marginLeft: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  stars: {
+    flexDirection: 'row',
+    marginRight: 6,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: Colors.gray,
+    fontWeight: '600',
   },
   price: {
     fontSize: 16,

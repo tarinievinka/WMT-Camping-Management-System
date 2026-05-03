@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import apiClient from '../../api/apiClient';
@@ -18,9 +19,11 @@ const CampsiteListScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetchCampsites();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchCampsites();
+    }, [])
+  );
 
   const fetchCampsites = async () => {
     try {

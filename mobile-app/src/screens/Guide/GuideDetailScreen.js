@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
@@ -17,92 +19,159 @@ import { useAuth } from '../../context/AuthContext';
 
 const GuideDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
+  const [guideData, setGuideData] = useState(item);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    if (path.startsWith('file:') || path.startsWith('content:')) return null;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  const { user } = useAuth();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchGuideData();
+      fetchReviews();
+    }, [])
+  );
+
+  const fetchGuideData = async () => {
+    try {
+      const response = await apiClient.get(`/guide/update/${item._id}`);
+      if (response.data) {
+        setGuideData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching guide data:', error);
+    }
   };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await apiClient.get(`/feedback/display?targetId=${item._id}&targetType=Guide`);
+      setReviews(response.data);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+
 
   return (
     <SafeAreaView style={styles.container}>
-  <ScrollView
-    showsVerticalScrollIndicator={false}
-    contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-  >
-    {/* Profile Header */}
-    <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Guide Profile</Text>
-      <View style={{ width: 40 }} />
-    </View>
-
-    <View style={styles.profileSection}>
-      <Image
-        source={{ uri: getImageUrl(item.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'Guide')}&background=166534&color=fff&size=200` }}
-        style={styles.avatar}
-        resizeMode="cover"
-      />
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.expertise}>{item.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>4.9</Text>
-          <Text style={styles.statLabel}>Rating</Text>
+        {/* Profile Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Guide Profile</Text>
+          <View style={{ width: 40 }} />
         </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>120+</Text>
-          <Text style={styles.statLabel}>Tours</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>5 yrs</Text>
-          <Text style={styles.statLabel}>Exp.</Text>
-        </View>
-      </View>
-    </View>
 
-    <View style={styles.content}>
-      <Text style={styles.sectionTitle}>About Me</Text>
-      <Text style={styles.bio}>
-        {item.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
-      </Text>
+        <View style={styles.profileSection}>
+          <Image
+            source={{ uri: getImageUrl(guideData.profilePhoto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(guideData.name || 'Guide')}&background=166534&color=fff&size=200` }}
+            style={styles.avatar}
+            resizeMode="cover"
+          />
+          <Text style={styles.name}>{guideData.name}</Text>
+          <Text style={styles.expertise}>{guideData.description?.substring(0, 50) || 'Expert Wilderness Guide'}</Text>
 
-      <Text style={styles.sectionTitle}>Specialties</Text>
-      <View style={styles.langContainer}>
-        {(item.specialties || ['General Camping']).map((spec, idx) => (
-          <View key={idx} style={styles.langBadge}>
-            <Text style={styles.langText}>{spec}</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {guideData.averageRating ? guideData.averageRating.toFixed(1) : '0.0'}
+              </Text>
+              <Text style={styles.statLabel}>Rating ({guideData.numReviews || 0})</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{guideData.experience || '5'}+ yrs</Text>
+              <Text style={styles.statLabel}>Exp.</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{guideData.age || '25'}</Text>
+              <Text style={styles.statLabel}>Age</Text>
+            </View>
           </View>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      {/* Pricing & Booking */}
-      <View style={styles.bookingCard}>
-        <View>
-          <Text style={styles.priceLabel}>Daily Rate</Text>
-          <Text style={styles.priceValue}>Rs. {item.dailyRate}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.bookButton}
-          onPress={() => navigation.navigate('Booking', { item, type: 'guide' })}
-        >
-          <Text style={styles.bookButtonText}>Book Guide</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </ScrollView>
-    </SafeAreaView >
+
+        <View style={styles.content}>
+          <Text style={styles.sectionTitle}>About Me</Text>
+          <Text style={styles.bio}>
+            {guideData.description || 'I am a passionate wilderness guide with years of experience leading groups through the most beautiful camping sites. My goal is to ensure your safety while providing an educational and fun experience in the great outdoors.'}
+          </Text>
+
+          <Text style={styles.sectionTitle}>Specialties</Text>
+          <View style={styles.langContainer}>
+            {(guideData.specialties || ['General Camping']).map((spec, idx) => (
+              <View key={idx} style={styles.langBadge}>
+                <Text style={styles.langText}>{spec}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Reviews Section */}
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.sectionTitle}>Client Reviews</Text>
+          </View>
+
+          {loadingReviews ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <View key={index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewerInfo}>
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarText}>
+                        {(review.userId?.name || review.userName || 'A')[0].toUpperCase()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.reviewerName}>{review.userId?.name || review.userName || 'Anonymous'}</Text>
+                      <Text style={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.reviewRating}>
+                    <Ionicons name="star" size={12} color="#fbbf24" />
+                    <Text style={styles.ratingValue}>{review.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.reviewComment}>"{review.comment}"</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noReviews}>No reviews yet. Book a session with this guide to share your experience.</Text>
+          )}
+
+          <View style={styles.divider} />
+
+          {/* Pricing & Booking Summary */}
+          <View style={styles.bookingCard}>
+            <View>
+              <Text style={styles.priceLabel}>Daily Rate</Text>
+              <Text style={styles.priceValue}>Rs. {guideData.dailyRate}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.bookButton}
+              onPress={() => navigation.navigate('Booking', { item: guideData, type: 'guide' })}
+            >
+              <Text style={styles.bookButtonText}>Book Guide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -225,6 +294,96 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f1f5f9',
     marginVertical: 20,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  addReviewBtn: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dcfce7',
+  },
+  addReviewText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  reviewCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginTop: 1,
+  },
+  reviewRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  ratingValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#92400e',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  noReviews: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: 20,
   },
   bookingCard: {
     flexDirection: 'row',

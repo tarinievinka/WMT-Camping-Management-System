@@ -11,6 +11,7 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
@@ -21,14 +22,29 @@ const { width } = Dimensions.get('window');
 const CampsiteDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
   const { user } = useAuth();
+  const [siteData, setSiteData] = useState(item);
   const [reviews, setReviews] = useState([]);
-  const [isEligible, setIsEligible] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-    checkEligibility();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+      fetchSiteData();
+    }, [])
+  );
+
+  const fetchSiteData = async () => {
+    try {
+      const response = await apiClient.get(`/campsite/${item._id}`);
+      if (response.data.data) {
+        setSiteData(response.data.data);
+      } else if (response.data) {
+        setSiteData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching site data:', error);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -41,15 +57,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const checkEligibility = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.get(`/feedback/check-eligibility?targetId=${item._id}&targetType=Campsite&userId=${user._id || user.id}`);
-      setIsEligible(response.data.eligible);
-    } catch (error) {
-      console.error('Error checking eligibility:', error);
-    }
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -83,7 +91,10 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.ratingBadge}>
               <Ionicons name="star" size={16} color="#fbbf24" />
-              <Text style={styles.ratingText}>{item.averageRating?.toFixed(1) || '4.8'}</Text>
+              <Text style={styles.ratingText}>
+                {siteData.averageRating ? siteData.averageRating.toFixed(1) : '0.0'}
+                <Text style={styles.reviewCount}> ({siteData.numReviews || 0})</Text>
+              </Text>
             </View>
           </View>
 
@@ -113,20 +124,6 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
           {/* Reviews Section */}
           <View style={styles.reviewsHeader}>
             <Text style={styles.sectionTitle}>Community Reviews</Text>
-            {isEligible && (
-              <TouchableOpacity
-                style={styles.addReviewBtn}
-                onPress={() => navigation.navigate('AddFeedback', {
-                  booking: {
-                    targetId: item._id,
-                    targetName: item.name,
-                    targetType: 'Campsite'
-                  }
-                })}
-              >
-                <Text style={styles.addReviewText}>Add Review</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
           {loadingReviews ? (
@@ -155,7 +152,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
               </View>
             ))
           ) : (
-            <Text style={styles.noReviews}>No reviews yet. {isEligible ? 'Be the first to review!' : 'Book this site to share your experience.'}</Text>
+            <Text style={styles.noReviews}>No reviews yet. Book this site to share your experience.</Text>
           )}
 
           <View style={styles.divider} />
@@ -245,6 +242,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#92400e',
     fontSize: 14,
+  },
+  reviewCount: {
+    fontSize: 11,
+    color: '#b45309',
+    fontWeight: '600',
   },
   divider: {
     height: 1,

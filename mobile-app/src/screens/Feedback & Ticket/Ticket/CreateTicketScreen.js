@@ -25,14 +25,24 @@ const CreateTicketScreen = ({ route, navigation }) => {
   const [description, setDescription] = useState(editTicket?.description || '');
   const [priority, setPriority] = useState(editTicket?.priority || 'medium');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
 
 
   const handleSubmit = async () => {
-    if (!title || !description) {
-      Alert.alert('Error', 'Please fill in all fields');
+    const newErrors = {};
+    if (!title || title.trim().length < 5) {
+      newErrors.title = 'Title must be at least 5 characters long.';
+    }
+    if (!description || description.trim().length < 20) {
+      newErrors.description = 'Description must be at least 20 characters long.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+    setErrors({});
 
     setLoading(true);
     try {
@@ -95,8 +105,12 @@ const CreateTicketScreen = ({ route, navigation }) => {
               style={styles.input}
               placeholder="What is the issue about?"
               value={title}
-              onChangeText={setTitle}
+              onChangeText={(text) => {
+                setTitle(text);
+                if (errors.title) setErrors({ ...errors, title: null });
+              }}
             />
+            {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
@@ -128,8 +142,12 @@ const CreateTicketScreen = ({ route, navigation }) => {
               multiline
               numberOfLines={6}
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(text) => {
+                setDescription(text);
+                if (errors.description) setErrors({ ...errors, description: null });
+              }}
             />
+            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
           </View>
 
           <TouchableOpacity
@@ -233,6 +251,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
   }
 });
 

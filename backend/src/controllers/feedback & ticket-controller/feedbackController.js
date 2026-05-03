@@ -8,6 +8,10 @@ const {
 const Reservation = require('../../models/reservation-models/Reservation');
 const GuideBooking = require('../../models/guide-booking-model/guideBookingModel');
 const EquipmentPurchase = require('../../models/Equipment-model/EquipmentPurchase');
+const Campsite = require('../../models/campsite-model/CampsiteModel');
+const Equipment = require('../../models/Equipment-model/EquipmentModel');
+const Guide = require('../../models/guide-model/guidemodel');
+const Feedback = require('../../models/feedback & ticket-model/FeedbackModel');
 
 // Create
 exports.createFeedback = async (req, res) => {
@@ -44,10 +48,65 @@ exports.createFeedback = async (req, res) => {
     }
 
     const feedback = await feedbackService.createFeedback(req.body);
+    
+    // Update target rating
+    await updateTargetRating(req.body.targetId, targetType);
+    
     res.status(201).json(feedback);
   } catch (err) {
-    console.error('Feedback creation error:', err); // Log full error for debugging
+    console.error('Feedback creation error:', err);
     res.status(400).json({ error: err.message });
+  }
+};
+
+// Helper function to update ratings
+const updateTargetRating = async (targetId, targetType) => {
+  if (!targetId || targetId === 'undefined') {
+    console.warn(`[updateTargetRating] Missing targetId for ${targetType}`);
+    return;
+  }
+
+  try {
+    const mongoose = require('mongoose');
+    let oid;
+    try {
+      oid = new mongoose.Types.ObjectId(targetId);
+    } catch (e) {
+      console.error(`[updateTargetRating] Invalid ObjectId: ${targetId}`);
+      return;
+    }
+
+    const stats = await Feedback.aggregate([
+      { $match: { targetId: oid, isVisible: true } },
+      {
+        $group: {
+          _id: "$targetId",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const averageRating = stats.length > 0 ? stats[0].averageRating : 0;
+    const numReviews = stats.length > 0 ? stats[0].numReviews : 0;
+
+    console.log(`[updateTargetRating] Updating ${targetType} ${targetId}: avg=${averageRating}, count=${numReviews}`);
+
+    let Model;
+    if (targetType === 'Campsite') Model = Campsite;
+    else if (targetType === 'Equipment') Model = Equipment;
+    else if (targetType === 'Guide') Model = Guide;
+
+    if (Model) {
+      const updated = await Model.findByIdAndUpdate(targetId, { averageRating, numReviews }, { new: true });
+      if (!updated) {
+        console.error(`[updateTargetRating] Target not found: ${targetType} ${targetId}`);
+      } else {
+        console.log(`[updateTargetRating] Successfully updated ${targetType} ${targetId}`);
+      }
+    }
+  } catch (error) {
+    console.error(`[updateTargetRating] Error updating rating for ${targetType} ${targetId}:`, error);
   }
 };
 
@@ -103,6 +162,10 @@ exports.updateFeedback = async (req, res) => {
     }
 
     const data = await feedbackService.updateFeedback(req.params.id, req.body);
+    
+    // Update target rating
+    await updateTargetRating(feedback.targetId, feedback.targetType);
+    
     res.json(data);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -122,6 +185,10 @@ exports.deleteFeedback = async (req, res) => {
     }
 
     await feedbackService.deleteFeedback(req.params.id);
+    
+    // Update target rating
+    await updateTargetRating(feedback.targetId, feedback.targetType);
+    
     res.json({ message: "Feedback deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -162,21 +229,21 @@ exports.checkEligibility = async (req, res) => {
       const reservation = await Reservation.findOne({
         user: userId,
         campsite: targetId,
-        status: 'confirmed'
+        status: { $in: ['confirmed', 'Confirmed', 'Payment Confirmed', 'paid', 'Completed', 'completed'] }
       });
       booked = !!reservation;
     } else if (targetType === 'Guide') {
       const booking = await GuideBooking.findOne({
         userId: userId,
         guideId: targetId,
-        status: { $in: ['Confirmed', 'Completed'] }
+        status: { $in: ['Confirmed', 'Completed', 'completed', 'Payment Confirmed', 'paid'] }
       });
       booked = !!booking;
     } else if (targetType === 'Equipment') {
       const purchase = await EquipmentPurchase.findOne({
         userId: userId,
         'items.equipmentId': targetId,
-        status: { $in: ['paid', 'shipped', 'delivered'] }
+        status: { $in: ['paid', 'shipped', 'delivered', 'Completed', 'completed'] }
       });
       booked = !!purchase;
     }

@@ -18,14 +18,20 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
   const { user, token } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     if (user) fetchFeedbacks();
-  }, [user, refreshSignal]);
+  }, [user, refreshSignal, activeCategory]);
 
   const fetchFeedbacks = async () => {
+    setLoading(true);
     try {
-      const response = await apiClient.get(`/feedback/display?userId=${user._id || user.id}`);
+      // If admin, fetch all. If user, fetch only their own.
+      const query = isAdmin ? '' : `userId=${user._id || user.id}`;
+      const response = await apiClient.get(`/feedback/display?${query}`);
       setFeedbacks(response.data.data || response.data || []);
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
@@ -34,7 +40,14 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
     }
   };
 
+  const filteredFeedbacks = feedbacks.filter(fb => {
+    if (activeCategory === 'All') return true;
+    return fb.targetType === activeCategory;
+  });
+
   const handleDelete = async (id) => {
+    if (isAdmin) return; // Admins can't delete
+    
     const confirmDelete = async () => {
       try {
         await apiClient.delete(`/feedback/delete/${id}`, {
@@ -68,29 +81,41 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.row}>
-        <Text style={styles.target}>{item.targetName || 'Campsite'}</Text>
+        <View>
+          <Text style={styles.target}>{item.targetName || 'Campsite'}</Text>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{item.targetType || 'Campsite'}</Text>
+          </View>
+        </View>
         <View style={styles.ratingContainer}>
           <Text style={styles.star}>⭐</Text>
           <Text style={styles.rating}>{item.rating}/5</Text>
         </View>
       </View>
+      
+      {isAdmin && (
+        <Text style={styles.userName}>By: {item.userId?.name || item.userName || 'Anonymous User'}</Text>
+      )}
+      
       <Text style={styles.comment}>"{item.comment}"</Text>
       <View style={styles.footer}>
         <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-        <View style={styles.actionRow}>
-          <TouchableOpacity 
-            style={styles.actionBtn} 
-            onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}
-          >
-            <Ionicons name="create-outline" size={18} color={Colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionBtn} 
-            onPress={() => handleDelete(item._id)}
-          >
-            <Ionicons name="trash-outline" size={18} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
+        {!isAdmin && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => navigation.navigate('AddFeedback', { booking: item, editMode: true })}
+            >
+              <Ionicons name="create-outline" size={18} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => handleDelete(item._id)}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -98,18 +123,30 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>My Feedbacks</Text>
-            <Text style={styles.subtitle}>Your shared experiences</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.createBtn}
-            onPress={() => navigation.navigate('AddFeedback')}
-          >
-            <Ionicons name="add-circle-outline" size={20} color="#fff" />
-            <Text style={styles.createBtnText}>New</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={28} color={Colors.text} />
           </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>{isAdmin ? 'Manage Reviews' : 'My Feedbacks'}</Text>
+            <Text style={styles.subtitle}>
+              {isAdmin ? 'View and monitor all community reviews' : 'Your shared experiences'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.tabContainer}>
+          {['All', 'Campsite', 'Equipment', 'Guide'].map((cat) => (
+            <TouchableOpacity 
+              key={cat}
+              style={[styles.tab, activeCategory === cat && styles.activeTab]}
+              onPress={() => setActiveCategory(cat)}
+            >
+              <Text style={[styles.tabText, activeCategory === cat && styles.activeTabText]}>
+                {cat === 'All' ? 'All' : cat + 's'}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
@@ -117,12 +154,12 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
         <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 50 }} />
       ) : (
         <FlatList
-          data={feedbacks}
+          data={filteredFeedbacks}
           renderItem={renderItem}
           keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No feedbacks yet.</Text>
+            <Text style={styles.emptyText}>No reviews found.</Text>
           }
         />
       )}
@@ -149,55 +186,60 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 4,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  createBtn: {
-    backgroundColor: Colors.primary,
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    gap: 8,
+    paddingTop: Platform.OS === 'ios' ? 0 : 20,
   },
-  createBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  list: {
-    padding: 20,
-  },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
-    elevation: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginRight: 15,
   },
-  target: {
-    fontSize: 16,
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: Colors.text,
+  },
+  categoryBadge: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  categoryBadgeText: {
+    fontSize: 10,
+    color: Colors.primary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  userName: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '600',
+    marginBottom: 10,
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef9c3',
+    backgroundColor: '#fffbeb',
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   star: {
     fontSize: 12,
@@ -206,13 +248,14 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#854d0e',
+    color: '#92400e',
   },
   comment: {
     fontSize: 14,
     color: '#475569',
     fontStyle: 'italic',
-    lineHeight: 20,
+    lineHeight: 22,
+    marginBottom: 12,
   },
   date: {
     fontSize: 11,
@@ -222,21 +265,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 12,
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 15,
   },
   actionBtn: {
-    padding: 4,
+    padding: 5,
   },
   emptyText: {
     textAlign: 'center',
     marginTop: 50,
     color: '#64748b',
     fontSize: 16,
-  }
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activeTab: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
 });
 
 export default FeedbackListScreen;
