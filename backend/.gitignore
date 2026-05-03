@@ -19,3 +19,6 @@ pids
 .DS_Store
 .vscode/
 .idea/
+
+# 5. Uploads
+uploads/
