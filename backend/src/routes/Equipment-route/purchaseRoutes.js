@@ -10,4 +10,7 @@ router.get('/my', protect, purchaseController.getMyPurchases);
 router.get('/all', protect, adminOnly, purchaseController.getAllPurchases);
 router.patch('/:id/status', protect, adminOnly, purchaseController.updatePurchaseStatus);
 
+router.delete('/:id', protect, purchaseController.deletePurchase);
+
 module.exports = router;
+

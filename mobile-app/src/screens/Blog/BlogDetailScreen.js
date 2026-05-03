@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+import { getImageUrl } from '../../api/apiClient';
 
 const BlogDetailScreen = ({ route, navigation }) => {
   const { blog: initialBlog } = route.params;
@@ -141,7 +142,7 @@ const BlogDetailScreen = ({ route, navigation }) => {
   const canEdit = user && currentUserId === blogAuthorId;
 
   const renderImageItem = ({ item }) => (
-    <Image source={{ uri: item }} style={[styles.galleryImage, { width: containerWidth }]} />
+    <Image source={{ uri: getImageUrl(item) }} style={[styles.galleryImage, { width: containerWidth }]} />
   );
 
   const handleScroll = (event) => {
@@ -307,7 +308,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.white },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 25,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.text },
   galleryContainer: { position: 'relative', width: '100%', overflow: 'hidden' },
