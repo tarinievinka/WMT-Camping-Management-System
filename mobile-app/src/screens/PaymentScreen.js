@@ -148,6 +148,8 @@ const PaymentScreen = ({ route, navigation }) => {
     }
 
     setLoading(true);
+    console.log('[PAYMENT_DEBUG] Attempting payment to:', `${apiClient.defaults.baseURL}/payment/add`);
+    console.log('[PAYMENT_DEBUG] Method:', paymentMethod);
     try {
       if (paymentMethod === 'deposit') {
         // Handle Bank Deposit with Receipt Upload
@@ -179,11 +181,7 @@ const PaymentScreen = ({ route, navigation }) => {
           }
         }
 
-        await apiClient.post('/payment/add', formData, {
-          headers: { 
-            'Content-Type': undefined, 
-          },
-        });
+        await apiClient.post('/payment/add', formData);
 
         setLoading(false);
         if (mode === 'bulk') clearCart();
