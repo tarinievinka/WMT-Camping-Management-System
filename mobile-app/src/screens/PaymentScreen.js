@@ -22,9 +22,11 @@ import { Shadows } from '../theme/shadows';
 import { BASE_URL, getImageUrl } from '../api/apiClient';
 import apiClient from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const PaymentScreen = ({ route, navigation }) => {
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const { item, type, mode, startDate: rawStartDate, endDate: rawEndDate, totalAmount, guests, bookingId } = route.params;
   
   const formatDate = (date) => {
@@ -95,6 +97,7 @@ const PaymentScreen = ({ route, navigation }) => {
         setTimeout(() => {
           setShowGPayModal(false);
           setGpayStep('summary'); // reset for next time
+          if (mode === 'bulk') clearCart();
           navigation.navigate('PaymentSuccess', { type, pending: false });
         }, 1500);
       } catch (error) {
@@ -183,6 +186,7 @@ const PaymentScreen = ({ route, navigation }) => {
         });
 
         setLoading(false);
+        if (mode === 'bulk') clearCart();
         navigation.navigate('PaymentSuccess', { type, pending: true });
       } else if (paymentMethod === 'card') {
         const paymentData = {
@@ -195,11 +199,13 @@ const PaymentScreen = ({ route, navigation }) => {
         };
         await apiClient.post('/payment/add', paymentData);
         setLoading(false);
+        if (mode === 'bulk') clearCart();
         navigation.navigate('PaymentSuccess', { type, pending: false });
       } else {
         // Handle other simulated methods
         setTimeout(() => {
           setLoading(false);
+          if (mode === 'bulk') clearCart();
           navigation.navigate('PaymentSuccess', { type, pending: false });
         }, 2000);
       }
@@ -247,7 +253,7 @@ const PaymentScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>Rs. {totalAmount}</Text>
+              <Text style={styles.totalValue}>LKR {totalAmount}</Text>
             </View>
           </View>
         </View>
@@ -433,7 +439,7 @@ const PaymentScreen = ({ route, navigation }) => {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.payButtonText}>
-              {paymentMethod === 'deposit' ? 'Confirm Booking' : paymentMethod === 'gpay' ? 'Pay with Google Pay' : `Pay Rs. ${totalAmount}`}
+              {paymentMethod === 'deposit' ? 'Confirm Booking' : paymentMethod === 'gpay' ? 'Pay with Google Pay' : `Pay LKR ${totalAmount}`}
             </Text>
           )}
         </TouchableOpacity>
@@ -462,7 +468,7 @@ const PaymentScreen = ({ route, navigation }) => {
               {gpayStep === 'summary' && (
                 <View>
                   <View style={styles.gpayContent}>
-                    <Text style={styles.gpayTotal}>Rs. {totalAmount}</Text>
+                    <Text style={styles.gpayTotal}>LKR {totalAmount}</Text>
                     <Text style={styles.gpayTo}>to Smart Camping System</Text>
                     
                     <View style={styles.gpayUser}>

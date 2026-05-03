@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { Colors } from '../../theme/colors';
 import { Shadows } from '../../theme/shadows';
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 
 const EquipmentDetailScreen = ({ route, navigation }) => {
   const { item } = route.params;
@@ -25,6 +27,7 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   const { user } = useAuth();
+  const { addToCart, cartItems } = useCart();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -57,7 +60,17 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
     }
   };
 
-
+  const handleAddToCart = (mode) => {
+    addToCart(equipmentData, 'equipment', mode, quantity);
+    Alert.alert(
+      'Success',
+      `${quantity} ${equipmentData.name} added to cart for ${mode}.`,
+      [
+        { text: 'Continue Shopping', style: 'cancel' },
+        { text: 'View Cart', onPress: () => navigation.navigate('Cart') }
+      ]
+    );
+  };
 
   const getImageUrl = (path) => {
     if (!path) return null;
@@ -81,6 +94,18 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
           >
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Cart')}
+          >
+            <Ionicons name="cart-outline" size={24} color={Colors.text} />
+            {cartItems.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
@@ -91,8 +116,8 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>{equipmentData.name}</Text>
-              <Text style={styles.price}>Rs. {equipmentData.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
-              <Text style={styles.salePrice}>Purchase: Rs. {equipmentData.salePrice}</Text>
+              <Text style={styles.price}>LKR {equipmentData.rentalPrice} <Text style={styles.unit}>/ day</Text></Text>
+              <Text style={styles.salePrice}>Purchase: LKR {equipmentData.salePrice}</Text>
             </View>
             <View style={styles.ratingBadge}>
               <Ionicons name="star" size={16} color="#fbbf24" />
@@ -180,21 +205,21 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
 
           <View style={styles.footer}>
             <View style={styles.totalSection}>
-              <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>Rs. {item.rentalPrice * quantity}</Text>
+              <Text style={styles.totalLabel}>Subtotal</Text>
+              <Text style={styles.totalValue}>LKR {equipmentData.rentalPrice * quantity}</Text>
             </View>
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={styles.buyButton}
-                onPress={() => navigation.navigate('Booking', { item, type: 'equipment', mode: 'buy' })}
+                onPress={() => handleAddToCart('buy')}
               >
-                <Text style={styles.buyButtonText}>Buy Now</Text>
+                <Text style={styles.buyButtonText}>Add Buy</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.rentButton}
-                onPress={() => navigation.navigate('Booking', { item, type: 'equipment', mode: 'rent' })}
+                onPress={() => handleAddToCart('rent')}
               >
-                <Text style={styles.rentButtonText}>Rent Now</Text>
+                <Text style={styles.rentButtonText}>Add Rent</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -231,6 +256,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.small,
+  },
+  cartButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.small,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ef4444',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
   },
   content: {
     padding: 24,
