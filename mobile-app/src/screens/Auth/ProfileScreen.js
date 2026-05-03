@@ -197,8 +197,8 @@ const ProfileScreen = ({ route, navigation }) => {
   },
   greenHeader: {
     backgroundColor: '#065f46',
-    paddingTop: Platform.OS === 'ios' ? 50 : (StatusBar.currentHeight || 40) + 10,
-    paddingBottom: 15,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 25,
     paddingHorizontal: 20,
   },
   headerRow: {
