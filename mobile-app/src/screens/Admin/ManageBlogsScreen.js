@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
 import { Ionicons } from '@expo/vector-icons';
+import { getImageUrl } from '../../api/apiClient';
+
 
 const ManageBlogsScreen = ({ navigation }) => {
   const { token, user } = useAuth();
@@ -138,9 +140,10 @@ const BlogCard = ({ item, user, navigation, onDelete }) => {
       <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
         <View style={styles.cardImageContainer}>
           <Image 
-            source={{ uri: (item.images && item.images.length > 0 ? item.images[0] : item.image) || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400' }} 
+            source={{ uri: getImageUrl(item.images && item.images.length > 0 ? item.images[0] : item.image) || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400' }} 
             style={styles.cardImage} 
           />
+
           <View style={styles.cardCategoryBadge}>
             <Text style={styles.cardCategoryText}>{item.category || 'General'}</Text>
           </View>
