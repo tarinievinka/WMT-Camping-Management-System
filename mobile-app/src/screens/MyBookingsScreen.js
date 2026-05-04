@@ -232,15 +232,7 @@ const MyBookingsScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
 
-          {!/cancel|reject/i.test(item.status) && (
-            <TouchableOpacity 
-              style={styles.deleteBtn}
-              onPress={() => handleDeleteBooking(item._id, item.type)}
-            >
-              <Ionicons name="trash-outline" size={16} color="#ef4444" />
-              <Text style={styles.deleteBtnText}>Delete</Text>
-            </TouchableOpacity>
-          )}
+
         </View>
 
       </View>
