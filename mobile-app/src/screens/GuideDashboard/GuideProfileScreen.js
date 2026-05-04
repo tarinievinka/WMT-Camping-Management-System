@@ -25,6 +25,7 @@ const GuideProfileScreen = ({ navigation }) => {
   const [gallery, setGallery] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchMyProfile();
@@ -116,6 +117,9 @@ const GuideProfileScreen = ({ navigation }) => {
   const handleUpdate = async () => {
     if (!guideData) return;
     
+    setErrors({});
+    let newErrors = {};
+
     // Validation
     const requiredFields = ['name', 'phone', 'specialties', 'dailyRate'];
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -126,10 +130,22 @@ const GuideProfileScreen = ({ navigation }) => {
       return;
     }
 
-    if (formData.phone && (formData.phone.length > 10 || isNaN(formData.phone))) {
-      const msg = 'Phone number should not exceed 10 digits and must be numeric';
-      if (Platform.OS === 'web') alert(msg);
-      else Alert.alert('Error', msg);
+    if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+
+    const rateNum = Number(formData.dailyRate);
+    if (isNaN(rateNum) || rateNum < 0) {
+      newErrors.dailyRate = 'Daily rate must be a positive number';
+    }
+
+    const expNum = Number(formData.experience);
+    if (formData.experience && (isNaN(expNum) || expNum < 0)) {
+      newErrors.experience = 'Experience must be a positive number';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -208,6 +224,21 @@ const GuideProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={[styles.input, errors.phone && styles.inputError]}
+            value={formData.phone}
+            onChangeText={(val) => {
+              setFormData({ ...formData, phone: val });
+              if (errors.phone) setErrors({ ...errors, phone: null });
+            }}
+            keyboardType="phone-pad"
+            placeholder="e.g. 0771234567"
+          />
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+        </View>
+
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Specialties (comma separated)</Text>
           <TextInput
             style={styles.input}
@@ -220,22 +251,30 @@ const GuideProfileScreen = ({ navigation }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Daily Rate (LKR)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.dailyRate && styles.inputError]}
             value={formData.dailyRate}
-            onChangeText={(val) => setFormData({ ...formData, dailyRate: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, dailyRate: val });
+              if (errors.dailyRate) setErrors({ ...errors, dailyRate: null });
+            }}
             keyboardType="numeric"
           />
+          {errors.dailyRate && <Text style={styles.errorText}>{errors.dailyRate}</Text>}
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Years of Experience</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.experience && styles.inputError]}
             value={formData.experience}
-            onChangeText={(val) => setFormData({ ...formData, experience: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, experience: val });
+              if (errors.experience) setErrors({ ...errors, experience: null });
+            }}
             keyboardType="numeric"
             placeholder="e.g. 5"
           />
+          {errors.experience && <Text style={styles.errorText}>{errors.experience}</Text>}
         </View>
 
         <View style={styles.inputGroup}>
@@ -396,6 +435,15 @@ const styles = StyleSheet.create({
   textArea: {
     height: 120,
     textAlignVertical: 'top',
+  },
+  inputError: {
+    borderColor: Colors.danger || '#ef4444',
+  },
+  errorText: {
+    color: Colors.danger || '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
   saveButton: {
     backgroundColor: Colors.primary,
