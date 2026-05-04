@@ -123,7 +123,8 @@ const BlogListScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       loadBookmarks();
-    }, [])
+      fetchBlogs();
+    }, [selectedCategory, searchQuery, activeTab])
   );
 
   useEffect(() => {
