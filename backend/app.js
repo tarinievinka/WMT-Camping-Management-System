@@ -92,15 +92,6 @@ const start = async () => {
   }
 };
 
-<<<<<<< HEAD
-=======
-
-
-
-
-
-
-
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('[SERVER_ERROR]', err);
@@ -110,5 +101,5 @@ app.use((err, req, res, next) => {
   });
 });
 
->>>>>>> 4dbb40e58d1a9e355e0ede54fe7172cc92baf875
+
 start();

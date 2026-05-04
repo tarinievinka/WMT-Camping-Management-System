@@ -3,8 +3,7 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView, Pla
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
-import { API_URL } from '../../api/config';
+import apiClient from '../../api/apiClient';
 import { useFocusEffect } from '@react-navigation/native';
 
 const GuideDashboardScreen = ({ navigation }) => {
@@ -12,10 +11,11 @@ const GuideDashboardScreen = ({ navigation }) => {
   const [stats, setStats] = useState({
     activeBookings: 0,
     totalIncome: 0,
-    completedTrips: 0
+    completedTrips: 0,
+    totalBookings: 0
   });
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [recentCompleted, setRecentCompleted] = useState([]);
+  const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useFocusEffect(
@@ -26,31 +26,43 @@ const GuideDashboardScreen = ({ navigation }) => {
 
   const fetchGuideStats = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/guide-bookings/my-bookings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get('/guide-bookings/my-bookings');
       
       const bookings = response.data || [];
-      const completed = bookings.filter(b => b.status === 'Completed');
-      const confirmed = bookings.filter(b => b.status === 'Confirmed');
-      const pending = bookings.filter(b => b.status === 'Pending');
+      const completed = bookings.filter(b => {
+        const s = b.status?.toLowerCase();
+        return s === 'completed' || s === 'paid';
+      });
+      const confirmed = bookings.filter(b => b.status?.toLowerCase() === 'confirmed');
+      const pending = bookings.filter(b => b.status?.toLowerCase() === 'pending');
       
       const income = completed.reduce((sum, b) => sum + (b.amount || 0), 0);
 
       setStats({
-        totalBookings: completed.length, // Only count finished tours
-        activeBookings: pending.length, // Only count pending requests
+        totalBookings: completed.length,
+        activeBookings: confirmed.length + pending.length,
         totalIncome: income,
         completedTrips: completed.length
       });
-      setRecentCompleted(completed.slice(0, 3)); // Top 3 recent
+
+      // Filter upcoming (Confirmed or Pending in the future)
+      const now = new Date().setHours(0,0,0,0);
+      const upcoming = bookings.filter(b => {
+        const s = b.status?.toLowerCase();
+        const bDate = b.startDate ? new Date(b.startDate).setHours(0,0,0,0) : 0;
+        return (s === 'confirmed' || s === 'pending') && bDate >= now;
+      });
+      
+      setUpcomingBookings(
+        upcoming
+          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+          .slice(0, 10)
+      );
 
       // Also fetch profile photo
-      const profileRes = await axios.get(`${API_URL}/api/guides/display`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const profileRes = await apiClient.get('/guides/display');
       const guides = profileRes.data.data || (Array.isArray(profileRes.data) ? profileRes.data : []);
-      const myProfile = guides.find(g => g.email === user.email);
+      const myProfile = guides.find(g => g.email === user?.email);
       if (myProfile && myProfile.profilePhoto) {
         setProfilePhoto(myProfile.profilePhoto);
       }
@@ -138,17 +150,38 @@ const GuideDashboardScreen = ({ navigation }) => {
           <Ionicons name="chevron-forward" size={20} color={Colors.text} />
         </TouchableOpacity>
 
-        {/* Completed Trips Section */}
-        {recentCompleted.length > 0 && (
+        {/* Upcoming Bookings Section */}
+        {upcomingBookings.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Recently Completed Trips</Text>
-            {recentCompleted.map(trip => (
-              <View key={trip._id} style={styles.completedTripCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Bookings</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Bookings')}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            {upcomingBookings.map(booking => (
+              <View key={booking._id} style={styles.upcomingCard}>
                 <View style={styles.tripInfo}>
-                  <Text style={styles.tripCustomer}>{trip.customerName}</Text>
-                  <Text style={styles.tripDate}>{new Date(trip.startDate).toLocaleDateString()}</Text>
+                  <Text style={styles.tripCustomer}>{booking.customerName}</Text>
+                  <Text style={styles.tripDate}>
+                    {new Date(booking.startDate).toLocaleDateString(undefined, { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric' 
+                    })}
+                  </Text>
                 </View>
-                <Text style={styles.tripAmount}>+LKR {trip.amount.toLocaleString()}</Text>
+                <View style={[
+                  styles.statusBadge, 
+                  { backgroundColor: booking.status === 'Confirmed' ? '#ecfdf5' : '#fffbeb' }
+                ]}>
+                  <Text style={[
+                    styles.statusBadgeText, 
+                    { color: booking.status === 'Confirmed' ? '#059669' : '#d97706' }
+                  ]}>
+                    {booking.status.toUpperCase()}
+                  </Text>
+                </View>
               </View>
             ))}
           </>
@@ -339,7 +372,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  completedTripCard: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  viewAllText: {
+    fontSize: 12,
+    color: '#064e3b',
+    fontWeight: 'bold',
+  },
+  upcomingCard: {
     backgroundColor: '#fff',
     borderRadius: 15,
     padding: 15,
@@ -348,12 +392,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#10b981',
+    borderLeftColor: '#064e3b',
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   tripInfo: {
     flex: 1,
@@ -367,11 +420,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
     marginTop: 2,
-  },
-  tripAmount: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#10b981',
   },
 });
 

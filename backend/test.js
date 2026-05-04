@@ -4,7 +4,7 @@ const data = JSON.stringify({
   username: "testuser2",
   email: "test2@test.com",
   password: "password123",
-  role: "user"
+  role: "user",
 });
 
 const options = {
