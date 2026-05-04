@@ -1,5 +1,5 @@
 export const Colors = {
-  primary: '#166534', // Forest Green (Matches the user's web theme)
+  primary: '#166534', // Forest Green (Reverted to original)
   secondary: '#10a110',
   accent: '#facc15',
   background: '#ffffff',
