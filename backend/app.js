@@ -29,12 +29,7 @@ console.log('[DEBUG] Starting server on port:', port);
 
 // Middleware
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:8081',
-    'http://127.0.0.1:8081'
-  ],
+  origin: true, // Allow all origins during development
   credentials: true
 }));
 

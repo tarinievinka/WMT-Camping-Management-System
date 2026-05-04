@@ -21,6 +21,7 @@ const CreateBlogScreen = ({ route, navigation }) => {
   const [imageUrl, setImageUrl] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   const isSubmitting = useRef(false);
 
   const categories = ['Smart Gear', 'Destinations', 'Campfire Recipes', 'Eco Camping', 'Safety & Tips'];
@@ -56,6 +57,29 @@ const CreateBlogScreen = ({ route, navigation }) => {
     setImages(newImages);
   };
 
+  // Upload a local file URI to the server and return the server URL
+  const uploadImageToServer = async (localUri) => {
+    if (localUri.startsWith('http')) return localUri; // already a URL, skip upload
+    try {
+      const formData = new FormData();
+      const filename = localUri.split('/').pop();
+      const ext = (filename.split('.').pop() || 'jpg').toLowerCase();
+      formData.append('image', {
+        uri: localUri,
+        name: filename || `photo_${Date.now()}.jpg`,
+        type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+      });
+      const res = await axios.post(`${API_URL}/api/blogs/upload-image`, formData, {
+        headers: { Authorization: `Bearer ${token}` }, // Do NOT set Content-Type - axios handles multipart boundary automatically
+        timeout: 30000,
+      });
+      return `${API_URL}${res.data.urlPath}`;
+    } catch (uploadErr) {
+      console.error('Image upload failed:', uploadErr?.response?.data || uploadErr.message);
+      return null; // return null on failure
+    }
+  };
+
   const handleCreate = async () => {
     if (isSubmitting.current) return;
 
@@ -67,12 +91,21 @@ const CreateBlogScreen = ({ route, navigation }) => {
     isSubmitting.current = true;
     setIsLoading(true);
     try {
+      // Upload any local images to the server first
+      setUploadStatus('Uploading images...');
+      const uploadResults = await Promise.all(
+        images.map(uri => uploadImageToServer(uri))
+      );
+      // Filter out failed uploads (null values), keep successful URLs
+      const uploadedImages = uploadResults.filter(url => url !== null);
+      setUploadStatus('');
+
       const blogData = {
         title,
         content,
         category,
-        tags: tags.split(',').map(tag => tag.trim()),
-        images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800&q=80']
+        tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+        images: uploadedImages.length > 0 ? uploadedImages : ['https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800&q=80']
       };
 
       if (editBlog) {
@@ -193,6 +226,10 @@ const CreateBlogScreen = ({ route, navigation }) => {
               multiline
             />
           </View>
+
+          {uploadStatus ? (
+            <Text style={{ textAlign: 'center', color: Colors.primary, marginBottom: 8, fontWeight: '600' }}>{uploadStatus}</Text>
+          ) : null}
 
           <TouchableOpacity
             style={[styles.submitButton, isLoading && styles.disabledButton]}
