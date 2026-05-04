@@ -132,12 +132,20 @@ const CartScreen = ({ navigation }) => {
           <Text style={styles.gearCategory}>Camping Gear • {item.mode === 'rent' ? 'Fair condition' : 'Brand New'}</Text>
           <View style={styles.gearFooter}>
             <View style={styles.qtyControl}>
-              <TouchableOpacity onPress={() => updateQuantity(item.cartId, -1)} style={styles.qtyBtn}>
-                <Feather name="minus" size={14} color={Colors.text} />
+              <TouchableOpacity 
+                onPress={() => updateQuantity(item.cartId, -1)} 
+                style={[styles.qtyBtn, (item.quantity <= 1) && { opacity: 0.5 }]}
+                disabled={item.quantity <= 1}
+              >
+                <Feather name="minus" size={14} color={(item.quantity <= 1) ? Colors.gray : Colors.text} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{item.quantity || 1}</Text>
-              <TouchableOpacity onPress={() => updateQuantity(item.cartId, 1)} style={styles.qtyBtn}>
-                <Feather name="plus" size={14} color={Colors.text} />
+              <TouchableOpacity 
+                onPress={() => updateQuantity(item.cartId, 1)} 
+                style={[styles.qtyBtn, item.quantity >= item.stockQuantity && { opacity: 0.5 }]}
+                disabled={item.quantity >= item.stockQuantity}
+              >
+                <Feather name="plus" size={14} color={item.quantity >= item.stockQuantity ? Colors.gray : Colors.text} />
               </TouchableOpacity>
             </View>
             <Text style={styles.gearPrice}>
