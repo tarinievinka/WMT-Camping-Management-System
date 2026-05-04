@@ -81,22 +81,56 @@ const CreateBlogScreen = ({ route, navigation }) => {
     isSubmitting.current = true;
     setIsLoading(true);
     try {
-      const blogData = {
-        title,
-        content,
-        category,
-        tags: tags.split(',').map(tag => tag.trim()),
-        images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800&q=80']
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content', content);
+      formData.append('category', category);
+      
+      const tagList = tags.split(',').map(tag => tag.trim()).filter(t => t !== "");
+      formData.append('tags', JSON.stringify(tagList));
+
+      // Local images + already added URLs
+      const allImages = [...images];
+      
+      // Auto-include pending URL if user forgot to click the '+' button
+      if (imageUrl.trim() && !allImages.includes(imageUrl.trim())) {
+        allImages.push(imageUrl.trim());
+      }
+
+      const urlImages = [];
+      allImages.forEach((img, index) => {
+        if (img.startsWith('http') || img.startsWith('/uploads')) {
+          urlImages.push(img);
+        } else {
+          // Local file upload
+          const fileName = img.split('/').pop() || `image_${index}.jpg`;
+          const extension = fileName.split('.').pop();
+          formData.append('images', {
+            uri: Platform.OS === 'android' ? img : img.replace('file://', ''),
+            name: fileName,
+            type: `image/${extension === 'jpg' ? 'jpeg' : extension}`
+          });
+        }
+      });
+
+
+
+      if (urlImages.length > 0) {
+        formData.append('urlImages', JSON.stringify(urlImages));
+      }
+
+
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
       };
 
       if (editBlog) {
-        await axios.put(`${API_URL}/api/blogs/${editBlog._id}`, blogData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API_URL}/api/blogs/${editBlog._id}`, formData, config);
       } else {
-        await axios.post(`${API_URL}/api/blogs`, blogData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API_URL}/api/blogs`, formData, config);
       }
 
       const successMsg = editBlog ? 'Blog updated successfully!' : 'Blog posted successfully!';
@@ -107,12 +141,14 @@ const CreateBlogScreen = ({ route, navigation }) => {
         Alert.alert('Success', successMsg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to save blog');
+      console.error('Blog Save Error:', err);
+      Alert.alert('Error', 'Failed to save blog. Please try again.');
     } finally {
       isSubmitting.current = false;
       setIsLoading(false);
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
