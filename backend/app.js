@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 const connectDB = require('./src/config/db');
 
-// Routes Imports
+// Routes Importsnpx
 const paymentRoute = require('./src/routes/payment-route/paymentRoute');
 const feedbackRoute = require('./src/routes/feedback & ticket-route/feedbackRoute');
 const equipmentRouter = require('./src/routes/Equipment-route/EquipmentRoute');
@@ -74,8 +74,8 @@ app.use('/api/purchases', purchaseRoute);
 const start = async () => {
   try {
     await connectDB();
-    const server = app.listen(port, () => {
-      console.log(`Server running at http://localhost:${port}`);
+    const server = app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on all interfaces at port ${port}`);
     });
 
     server.on('error', (err) => {
@@ -92,13 +92,6 @@ const start = async () => {
   }
 };
 
-
-
-
-
-
-
-
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('[SERVER_ERROR]', err);
@@ -108,10 +101,5 @@ app.use((err, req, res, next) => {
   });
 });
 
+
 start();
-
-
-
-
-
-

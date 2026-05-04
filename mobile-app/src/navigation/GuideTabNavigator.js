@@ -3,8 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import GuideDashboardScreen from '../screens/GuideDashboard/GuideDashboardScreen';
 import GuideBookingsScreen from '../screens/GuideDashboard/GuideBookingsScreen';
-import GuideProfileScreen from '../screens/GuideDashboard/GuideProfileScreen';
-import GuideDetailScreen from '../screens/Guide/GuideDetailScreen';
+import GuideEarningsScreen from '../screens/GuideDashboard/GuideEarningsScreen';
+import GuideProfileViewScreen from '../screens/GuideDashboard/GuideProfileViewScreen';
 import { Colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -45,8 +45,8 @@ const GuideTabNavigator = () => {
     >
       <Tab.Screen name="Dashboard" component={GuideDashboardScreen} />
       <Tab.Screen name="Bookings" component={GuideBookingsScreen} />
-      <Tab.Screen name="Earnings" component={GuideDashboardScreen} /> 
-      <Tab.Screen name="Profile" component={GuideDetailScreen} />
+      <Tab.Screen name="Earnings" component={GuideEarningsScreen} /> 
+      <Tab.Screen name="Profile" component={GuideProfileViewScreen} />
     </Tab.Navigator>
   );
 };

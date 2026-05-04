@@ -207,7 +207,7 @@ const PaymentHistoryScreen = ({ navigation }) => {
               <Text style={styles.emptySubtitle}>Your payment records will appear here once you make a booking.</Text>
               <TouchableOpacity 
                 style={styles.exploreButton}
-                onPress={() => navigation.navigate('Equipment')}
+                onPress={() => navigation.navigate('Store')}
               >
                 <Text style={styles.exploreButtonText}>Start Exploring</Text>
               </TouchableOpacity>

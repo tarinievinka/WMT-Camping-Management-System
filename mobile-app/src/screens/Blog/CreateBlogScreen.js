@@ -21,6 +21,8 @@ const CreateBlogScreen = ({ route, navigation }) => {
   const [imageUrl, setImageUrl] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+  const [titleError, setTitleError] = useState('');
+  const [contentError, setContentError] = useState('');
   const isSubmitting = useRef(false);
 
   const categories = ['Smart Gear', 'Destinations', 'Campfire Recipes', 'Eco Camping', 'Safety & Tips'];
@@ -59,30 +61,76 @@ const CreateBlogScreen = ({ route, navigation }) => {
   const handleCreate = async () => {
     if (isSubmitting.current) return;
 
-    if (!title || !content) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
+    let isValid = true;
+    if (!title.trim()) {
+      setTitleError('Title is required');
+      isValid = false;
+    } else {
+      setTitleError('');
     }
+
+    if (!content.trim()) {
+      setContentError('Content is required');
+      isValid = false;
+    } else {
+      setContentError('');
+    }
+
+    if (!isValid) return;
 
     isSubmitting.current = true;
     setIsLoading(true);
     try {
-      const blogData = {
-        title,
-        content,
-        category,
-        tags: tags.split(',').map(tag => tag.trim()),
-        images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800&q=80']
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content', content);
+      formData.append('category', category);
+      
+      const tagList = tags.split(',').map(tag => tag.trim()).filter(t => t !== "");
+      formData.append('tags', JSON.stringify(tagList));
+
+      // Local images + already added URLs
+      const allImages = [...images];
+      
+      // Auto-include pending URL if user forgot to click the '+' button
+      if (imageUrl.trim() && !allImages.includes(imageUrl.trim())) {
+        allImages.push(imageUrl.trim());
+      }
+
+      const urlImages = [];
+      allImages.forEach((img, index) => {
+        if (img.startsWith('http') || img.startsWith('/uploads')) {
+          urlImages.push(img);
+        } else {
+          // Local file upload
+          const fileName = img.split('/').pop() || `image_${index}.jpg`;
+          const extension = fileName.split('.').pop();
+          formData.append('images', {
+            uri: Platform.OS === 'android' ? img : img.replace('file://', ''),
+            name: fileName,
+            type: `image/${extension === 'jpg' ? 'jpeg' : extension}`
+          });
+        }
+      });
+
+
+
+      if (urlImages.length > 0) {
+        formData.append('urlImages', JSON.stringify(urlImages));
+      }
+
+
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
       };
 
       if (editBlog) {
-        await axios.put(`${API_URL}/api/blogs/${editBlog._id}`, blogData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API_URL}/api/blogs/${editBlog._id}`, formData, config);
       } else {
-        await axios.post(`${API_URL}/api/blogs`, blogData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API_URL}/api/blogs`, formData, config);
       }
 
       const successMsg = editBlog ? 'Blog updated successfully!' : 'Blog posted successfully!';
@@ -93,12 +141,14 @@ const CreateBlogScreen = ({ route, navigation }) => {
         Alert.alert('Success', successMsg, [{ text: 'OK', onPress: () => navigation.goBack() }]);
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to save blog');
+      console.error('Blog Save Error:', err);
+      Alert.alert('Error', 'Failed to save blog. Please try again.');
     } finally {
       isSubmitting.current = false;
       setIsLoading(false);
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -149,13 +199,17 @@ const CreateBlogScreen = ({ route, navigation }) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Title</Text>
+            <Text style={styles.label}>Title <Text style={{ color: '#ef4444' }}>*</Text></Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, titleError ? styles.errorInput : null]}
               placeholder="Enter an inspiring title"
               value={title}
-              onChangeText={setTitle}
+              onChangeText={(text) => {
+                setTitle(text);
+                if (text.trim()) setTitleError('');
+              }}
             />
+            {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
           </View>
 
           <View style={styles.inputGroup}>
@@ -184,14 +238,18 @@ const CreateBlogScreen = ({ route, navigation }) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Content</Text>
+            <Text style={styles.label}>Content <Text style={{ color: '#ef4444' }}>*</Text></Text>
             <TextInput
-              style={[styles.input, styles.contentInput]}
+              style={[styles.input, styles.contentInput, contentError ? styles.errorInput : null]}
               placeholder="Share your experience..."
               value={content}
-              onChangeText={setContent}
+              onChangeText={(text) => {
+                setContent(text);
+                if (text.trim()) setContentError('');
+              }}
               multiline
             />
+            {contentError ? <Text style={styles.errorText}>{contentError}</Text> : null}
           </View>
 
           <TouchableOpacity
@@ -242,6 +300,8 @@ const styles = StyleSheet.create({
   submitButton: { backgroundColor: Colors.primary, paddingVertical: 18, borderRadius: 12, alignItems: 'center', marginTop: 20, marginBottom: 40 },
   submitText: { color: Colors.white, fontSize: 18, fontWeight: 'bold' },
   disabledButton: { opacity: 0.7 },
+  errorInput: { borderColor: '#ef4444' },
+  errorText: { color: '#ef4444', fontSize: 12, marginTop: 4, marginLeft: 2 },
 });
 
 export default CreateBlogScreen;

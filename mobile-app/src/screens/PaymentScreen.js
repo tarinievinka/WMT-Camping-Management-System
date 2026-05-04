@@ -274,7 +274,9 @@ const PaymentScreen = ({ route, navigation }) => {
               {mode !== 'buy' && (
                 <Text style={styles.itemDates}>{startDate} to {endDate}</Text>
               )}
-              <Text style={styles.itemGuests}>{guests} {type === 'equipment' ? 'Units' : 'Guests'}</Text>
+              <Text style={styles.itemGuests}>
+                {guests} {type === 'equipment' ? 'Units' : (guests === 1 ? 'Guest' : 'Guests')}
+              </Text>
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.totalLabel}>Total</Text>

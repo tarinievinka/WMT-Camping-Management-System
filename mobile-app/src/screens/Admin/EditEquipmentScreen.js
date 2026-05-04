@@ -11,14 +11,14 @@ const CATEGORIES = ["Tents", "Sleeping Bags", "Backpacks", "Cooking Gear", "Ligh
 const CONDITIONS = ["New", "Good", "Fair", "Poor"];
 const STATUSES = ["Available", "Rented", "Out of Stock", "Deactivated"];
 
-const CustomDropdown = ({ label, value, options, onSelect }) => {
+const CustomDropdown = ({ label, value, options, onSelect, error }) => {
   const [visible, setVisible] = useState(false);
 
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity 
-        style={styles.dropdownBtn} 
+        style={[styles.dropdownBtn, error && styles.inputError]} 
         onPress={() => {
           Keyboard.dismiss();
           setVisible(true);
@@ -42,6 +42,7 @@ const CustomDropdown = ({ label, value, options, onSelect }) => {
           </View>
         </TouchableOpacity>
       </Modal>
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -65,6 +66,47 @@ const EditEquipmentScreen = ({ navigation, route }) => {
   const [currentImageUrl, setCurrentImageUrl] = useState(item.imageUrl || '');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    let newErrors = {};
+    
+    if (!formData.name.trim()) {
+      newErrors.name = 'Equipment name is required';
+    } else if (formData.name.length < 3) {
+      newErrors.name = 'Name must be at least 3 characters';
+    }
+    
+    if (!formData.rentalPrice) {
+      newErrors.rentalPrice = 'Required';
+    } else if (isNaN(formData.rentalPrice) || parseFloat(formData.rentalPrice) <= 0) {
+      newErrors.rentalPrice = 'Invalid price';
+    }
+    
+    if (!formData.salePrice) {
+      newErrors.salePrice = 'Required';
+    } else if (isNaN(formData.salePrice) || parseFloat(formData.salePrice) <= 0) {
+      newErrors.salePrice = 'Invalid price';
+    }
+    
+    if (formData.stockQuantity < 0) {
+      newErrors.stockQuantity = 'Quantity cannot be negative';
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    } else if (formData.description.length < 10) {
+      newErrors.description = 'Description must be at least 10 characters';
+    }
+    
+    // In edit, we either have a new image or an existing one
+    if (images.length === 0 && !currentImageUrl) {
+      newErrors.images = 'Equipment photo is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -88,8 +130,8 @@ const EditEquipmentScreen = ({ navigation, route }) => {
   };
 
   const handleUpdate = async () => {
-    if (!formData.name || !formData.rentalPrice || !formData.salePrice || formData.stockQuantity < 0) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please correct the highlighted fields.');
       return;
     }
 
@@ -165,12 +207,16 @@ const EditEquipmentScreen = ({ navigation, route }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>EQUIPMENT NAME</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.name && styles.inputError]}
             placeholder="e.g. Ultra-Light Alpine Tent"
             placeholderTextColor={Colors.textLight}
             value={formData.name}
-            onChangeText={(val) => setFormData({ ...formData, name: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, name: val });
+              if (errors.name) setErrors({...errors, name: null});
+            }}
           />
+          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
         </View>
 
         <CustomDropdown
@@ -178,6 +224,7 @@ const EditEquipmentScreen = ({ navigation, route }) => {
           value={formData.category}
           options={CATEGORIES}
           onSelect={(val) => setFormData({ ...formData, category: val })}
+          error={errors.category}
         />
 
         <View style={styles.inputGroup}>
@@ -200,31 +247,39 @@ const EditEquipmentScreen = ({ navigation, route }) => {
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.label}>RENT PRICE/DAY</Text>
-            <View style={styles.iconInputContainer}>
+            <View style={[styles.iconInputContainer, errors.rentalPrice && styles.inputError]}>
               <Text style={styles.inputIcon}>LKR</Text>
               <TextInput
                 style={styles.iconInput}
                 placeholder="0.00"
                 placeholderTextColor={Colors.textLight}
                 value={formData.rentalPrice}
-                onChangeText={(val) => setFormData({ ...formData, rentalPrice: val })}
+                onChangeText={(val) => {
+                  setFormData({ ...formData, rentalPrice: val });
+                  if (errors.rentalPrice) setErrors({...errors, rentalPrice: null});
+                }}
                 keyboardType="numeric"
               />
             </View>
+            {errors.rentalPrice && <Text style={styles.errorText}>{errors.rentalPrice}</Text>}
           </View>
           <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
             <Text style={styles.label}>SALE PRICE</Text>
-            <View style={styles.iconInputContainer}>
+            <View style={[styles.iconInputContainer, errors.salePrice && styles.inputError]}>
               <Text style={styles.inputIcon}>LKR</Text>
               <TextInput
                 style={styles.iconInput}
                 placeholder="0.00"
                 placeholderTextColor={Colors.textLight}
                 value={formData.salePrice}
-                onChangeText={(val) => setFormData({ ...formData, salePrice: val })}
+                onChangeText={(val) => {
+                  setFormData({ ...formData, salePrice: val });
+                  if (errors.salePrice) setErrors({...errors, salePrice: null});
+                }}
                 keyboardType="numeric"
               />
             </View>
+            {errors.salePrice && <Text style={styles.errorText}>{errors.salePrice}</Text>}
           </View>
         </View>
 
@@ -234,11 +289,14 @@ const EditEquipmentScreen = ({ navigation, route }) => {
             <TouchableOpacity style={styles.qtyBtn} onPress={() => handleQuantityChange('dec')}>
               <Feather name="minus" size={20} color={Colors.text} />
             </TouchableOpacity>
-            <View style={styles.qtyInputContainer}>
+            <View style={[styles.qtyInputContainer, errors.stockQuantity && styles.inputError]}>
               <TextInput
                 style={styles.qtyInput}
                 value={formData.stockQuantity.toString()}
-                onChangeText={(val) => setFormData({ ...formData, stockQuantity: parseInt(val) || 0 })}
+                onChangeText={(val) => {
+                  setFormData({ ...formData, stockQuantity: parseInt(val) || 0 });
+                  if (errors.stockQuantity) setErrors({...errors, stockQuantity: null});
+                }}
                 keyboardType="numeric"
               />
             </View>
@@ -246,6 +304,7 @@ const EditEquipmentScreen = ({ navigation, route }) => {
               <Feather name="plus" size={20} color={Colors.text} />
             </TouchableOpacity>
           </View>
+          {errors.stockQuantity && <Text style={styles.errorText}>{errors.stockQuantity}</Text>}
         </View>
 
         <CustomDropdown
@@ -258,18 +317,22 @@ const EditEquipmentScreen = ({ navigation, route }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>DESCRIPTION</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, errors.description && styles.inputError]}
             placeholder="Describe the equipment details, features, and durability..."
             placeholderTextColor={Colors.textLight}
             value={formData.description}
-            onChangeText={(val) => setFormData({ ...formData, description: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, description: val });
+              if (errors.description) setErrors({...errors, description: null});
+            }}
             multiline
           />
+          {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
         </View>
 
         <Text style={styles.label}>EQUIPMENT PHOTO</Text>
         <View style={styles.photoSection}>
-          <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
+          <TouchableOpacity style={[styles.addImageButton, errors.images && styles.inputError]} onPress={pickImage}>
             <Ionicons name="camera" size={30} color={Colors.primary} />
             <Text style={styles.addImageText}>Change</Text>
           </TouchableOpacity>
@@ -281,12 +344,13 @@ const EditEquipmentScreen = ({ navigation, route }) => {
               />
             </View>
           ) : (
-            <View style={[styles.imageContainer, styles.noImageContainer]}>
+            <View style={[styles.imageContainer, styles.noImageContainer, errors.images && styles.inputError]}>
                <Feather name="image" size={30} color="#cbd5e1" />
                <Text style={styles.noImageText}>No photo</Text>
             </View>
           )}
         </View>
+        {errors.images && <Text style={[styles.errorText, {marginTop: -25, marginBottom: 20}]}>{errors.images}</Text>}
 
         <TouchableOpacity 
           style={[styles.submitButton, isLoading && styles.disabledButton]}
@@ -597,6 +661,16 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 11,
+    marginTop: 4,
+    fontWeight: '600',
   },
 });
 

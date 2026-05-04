@@ -20,6 +20,12 @@ const { width } = Dimensions.get('window');
 
 const StoreScreen = ({ navigation, route }) => {
   const [activeTab, setActiveTab] = useState(route.params?.activeTab || 'campsites');
+  
+  React.useEffect(() => {
+    if (route.params?.activeTab) {
+      setActiveTab(route.params.activeTab);
+    }
+  }, [route.params?.activeTab]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -86,16 +92,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   activeTab: {
-    backgroundColor: '#fff',
-    elevation: 2,
-    ...(Platform.OS === 'web' ? {
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
-    } : {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    })
+    backgroundColor: Colors.primary,
   },
   tabText: {
     fontSize: 13,
@@ -103,7 +100,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   activeTabText: {
-    color: Colors.primary,
+    color: '#fff',
   },
   content: {
     flex: 1,

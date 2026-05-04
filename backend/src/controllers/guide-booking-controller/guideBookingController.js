@@ -21,7 +21,11 @@ exports.createBooking = async (req, res) => {
                 });
             }
         }
-        const booking = new GuideBooking(req.body);
+        const booking = new GuideBooking({
+            ...req.body,
+            guidePhoto: req.body.guidePhoto || (g ? g.profilePhoto : null),
+            numberOfGuests: req.body.numberOfGuests || req.body.guests || 1
+        });
         await booking.save();
         res.status(201).json(booking);
     } catch (err) {
@@ -72,8 +76,16 @@ exports.getMyBookings = async (req, res) => {
         if (!guide) {
             return res.status(404).json({ error: "Guide profile not found for this user" });
         }
-        const bookings = await GuideBooking.find({ guideId: guide._id }).sort({ createdAt: -1 });
-        res.json(bookings);
+        const bookings = await GuideBooking.find({ guideId: guide._id }).sort({ createdAt: -1 }).populate("guideId");
+        const results = bookings.map(b => {
+            const doc = b.toObject();
+            if (doc.guideId && typeof doc.guideId === 'object') {
+                if (!doc.guideName) doc.guideName = doc.guideId.name;
+                if (!doc.guidePhoto) doc.guidePhoto = doc.guideId.profilePhoto;
+            }
+            return doc;
+        });
+        res.json(results);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -83,8 +95,16 @@ exports.getMyBookings = async (req, res) => {
 exports.getCustomerBookings = async (req, res) => {
     try {
         const userId = req.user.id;
-        const bookings = await GuideBooking.find({ userId }).sort({ createdAt: -1 });
-        res.json(bookings);
+        const bookings = await GuideBooking.find({ userId }).populate("guideId").sort({ createdAt: -1 });
+        const results = bookings.map(b => {
+            const doc = b.toObject();
+            if (doc.guideId && typeof doc.guideId === 'object') {
+                if (!doc.guideName) doc.guideName = doc.guideId.name;
+                if (!doc.guidePhoto) doc.guidePhoto = doc.guideId.profilePhoto;
+            }
+            return doc;
+        });
+        res.json(results);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

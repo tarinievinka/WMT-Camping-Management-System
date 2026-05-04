@@ -42,7 +42,11 @@ export const CartProvider = ({ children }) => {
       
       if (existingItemIndex > -1) {
         updatedCart = [...prev];
-        updatedCart[existingItemIndex].quantity += quantity;
+        const newQty = updatedCart[existingItemIndex].quantity + quantity;
+        // Cap quantity at stock level if available
+        updatedCart[existingItemIndex].quantity = item.stockQuantity !== undefined 
+          ? Math.min(newQty, item.stockQuantity) 
+          : newQty;
       } else {
         updatedCart = [...prev, {
           cartId,
@@ -52,6 +56,7 @@ export const CartProvider = ({ children }) => {
           type,
           mode,
           quantity,
+          stockQuantity: item.stockQuantity, // Store stock count
           image: item.imageUrl || item.images?.[0] || item.image
         }];
       }
@@ -64,7 +69,12 @@ export const CartProvider = ({ children }) => {
     setCartItems(prev => {
       const updatedCart = prev.map(item => {
         if (item.cartId === cartId) {
-          const newQty = Math.max(1, item.quantity + delta);
+          let newQty = item.quantity + delta;
+          // Cap at stockQuantity if it exists, otherwise just ensure at least 1
+          if (item.stockQuantity !== undefined) {
+            newQty = Math.min(newQty, item.stockQuantity);
+          }
+          newQty = Math.max(1, newQty);
           return { ...item, quantity: newQty };
         }
         return item;

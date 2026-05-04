@@ -35,6 +35,12 @@ const EquipmentCard = ({ item, onPress, onAddToCart }) => {
               <Text style={styles.stockWarningText}>ONLY {item.stockQuantity} LEFT</Text>
             </View>
           )}
+          
+          {isOutOfStock && (
+            <View style={[styles.stockWarningBadge, { backgroundColor: '#ef4444' }]}>
+              <Text style={styles.stockWarningText}>SOLD OUT</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -79,13 +85,7 @@ const EquipmentCard = ({ item, onPress, onAddToCart }) => {
             <Text style={styles.price}>LKR {item.rentalPrice}</Text>
           </View>
           
-          <TouchableOpacity 
-            style={[styles.addToCartBtn, isOutOfStock && styles.disabledBtn]} 
-            onPress={() => !isOutOfStock && onAddToCart?.(item)}
-            disabled={isOutOfStock}
-          >
-            <Ionicons name="cart-outline" size={18} color={Colors.white} />
-          </TouchableOpacity>
+
         </View>
       </View>
     </TouchableOpacity>
@@ -217,30 +217,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#166534',
   },
-  addToCartBtn: {
-    backgroundColor: '#10b981',
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      web: {
-        boxShadow: '0px 4px 10px rgba(16, 185, 129, 0.3)',
-      },
-      default: {
-        elevation: 3,
-        shadowColor: '#10b981',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-      }
-    })
-  },
-  disabledBtn: {
-    backgroundColor: '#cbd5e1',
-    shadowOpacity: 0,
-  }
+
 });
 
 export default EquipmentCard;
