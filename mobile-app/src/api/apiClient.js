@@ -6,13 +6,13 @@ import { Platform } from 'react-native';
 // FOR WEB: localhost works normally
 export const BASE_URL = Platform.OS === 'web'
   ? 'http://localhost:5000'
-  : 'http://172.29.146.225:5000';
+  : 'http://192.168.1.8:5000';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 60000,
   headers: {
     'Accept': 'application/json',
   },

@@ -198,9 +198,8 @@ const MyBookingsScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.cardFooter}>
-          {(item.status?.toLowerCase() === 'confirmed' || 
-            item.status?.toLowerCase() === 'completed' || 
-            item.status?.toLowerCase() === 'paid') && (
+          {((item.status?.toLowerCase() === 'completed') || 
+            (item.type !== 'Guide' && (item.status?.toLowerCase() === 'confirmed' || item.status?.toLowerCase() === 'paid'))) && (
             <TouchableOpacity 
               style={styles.reviewBtn}
               onPress={() => navigation.navigate('AddFeedback', { booking: item })}
@@ -232,13 +231,7 @@ const MyBookingsScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity 
-            style={styles.deleteBtn}
-            onPress={() => handleDeleteBooking(item._id, item.type)}
-          >
-            <Ionicons name="trash-outline" size={16} color="#ef4444" />
-            <Text style={styles.deleteBtnText}>Delete</Text>
-          </TouchableOpacity>
+
         </View>
 
       </View>
