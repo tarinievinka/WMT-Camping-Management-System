@@ -21,11 +21,22 @@ const equipmentPurchaseSchema = new mongoose.Schema({
         price: {
             type: Number,
             required: true
+        },
+        bookingType: {
+            type: String,
+            enum: ['buy', 'rent'],
+            default: 'buy'
         }
     }],
     totalPrice: {
         type: Number,
         required: true
+    },
+    startDate: {
+        type: Date
+    },
+    endDate: {
+        type: Date
     },
     status: {
         type: String,
