@@ -20,6 +20,12 @@ const { width } = Dimensions.get('window');
 
 const StoreScreen = ({ navigation, route }) => {
   const [activeTab, setActiveTab] = useState(route.params?.activeTab || 'campsites');
+  
+  React.useEffect(() => {
+    if (route.params?.activeTab) {
+      setActiveTab(route.params.activeTab);
+    }
+  }, [route.params?.activeTab]);
 
   const renderContent = () => {
     switch (activeTab) {
