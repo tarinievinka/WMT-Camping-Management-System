@@ -116,6 +116,23 @@ const GuideProfileScreen = ({ navigation }) => {
   const handleUpdate = async () => {
     if (!guideData) return;
     
+    // Validation
+    const requiredFields = ['name', 'phone', 'specialties', 'dailyRate'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    if (missingFields.length > 0) {
+      const msg = `Please fill in all required fields: ${missingFields.join(', ')}`;
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Error', msg);
+      return;
+    }
+
+    if (formData.phone && (formData.phone.length > 10 || isNaN(formData.phone))) {
+      const msg = 'Phone number should not exceed 10 digits and must be numeric';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Error', msg);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const data = {
