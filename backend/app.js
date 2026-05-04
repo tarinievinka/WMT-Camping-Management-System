@@ -29,12 +29,7 @@ console.log('[DEBUG] Starting server on port:', port);
 
 // Middleware
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:8081',
-    'http://127.0.0.1:8081'
-  ],
+  origin: '*', // Allow all origins for development to avoid mobile connectivity issues
   credentials: true
 }));
 
@@ -97,4 +92,23 @@ const start = async () => {
   }
 };
 
+<<<<<<< HEAD
+=======
+
+
+
+
+
+
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[SERVER_ERROR]', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
+>>>>>>> 4dbb40e58d1a9e355e0ede54fe7172cc92baf875
 start();

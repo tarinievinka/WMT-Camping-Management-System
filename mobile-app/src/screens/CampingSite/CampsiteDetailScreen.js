@@ -35,7 +35,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
 
   const fetchSiteData = async () => {
     try {
-      const response = await apiClient.get(`/campsite/${item._id}`);
+      const response = await apiClient.get(`/campsites/${item._id}`);
       if (response.data.data) {
         setSiteData(response.data.data);
       } else if (response.data) {

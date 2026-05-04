@@ -36,6 +36,21 @@ const createPayment = async (data) => {
     } catch (err) {
       console.error('Error in immediate payment processing:', err);
     }
+  } else if (data.paymentMethod === 'bank-deposit') {
+    // For bank deposits, ensure the booking status is set to 'pending'
+    try {
+      if (data.bookingType === 'GuideBooking') {
+        await GuideBooking.findByIdAndUpdate(data.bookingId, { status: 'pending' });
+      } else if (data.bookingType === 'CampsiteBooking') {
+        await Reservation.findByIdAndUpdate(data.bookingId, { status: 'pending' });
+      } else if (data.bookingType === 'EquipmentBooking') {
+        await EquipmentPurchase.findByIdAndUpdate(data.bookingId, { status: 'pending' });
+      }
+      
+      console.log(`[PAYMENT_SERVICE] Booking ${data.bookingId} set to pending for bank deposit.`);
+    } catch (err) {
+      console.error('Error setting booking to pending for bank deposit:', err);
+    }
   }
   return savedPayment;
 };
