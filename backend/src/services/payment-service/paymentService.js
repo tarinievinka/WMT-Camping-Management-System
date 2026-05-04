@@ -105,7 +105,25 @@ const updatePaymentStatus = async (id, status) => {
       console.error('Error updating booking status or sending notification:', err);
       // We don't throw here to avoid breaking the payment update itself
     }
+  } else if (status === 'failed') {
+    try {
+      const user = await User.findById(payment.userId);
+      if (user) {
+        const notification = new CustomerNotification({
+          customerName: user.name || user.fullName || 'Valued Camper',
+          customerEmail: user.email,
+          title: 'Payment Failed ❌',
+          body: `Unfortunately, your payment of LKR ${payment.amount} for booking #${payment.bookingId?.slice(-6)} was rejected. Please check your payment details and try again.`,
+          bookingId: payment.bookingId,
+          read: false
+        });
+        await notification.save();
+      }
+    } catch (err) {
+      console.error('Error sending failed payment notification:', err);
+    }
   }
+
 
   return payment;
 };
