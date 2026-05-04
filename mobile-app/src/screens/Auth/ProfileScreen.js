@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
-  FlatList,
-  Platform,
-  StatusBar
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  Alert, 
+  ScrollView, 
+  ActivityIndicator, 
+  FlatList, 
+  Platform, 
+  StatusBar 
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
+import axios from 'axios';
+import { API_URL } from '../../api/config';
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -26,14 +28,6 @@ const ProfileScreen = ({ route, navigation }) => {
   const [profileData, setProfileData] = useState(null);
   const [userBlogs, setUserBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const user = {
-    name: authUser?.name || 'Happy Camper',
-    email: authUser?.email || 'camper@example.com',
-    avatar: authUser?.profilePicture
-      ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
-      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
-  };
 
   useEffect(() => {
     fetchProfileData();
@@ -45,22 +39,22 @@ const ProfileScreen = ({ route, navigation }) => {
       if (isOwnProfile) {
         setProfileData(authUser);
       } else {
-        const response = await apiClient.get('/blogs');
-        const blogs = response.data.data || response.data;
+        const blogRes = await axios.get(`${API_URL}/api/blogs`);
+        const blogs = Array.isArray(blogRes.data) ? blogRes.data : (blogRes.data.data || []);
         const authorBlog = blogs.find(b => (b.author?._id || b.author) === authorId);
         if (authorBlog) {
           setProfileData({
             _id: authorId,
-            name: authorBlog.authorName || (authorBlog.author?.name),
-            role: authorBlog.authorRole || (authorBlog.author?.role),
+            name: authorBlog.authorName || authorBlog.author?.name,
+            role: authorBlog.authorRole || authorBlog.author?.role,
             email: 'author@camptrail360.com',
-            profilePicture: authorBlog.authorAvatar
+            profilePicture: authorBlog.authorAvatar || authorBlog.author?.profilePicture
           });
         }
       }
 
-      const response = await apiClient.get('/blogs');
-      const blogs = response.data.data || response.data;
+      const response = await axios.get(`${API_URL}/api/blogs`);
+      const blogs = Array.isArray(response.data) ? response.data : (response.data.data || []);
       const filtered = blogs.filter(b => (b.author?._id || b.author) === (authorId || authUser?._id || authUser?.id));
       setUserBlogs(filtered);
     } catch (err) {
@@ -72,10 +66,14 @@ const ProfileScreen = ({ route, navigation }) => {
 
   const userDisplayName = profileData?.name || authUser?.name || 'Happy Camper';
   const userEmail = profileData?.email || authUser?.email || 'camper@example.com';
-  const userAvatar = getImageUrl(profileData?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+  const userAvatar = profileData?.profilePicture 
+    ? (profileData.profilePicture.startsWith('http') ? profileData.profilePicture : `${BASE_URL}${profileData.profilePicture}`)
+    : authUser?.profilePicture 
+    ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
 
   const menuItems = [
-    { icon: 'bookmark-outline', label: 'My Bookings', action: () => navigation.navigate('MyBookings') },
+    { icon: 'bookmark-outline', label: 'My Bookings', count: isOwnProfile ? null : null, action: () => navigation.navigate('MyBookings') },
     { icon: 'heart-outline', label: 'Favorites', action: () => Alert.alert('Coming Soon', 'Feature in development!') },
     { icon: 'card-outline', label: 'Payment History', action: () => navigation.navigate('PaymentHistory') },
     { icon: 'settings-outline', label: 'Settings', action: () => Alert.alert('Coming Soon', 'Feature in development!') },
@@ -83,13 +81,13 @@ const ProfileScreen = ({ route, navigation }) => {
   ];
 
   const renderBlogItem = ({ item }) => (
-    <TouchableOpacity
+    <TouchableOpacity 
       style={styles.blogCard}
       onPress={() => navigation.navigate('BlogDetail', { blog: item })}
     >
-      <Image
-        source={{ uri: getImageUrl(item.image) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=600' }}
-        style={styles.blogThumb}
+      <Image 
+        source={{ uri: item.image?.startsWith('http') ? item.image : `${BASE_URL}${item.image}` }} 
+        style={styles.blogThumb} 
       />
       <View style={styles.blogInfo}>
         <Text style={styles.blogCategory}>{item.category?.toUpperCase()}</Text>
@@ -99,98 +97,98 @@ const ProfileScreen = ({ route, navigation }) => {
   );
 
   if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-      {isOwnProfile ? (
-        <Header />
-      ) : (
-        <View style={styles.greenHeader}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      
+      {/* Camptrail 360 Green Header */}
+      <View style={styles.greenHeader}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            {!isOwnProfile && (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
-              <Ionicons name="leaf" size={20} color="#fff" />
-              <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
-            </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
-              <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
-            </View>
+            )}
+            <Ionicons name="leaf" size={20} color="#fff" />
+            <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerIcon}><Ionicons name="search" size={22} color="#fff" /></TouchableOpacity>
+            <TouchableOpacity style={styles.headerIcon}><Ionicons name="person-circle" size={24} color="#fff" /></TouchableOpacity>
           </View>
         </View>
-      )}
+      </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Profile Info Section */}
         <View style={styles.profileSection}>
-          <Image source={{ uri: userAvatar }} style={styles.avatar} />
+          <Image 
+            source={{ uri: userAvatar }} 
+            style={styles.avatar} 
+          />
           <Text style={styles.userName}>{userDisplayName}</Text>
           <Text style={styles.userEmail}>{userEmail}</Text>
-
-            {isOwnProfile && (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('EditProfile')}
-              >
-                <Ionicons name="pencil-sharp" size={16} color="#fff" />
-                <Text style={styles.editButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
+          
           {isOwnProfile && (
-            <View style={styles.menuContainer}>
-              {menuItems.map((item, index) => (
-                <TouchableOpacity key={index} style={styles.menuItem} onPress={item.action}>
-                  <View style={styles.menuItemLeft}>
-                    <Ionicons name={item.icon} size={22} color={Colors.text} />
-                    <Text style={styles.menuLabel}>{item.label}</Text>
-                  </View>
-                  <View style={styles.menuItemRight}>
-                    {item.count && <Text style={styles.badge}>{item.count}</Text>}
-                    <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          <View style={styles.blogsSection}>
-            <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
-            {userBlogs.length > 0 ? (
-              userBlogs.map(item => (
-                <React.Fragment key={item._id || Math.random().toString()}>
-                  {renderBlogItem({ item })}
-                </React.Fragment>
-              ))
-            ) : (
-              <Text style={styles.emptyText}>No blogs found.</Text>
-            )}
-          </View>
-
-          {isOwnProfile && (
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={logout}
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => navigation.navigate('EditProfile')}
             >
-              <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
-              <Text style={styles.logoutText}>Logout</Text>
+              <Ionicons name="pencil-sharp" size={16} color="#fff" />
+              <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           )}
-        </ScrollView>
-      </View>
-    );
+        </View>
+
+        {isOwnProfile && (
+          <View style={styles.menuContainer}>
+            {menuItems.map((item, index) => (
+              <TouchableOpacity key={index} style={styles.menuItem} onPress={item.action}>
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name={item.icon} size={22} color={Colors.text} />
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                </View>
+                <View style={styles.menuItemRight}>
+                  <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.blogsSection}>
+          <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
+          {userBlogs.length > 0 ? (
+            userBlogs.map(item => (
+              <React.Fragment key={item._id || Math.random().toString()}>
+                {renderBlogItem({ item })}
+              </React.Fragment>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No blogs found.</Text>
+          )}
+        </View>
+
+        {isOwnProfile && (
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
+    </View>
+  );
 };
 
-      const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -293,16 +291,6 @@ const ProfileScreen = ({ route, navigation }) => {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  badge: {
-    backgroundColor: '#065f46',
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginRight: 10,
-  },
   blogsSection: {
     padding: 20,
     marginTop: 10,
@@ -335,7 +323,7 @@ const ProfileScreen = ({ route, navigation }) => {
   blogCategory: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: '#065f46',
     marginBottom: 2,
   },
   blogTitle: {
@@ -352,7 +340,7 @@ const ProfileScreen = ({ route, navigation }) => {
     paddingVertical: 15,
   },
   logoutText: {
-    color: Colors.danger,
+    color: '#ef4444',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
@@ -364,4 +352,4 @@ const ProfileScreen = ({ route, navigation }) => {
   },
 });
 
-      export default ProfileScreen;
+export default ProfileScreen;

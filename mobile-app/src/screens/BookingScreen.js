@@ -167,7 +167,9 @@ const BookingScreen = ({ route, navigation }) => {
           amount: subtotal + serviceFee,
           customerName: user?.name,
           userId: user?._id,
-          status: 'Pending'
+          status: 'Pending',
+          numberOfGuests: parseInt(guests || 1),
+          guidePhoto: item.profilePhoto || item.image || item.imageUrl
         };
       } else {
         endpoint = '/purchases';
