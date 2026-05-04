@@ -172,7 +172,7 @@ const CampsiteDetailScreen = ({ route, navigation }) => {
           <View style={styles.priceCard}>
             <View>
               <Text style={styles.priceLabel}>Price per night</Text>
-              <Text style={styles.priceValue}>Rs. {item.pricePerNight}</Text>
+              <Text style={styles.priceValue}>LKR {item.pricePerNight}</Text>
             </View>
             <TouchableOpacity
               style={styles.bookButton}
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
+    top: Platform.OS === 'ios' ? 60 : 50,
     left: 20,
     backgroundColor: 'rgba(0,0,0,0.3)',
     width: 40,

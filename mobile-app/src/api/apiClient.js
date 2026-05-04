@@ -24,7 +24,7 @@ export const apiClient = axios.create({
   timeout: 30000,
 >>>>>>> c5b4ed2900f304953efeb3507c49ee1fa6308035
   headers: {
-    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 

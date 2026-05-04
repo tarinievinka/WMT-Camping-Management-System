@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   Platform,
   RefreshControl,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
@@ -45,7 +46,7 @@ const MyBookingsScreen = ({ navigation }) => {
         targetName: item.campsite?.name || 'Campsite Booking',
         targetType: 'Campsite',
         date: new Date(item.checkInDate).toLocaleDateString(),
-        displayAmount: `Rs. ${item.totalPrice}`,
+        displayAmount: `LKR ${item.totalPrice}`,
         status: item.status === 'Payment Confirmed' ? 'Confirmed' : item.status
       }));
 
@@ -59,7 +60,7 @@ const MyBookingsScreen = ({ navigation }) => {
           targetName: item.guideName || 'Guide Booking',
           targetType: 'Guide',
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
-          displayAmount: `Rs. ${item.amount}`,
+          displayAmount: `LKR ${item.amount}`,
           status: item.status
         }));
 
@@ -73,7 +74,7 @@ const MyBookingsScreen = ({ navigation }) => {
         targetName: item.items?.length > 0 ? item.items[0].name : 'Equipment Purchase',
         targetType: 'Equipment',
         date: new Date(item.createdAt).toLocaleDateString(),
-        displayAmount: `Rs. ${item.totalPrice}`,
+        displayAmount: `LKR ${item.totalPrice}`,
         status: item.status === 'paid' ? 'Confirmed' : (item.status === 'pending' ? 'Pending' : item.status)
       }));
 
@@ -82,10 +83,48 @@ const MyBookingsScreen = ({ navigation }) => {
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setBookings([]);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
+
+  const handleDeleteBooking = (id, type) => {
+    Alert.alert(
+      'Cancel Booking',
+      'Are you sure you want to cancel this booking?',
+      [
+        { text: 'No', style: 'cancel' },
+        { 
+          text: 'Yes, Cancel', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              let res;
+              if (type === 'Campsite') {
+                res = await apiClient.delete(`/reservations/${id}`);
+              } else if (type === 'Guide') {
+                res = await apiClient.delete(`/guide-bookings/cancel/${id}`);
+              } else if (type === 'Equipment') {
+                res = await apiClient.delete(`/purchases/${id}`);
+              }
+
+              if (res && (res.status === 200 || res.status === 201 || res.data.message)) {
+                Alert.alert('Success', 'Booking cancelled successfully.');
+                fetchBookings();
+              } else {
+                Alert.alert('Error', 'Failed to cancel booking.');
+              }
+            } catch (error) {
+              console.error('Delete error:', error);
+              const errorMsg = error.response?.data?.message || error.response?.data?.error || 'An error occurred while deleting the booking.';
+              Alert.alert('Error', errorMsg);
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   const stats = useMemo(() => {
     const active = bookings.filter(b => b.status?.toLowerCase() === 'confirmed' || b.status?.toLowerCase() === 'pending').length;
@@ -188,11 +227,14 @@ const MyBookingsScreen = ({ navigation }) => {
                 });
               }}
             >
-              <Text style={styles.payNowText}>Pay Now</Text>
+              <Text style={styles.payNowText}>Pay</Text>
               <Ionicons name="arrow-forward" size={14} color="#fff" />
             </TouchableOpacity>
           )}
+
+
         </View>
+
       </View>
     );
   };
@@ -254,8 +296,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 50,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 25,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(241, 245, 249, 0.5)',
@@ -448,6 +490,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginRight: 6,
   },
+  deleteBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fef2f2',
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginLeft: 12,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  deleteBtnText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    marginLeft: 8,
+  },
+
   centered: {
     flex: 1,
     justifyContent: 'center',

@@ -7,6 +7,7 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [rentalDates, setRentalDates] = useState({ startDate: '', endDate: '' });
 
   useEffect(() => {
     loadCart();
@@ -15,55 +16,109 @@ export const CartProvider = ({ children }) => {
   const loadCart = async () => {
     try {
       const storedCart = await AsyncStorage.getItem('cart');
-      if (storedCart) {
-        setCartItems(JSON.parse(storedCart));
-      }
+      const storedDates = await AsyncStorage.getItem('rentalDates');
+      if (storedCart) setCartItems(JSON.parse(storedCart));
+      if (storedDates) setRentalDates(JSON.parse(storedDates));
     } catch (err) {
       console.error('Failed to load cart', err);
     }
   };
 
-  const saveCart = async (newCart) => {
+  const saveCart = async (newCart, newDates = rentalDates) => {
     try {
       await AsyncStorage.setItem('cart', JSON.stringify(newCart));
+      await AsyncStorage.setItem('rentalDates', JSON.stringify(newDates));
     } catch (err) {
       console.error('Failed to save cart', err);
     }
   };
 
-  const addToCart = (item, type, details) => {
-    const newItem = {
-      id: `${type}-${item._id}-${Date.now()}`,
-      itemId: item._id,
-      name: item.name,
-      price: details.price,
-      type, // 'campsite', 'guide', 'equipment'
-      details, // { startDate, endDate, quantity, guests, etc }
-      image: item.images?.[0] || item.profilePicture || item.image
-    };
-
-    const updatedCart = [...cartItems, newItem];
-    setCartItems(updatedCart);
-    saveCart(updatedCart);
+  const addToCart = (item, type, mode = 'buy', quantity = 1) => {
+    const cartId = `${type}-${item._id}-${mode}`;
+    
+    setCartItems(prev => {
+      const existingItemIndex = prev.findIndex(i => i.cartId === cartId);
+      let updatedCart;
+      
+      if (existingItemIndex > -1) {
+        updatedCart = [...prev];
+        updatedCart[existingItemIndex].quantity += quantity;
+      } else {
+        updatedCart = [...prev, {
+          cartId,
+          itemId: item._id,
+          name: item.name,
+          price: mode === 'buy' ? item.salePrice : item.rentalPrice,
+          type,
+          mode,
+          quantity,
+          image: item.imageUrl || item.images?.[0] || item.image
+        }];
+      }
+      saveCart(updatedCart);
+      return updatedCart;
+    });
   };
 
-  const removeFromCart = (id) => {
-    const updatedCart = cartItems.filter(item => item.id !== id);
+  const updateQuantity = (cartId, delta) => {
+    setCartItems(prev => {
+      const updatedCart = prev.map(item => {
+        if (item.cartId === cartId) {
+          const newQty = Math.max(1, item.quantity + delta);
+          return { ...item, quantity: newQty };
+        }
+        return item;
+      });
+      saveCart(updatedCart);
+      return updatedCart;
+    });
+  };
+
+  const removeFromCart = (cartId) => {
+    const updatedCart = cartItems.filter(item => item.cartId !== cartId);
     setCartItems(updatedCart);
     saveCart(updatedCart);
   };
 
   const clearCart = () => {
     setCartItems([]);
-    saveCart([]);
+    setRentalDates({ startDate: '', endDate: '' });
+    saveCart([], { startDate: '', endDate: '' });
+  };
+
+  const updateRentalDates = (dates) => {
+    setRentalDates(dates);
+    saveCart(cartItems, dates);
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price || 0), 0);
+    let days = 1;
+    if (rentalDates.startDate && rentalDates.endDate) {
+      const start = new Date(rentalDates.startDate);
+      const end = new Date(rentalDates.endDate);
+      const diffTime = Math.abs(end - start);
+      days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    }
+
+    return cartItems.reduce((total, item) => {
+      const itemTotal = item.mode === 'rent' 
+        ? item.price * item.quantity * days 
+        : item.price * item.quantity;
+      return total + itemTotal;
+    }, 0);
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, getCartTotal }}>
+    <CartContext.Provider value={{ 
+      cartItems, 
+      rentalDates, 
+      addToCart, 
+      removeFromCart, 
+      clearCart, 
+      getCartTotal, 
+      updateQuantity, 
+      updateRentalDates 
+    }}>
       {children}
     </CartContext.Provider>
   );

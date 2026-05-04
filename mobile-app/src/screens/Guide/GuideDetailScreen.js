@@ -18,8 +18,8 @@ import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
 
 const GuideDetailScreen = ({ route, navigation }) => {
-  const { item } = route.params;
-  const [guideData, setGuideData] = useState(item);
+  const { item } = route.params || {};
+  const [guideData, setGuideData] = useState(item || null);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
@@ -34,7 +34,8 @@ const GuideDetailScreen = ({ route, navigation }) => {
 
   const fetchGuideData = async () => {
     try {
-      const response = await apiClient.get(`/guide/update/${item._id}`);
+      const endpoint = item ? `/guides/update/${item._id}` : `/guides/me`;
+      const response = await apiClient.get(endpoint);
       if (response.data) {
         setGuideData(response.data);
       }
@@ -44,8 +45,10 @@ const GuideDetailScreen = ({ route, navigation }) => {
   };
 
   const fetchReviews = async () => {
+    if (!guideData?._id && !item?._id) return;
     try {
-      const response = await apiClient.get(`/feedback/display?targetId=${item._id}&targetType=Guide`);
+      const id = guideData?._id || item?._id;
+      const response = await apiClient.get(`/feedback/display?targetId=${id}&targetType=Guide`);
       setReviews(response.data);
     } catch (error) {
       console.error('Error fetching reviews:', error);
@@ -55,6 +58,16 @@ const GuideDetailScreen = ({ route, navigation }) => {
   };
 
 
+
+  if (!guideData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  const isOwnProfile = user?.email === guideData?.email;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,12 +124,34 @@ const GuideDetailScreen = ({ route, navigation }) => {
 
           <Text style={styles.sectionTitle}>Specialties</Text>
           <View style={styles.langContainer}>
-            {(guideData.specialties || ['General Camping']).map((spec, idx) => (
+            {(guideData.specialties && guideData.specialties.length > 0 ? guideData.specialties : ['General Camping']).map((spec, idx) => (
               <View key={idx} style={styles.langBadge}>
                 <Text style={styles.langText}>{spec}</Text>
               </View>
             ))}
           </View>
+
+          <Text style={styles.sectionTitle}>Languages</Text>
+          <View style={styles.langContainer}>
+            {(guideData.languages && guideData.languages.length > 0 ? guideData.languages : ['English']).map((lang, idx) => (
+              <View key={idx} style={[styles.langBadge, { backgroundColor: '#eef2ff' }]}>
+                <Text style={[styles.langText, { color: '#4f46e5' }]}>{lang}</Text>
+              </View>
+            ))}
+          </View>
+
+          {guideData.skills && guideData.skills.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Skills</Text>
+              <View style={styles.langContainer}>
+                {guideData.skills.map((skill, idx) => (
+                  <View key={idx} style={[styles.langBadge, { backgroundColor: '#fff7ed' }]}>
+                    <Text style={[styles.langText, { color: '#ea580c' }]}>{skill}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
 
           <View style={styles.divider} />
 
@@ -168,18 +203,20 @@ const GuideDetailScreen = ({ route, navigation }) => {
           <View style={styles.divider} />
 
           {/* Pricing & Booking Summary */}
-          <View style={styles.bookingCard}>
-            <View>
-              <Text style={styles.priceLabel}>Daily Rate</Text>
-              <Text style={styles.priceValue}>Rs. {guideData.dailyRate}</Text>
+          {!isOwnProfile && (
+            <View style={styles.bookingCard}>
+              <View>
+                <Text style={styles.priceLabel}>Daily Rate</Text>
+                <Text style={styles.priceValue}>Rs. {guideData.dailyRate}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.bookButton}
+                onPress={() => navigation.navigate('Booking', { item: guideData, type: 'guide' })}
+              >
+                <Text style={styles.bookButtonText}>Book Guide</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.bookButton}
-              onPress={() => navigation.navigate('Booking', { item: guideData, type: 'guide' })}
-            >
-              <Text style={styles.bookButtonText}>Book Guide</Text>
-            </TouchableOpacity>
-          </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

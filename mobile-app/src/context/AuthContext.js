@@ -92,6 +92,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (user && user.email) {
+      fetchUnreadCount();
+      interval = setInterval(fetchUnreadCount, 30000); // Poll every 30 seconds
+    } else {
+      setUnreadCount(0);
+    }
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    if (!user || !user.email) return;
+    try {
+      const res = await apiClient.get(`/customer-notifications/user/${user.email}`);
+      const unread = res.data.filter(n => !n.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('[AUTH] Failed to fetch unread count:', error);
+    }
+  };
+
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('token');
@@ -99,13 +123,14 @@ export const AuthProvider = ({ children }) => {
       delete apiClient.defaults.headers.common['Authorization'];
       setUser(null);
       setToken(null);
+      setUnreadCount(0);
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, token, isLoading, unreadCount, fetchUnreadCount, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -169,13 +169,7 @@ const MyTicketsScreen = ({ navigation, route, isEmbedded = false, refreshSignal 
           <Text style={[styles.actionText, { color: Colors.primary }]}>Edit</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => handleDelete(item._id)}
-        >
-          <Ionicons name="trash-outline" size={18} color="#ef4444" />
-          <Text style={[styles.actionText, { color: '#ef4444' }]}>Delete</Text>
-        </TouchableOpacity>
+
       </View>
     </View>
   );
