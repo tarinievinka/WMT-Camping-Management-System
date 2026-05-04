@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 // FOR WEB: localhost works normally
 export const BASE_URL = Platform.OS === 'web' 
   ? 'http://localhost:5000' 
-  : 'http://172.29.146.155:5000';
+  : 'http://172.29.146.225:5000';
 
 export const API_URL = BASE_URL;
 
