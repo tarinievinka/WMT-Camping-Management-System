@@ -61,6 +61,14 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
   };
 
   const handleAddToCart = (mode) => {
+    if (equipmentData.stockQuantity <= 0) {
+      Alert.alert('Out of Stock', 'This item is currently unavailable.');
+      return;
+    }
+    if (quantity > equipmentData.stockQuantity) {
+      Alert.alert('Insufficient Stock', `Only ${equipmentData.stockQuantity} items available.`);
+      return;
+    }
     addToCart(equipmentData, 'equipment', mode, quantity);
     Alert.alert(
       'Success',
@@ -109,8 +117,20 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.content}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.category || 'CAMPING GEAR'}</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.category || 'CAMPING GEAR'}</Text>
+            </View>
+            {equipmentData.stockQuantity === 0 && (
+              <View style={[styles.badge, { backgroundColor: '#fee2e2' }]}>
+                <Text style={[styles.badgeText, { color: '#ef4444' }]}>SOLD OUT</Text>
+              </View>
+            )}
+            {equipmentData.stockQuantity > 0 && equipmentData.stockQuantity <= 5 && (
+              <View style={[styles.badge, { backgroundColor: '#fffbeb' }]}>
+                <Text style={[styles.badgeText, { color: '#b45309' }]}>ONLY {equipmentData.stockQuantity} LEFT</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.headerRow}>
@@ -147,9 +167,10 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
               <Text style={styles.qtyText}>{quantity}</Text>
               <TouchableOpacity
                 style={styles.qtyBtn}
-                onPress={() => setQuantity(quantity + 1)}
+                onPress={() => setQuantity(Math.min(equipmentData.stockQuantity || 1, quantity + 1))}
+                disabled={equipmentData.stockQuantity === 0}
               >
-                <Feather name="plus" size={20} color={Colors.text} />
+                <Feather name="plus" size={20} color={equipmentData.stockQuantity === 0 ? Colors.gray : Colors.text} />
               </TouchableOpacity>
             </View>
           </View>
@@ -209,18 +230,26 @@ const EquipmentDetailScreen = ({ route, navigation }) => {
               <Text style={styles.totalValue}>LKR {equipmentData.rentalPrice * quantity}</Text>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.buyButton}
-                onPress={() => handleAddToCart('buy')}
-              >
-                <Text style={styles.buyButtonText}>Add Buy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.rentButton}
-                onPress={() => handleAddToCart('rent')}
-              >
-                <Text style={styles.rentButtonText}>Add Rent</Text>
-              </TouchableOpacity>
+              {equipmentData.stockQuantity > 0 ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.buyButton}
+                    onPress={() => handleAddToCart('buy')}
+                  >
+                    <Text style={styles.buyButtonText}>Add Buy</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.rentButton}
+                    onPress={() => handleAddToCart('rent')}
+                  >
+                    <Text style={styles.rentButtonText}>Add Rent</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={[styles.rentButton, { backgroundColor: '#94a3b8', flex: 1, marginLeft: 0 }]}>
+                  <Text style={styles.rentButtonText}>Out of Stock</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

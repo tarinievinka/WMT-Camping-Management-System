@@ -29,7 +29,11 @@ console.log('[DEBUG] Starting server on port:', port);
 
 // Middleware
 app.use(cors({
+<<<<<<< HEAD
+  origin: true, // Allow all origins during development
+=======
   origin: '*', // Allow all origins for development to avoid mobile connectivity issues
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
   credentials: true
 }));
 

@@ -8,17 +8,26 @@ import {
   Alert, 
   ScrollView, 
   ActivityIndicator, 
+<<<<<<< HEAD
+=======
   FlatList, 
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
   Platform, 
   StatusBar 
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
+import { API_URL } from '../../api/config';
 import Header from '../../components/Header';
+<<<<<<< HEAD
+import { getImageUrl } from '../../api/apiClient';
+=======
 import apiClient, { BASE_URL, getImageUrl } from '../../api/apiClient';
 import axios from 'axios';
 import { API_URL } from '../../api/config';
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
 
 const ProfileScreen = ({ route, navigation }) => {
   const { user: authUser, logout } = useAuth();
@@ -39,8 +48,13 @@ const ProfileScreen = ({ route, navigation }) => {
       if (isOwnProfile) {
         setProfileData(authUser);
       } else {
+<<<<<<< HEAD
+        const response = await axios.get(`${API_URL}/api/blogs`);
+        const blogs = response.data;
+=======
         const blogRes = await axios.get(`${API_URL}/api/blogs`);
         const blogs = Array.isArray(blogRes.data) ? blogRes.data : (blogRes.data.data || []);
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
         const authorBlog = blogs.find(b => (b.author?._id || b.author) === authorId);
         if (authorBlog) {
           setProfileData({
@@ -53,9 +67,18 @@ const ProfileScreen = ({ route, navigation }) => {
         }
       }
 
+<<<<<<< HEAD
+      const response = await axios.get(`${API_URL}/api/blogs?t=${Date.now()}`);
+      const filtered = response.data.filter(b => {
+        const blogAuthorId = (b.author && typeof b.author === 'object') ? b.author._id : b.author;
+        const currentUserId = authorId || authUser?._id || authUser?.id;
+        return blogAuthorId && currentUserId && blogAuthorId.toString() === currentUserId.toString();
+      });
+=======
       const response = await axios.get(`${API_URL}/api/blogs`);
       const blogs = Array.isArray(response.data) ? response.data : (response.data.data || []);
       const filtered = blogs.filter(b => (b.author?._id || b.author) === (authorId || authUser?._id || authUser?.id));
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
       setUserBlogs(filtered);
     } catch (err) {
       console.error('Error fetching profile data:', err);
@@ -64,6 +87,13 @@ const ProfileScreen = ({ route, navigation }) => {
     }
   };
 
+<<<<<<< HEAD
+  const user = {
+    name: profileData?.name || authUser?.name || 'Happy Camper',
+    email: profileData?.email || authUser?.email || 'camper@example.com',
+    avatar: getImageUrl(profileData?.profilePicture || authUser?.profilePicture) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  };
+=======
   const userDisplayName = profileData?.name || authUser?.name || 'Happy Camper';
   const userEmail = profileData?.email || authUser?.email || 'camper@example.com';
   const userAvatar = profileData?.profilePicture 
@@ -71,6 +101,7 @@ const ProfileScreen = ({ route, navigation }) => {
     : authUser?.profilePicture 
     ? (authUser.profilePicture.startsWith('http') ? authUser.profilePicture : `${BASE_URL}${authUser.profilePicture}`)
     : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
 
   const menuItems = [
     { icon: 'bookmark-outline', label: 'My Bookings', count: isOwnProfile ? null : null, action: () => navigation.navigate('MyBookings') },
@@ -80,6 +111,15 @@ const ProfileScreen = ({ route, navigation }) => {
     { icon: 'help-circle-outline', label: 'Help Center', action: () => Alert.alert('Coming Soon', 'Feature in development!') },
   ];
 
+<<<<<<< HEAD
+  const renderBlogItem = (item) => (
+    <TouchableOpacity
+      key={item._id}
+      style={styles.blogCard}
+      onPress={() => navigation.navigate('BlogDetail', { blog: item })}
+    >
+      <Image source={{ uri: item.image || (item.images && item.images[0]) }} style={styles.blogThumb} />
+=======
   const renderBlogItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.blogCard}
@@ -89,8 +129,9 @@ const ProfileScreen = ({ route, navigation }) => {
         source={{ uri: item.image?.startsWith('http') ? item.image : `${BASE_URL}${item.image}` }} 
         style={styles.blogThumb} 
       />
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
       <View style={styles.blogInfo}>
-        <Text style={styles.blogCategory}>{item.category?.toUpperCase()}</Text>
+        <Text style={styles.blogCategory}>{item.category?.toUpperCase() || 'GENERAL'}</Text>
         <Text style={styles.blogTitle} numberOfLines={1}>{item.title}</Text>
       </View>
     </TouchableOpacity>
@@ -107,6 +148,17 @@ const ProfileScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+<<<<<<< HEAD
+      <Header />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.profileSection}>
+          <Image 
+            source={{ uri: user.avatar }} 
+            style={styles.avatar} 
+          />
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+=======
       
       {/* Camptrail 360 Green Header */}
       <View style={styles.greenHeader}>
@@ -136,6 +188,7 @@ const ProfileScreen = ({ route, navigation }) => {
           />
           <Text style={styles.userName}>{userDisplayName}</Text>
           <Text style={styles.userEmail}>{userEmail}</Text>
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
           
           {isOwnProfile && (
             <TouchableOpacity 
@@ -165,6 +218,11 @@ const ProfileScreen = ({ route, navigation }) => {
         )}
 
         <View style={styles.blogsSection}>
+<<<<<<< HEAD
+          <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${user.name}`}</Text>
+          {userBlogs.length > 0 ? (
+            userBlogs.map(item => renderBlogItem(item))
+=======
           <Text style={styles.sectionTitle}>{isOwnProfile ? 'My Publications' : `Blogs by ${userDisplayName}`}</Text>
           {userBlogs.length > 0 ? (
             userBlogs.map(item => (
@@ -172,14 +230,23 @@ const ProfileScreen = ({ route, navigation }) => {
                 {renderBlogItem({ item })}
               </React.Fragment>
             ))
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
           ) : (
             <Text style={styles.emptyText}>No blogs found.</Text>
           )}
         </View>
 
         {isOwnProfile && (
+<<<<<<< HEAD
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={logout}
+          >
+            <Ionicons name="log-out-outline" size={22} color={Colors.danger} />
+=======
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
             <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         )}
@@ -189,6 +256,32 @@ const ProfileScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
+  container: { flex: 1, backgroundColor: '#fff' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scrollContent: { paddingBottom: 100 },
+  profileSection: { alignItems: 'center', paddingVertical: 30 },
+  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15, borderWidth: 3, borderColor: '#f1f5f9' },
+  userName: { fontSize: 22, fontWeight: 'bold', color: '#1e293b' },
+  userEmail: { fontSize: 14, color: '#64748b', marginTop: 4, marginBottom: 20 },
+  editButton: { flexDirection: 'row', backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, alignItems: 'center' },
+  editButtonText: { color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 },
+  menuContainer: { paddingHorizontal: 20 },
+  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
+  menuLabel: { fontSize: 16, marginLeft: 15, color: '#334155' },
+  menuItemRight: { flexDirection: 'row', alignItems: 'center' },
+  blogsSection: { padding: 20, marginTop: 10 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 15 },
+  blogCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#f1f5f9' },
+  blogThumb: { width: 60, height: 60, borderRadius: 8 },
+  blogInfo: { flex: 1, marginLeft: 15 },
+  blogCategory: { fontSize: 10, fontWeight: 'bold', color: Colors.primary, marginBottom: 2 },
+  blogTitle: { fontSize: 15, fontWeight: '600', color: '#1e293b' },
+  logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 20, paddingVertical: 15 },
+  logoutText: { color: Colors.danger, fontSize: 16, fontWeight: '600', marginLeft: 10 },
+  emptyText: { textAlign: 'center', color: '#94a3b8', marginTop: 10 },
+=======
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -350,6 +443,7 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     marginTop: 10,
   },
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
 });
 
 export default ProfileScreen;

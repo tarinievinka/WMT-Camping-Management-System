@@ -11,28 +11,18 @@ const Header = () => {
 
   return (
     <View style={styles.topNav}>
-      <View style={styles.logoContainer}>
-        <View style={styles.logoIcon}>
-          <Ionicons name="leaf" size={14} color={Colors.primary} />
+      <View style={styles.headerLeft}>
+        <View style={styles.logoBox}>
+          <Ionicons name="leaf" size={18} color="#166534" />
         </View>
-        <Text style={styles.logoText}>CAMPTRAIL 360</Text>
+        <Text style={styles.headerBrand}>CAMPTRAIL 360</Text>
       </View>
-      <View style={styles.topIcons}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Store')}>
-          <Feather name="search" size={20} color={Colors.white} />
+      <View style={styles.headerRight}>
+        <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('Store')}>
+          <Ionicons name="search" size={24} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
-          <View>
-            <Ionicons name="notifications-outline" size={24} color={Colors.white} />
-            {unreadCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
-          <Ionicons name="person-circle" size={32} color={Colors.white} />
+        <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('Profile')}>
+          <Ionicons name="person-circle" size={32} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
@@ -41,48 +31,38 @@ const Header = () => {
 
 const styles = StyleSheet.create({
   topNav: {
+    backgroundColor: '#166534',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(22, 101, 52, 1)', // Theme Green
     paddingTop: Platform.OS === 'ios' ? 60 : 50,
-    paddingBottom: 25,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    ...Platform.select({
-      web: {
-        backdropFilter: 'blur(10px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-      }
-    })
+    paddingBottom: 20,
   },
-  logoContainer: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoIcon: {
-    backgroundColor: Colors.white,
-    padding: 3,
-    borderRadius: 6,
+  logoBox: {
+    backgroundColor: '#fff',
+    padding: 6,
+    borderRadius: 8,
     marginRight: 10,
   },
-  logoText: {
-    color: Colors.white,
-    fontWeight: 'bold',
+  headerBrand: {
+    color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
     letterSpacing: 1,
   },
-  topIcons: {
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  iconButton: {
-    marginRight: 15,
+  headerIcon: {
+    marginLeft: 15,
   },
+
   profileButton: {
     // Styling for profile button
   },
