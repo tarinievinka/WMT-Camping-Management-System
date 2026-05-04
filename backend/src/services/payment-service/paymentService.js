@@ -5,6 +5,49 @@ const Reservation = require('../../models/reservation-models/Reservation');
 const CustomerNotification = require('../../models/customer-notification-model/customerNotificationModel');
 const User = require('../../models/user-models/User');
 const EquipmentPurchase = require('../../models/Equipment-model/EquipmentPurchase');
+const Equipment = require('../../models/Equipment-model/EquipmentModel');
+
+/**
+ * Helper to reduce stock for equipment in a purchase
+ * @param {String} purchaseId 
+ */
+const reduceEquipmentStock = async (purchaseId) => {
+  try {
+    const purchase = await EquipmentPurchase.findById(purchaseId);
+    if (!purchase) {
+      console.error(`[STOCK_UPDATE_ERROR] Purchase ${purchaseId} not found`);
+      return;
+    }
+
+    // Only reduce stock if the purchase status is not already 'paid'
+    // (though in many cases we call this right before/after setting status to paid)
+    // Here we assume if status is 'paid', stock was already reduced.
+    // However, the caller might be updating status TO 'paid'.
+    
+    console.log(`[STOCK_UPDATE] Reducing stock for purchase ${purchaseId}`);
+    for (const item of purchase.items) {
+      const result = await Equipment.findByIdAndUpdate(item.equipmentId, {
+        $inc: { stockQuantity: -item.quantity }
+      }, { new: true });
+      
+      if (result) {
+        console.log(`[STOCK_UPDATE] ${result.name}: New stock is ${result.stockQuantity}`);
+        
+        // If stock reaches 0, update status to Out of Stock
+        if (result.stockQuantity <= 0) {
+          await Equipment.findByIdAndUpdate(item.equipmentId, {
+            availabilityStatus: 'Out of Stock'
+          });
+          console.log(`[STOCK_UPDATE] ${result.name} is now OUT OF STOCK`);
+        }
+      } else {
+        console.error(`[STOCK_UPDATE_ERROR] Equipment ${item.equipmentId} not found`);
+      }
+    }
+  } catch (err) {
+    console.error(`[STOCK_UPDATE_ERROR] Failed to reduce stock for ${purchaseId}:`, err);
+  }
+};
 
 const createPayment = async (data) => {
   const payment = new Payment(data);
@@ -18,7 +61,12 @@ const createPayment = async (data) => {
       } else if (data.bookingType === 'CampsiteBooking') {
         await Reservation.findByIdAndUpdate(data.bookingId, { status: 'Payment Confirmed' });
       } else if (data.bookingType === 'EquipmentBooking') {
-        await EquipmentPurchase.findByIdAndUpdate(data.bookingId, { status: 'paid' });
+        const purchase = await EquipmentPurchase.findById(data.bookingId);
+        // Only reduce stock if it's not already paid (prevent double reduction)
+        if (purchase && purchase.status !== 'paid') {
+          await EquipmentPurchase.findByIdAndUpdate(data.bookingId, { status: 'paid' });
+          await reduceEquipmentStock(data.bookingId);
+        }
       }
       
       const user = await User.findById(data.userId);
@@ -100,7 +148,12 @@ const updatePaymentStatus = async (id, status) => {
       } else if (payment.bookingType === 'CampsiteBooking') {
         await Reservation.findByIdAndUpdate(payment.bookingId, { status: 'Payment Confirmed' });
       } else if (payment.bookingType === 'EquipmentBooking') {
-        await EquipmentPurchase.findByIdAndUpdate(payment.bookingId, { status: 'paid' });
+        const purchase = await EquipmentPurchase.findById(payment.bookingId);
+        // Only reduce stock if it's not already paid (prevent double reduction)
+        if (purchase && purchase.status !== 'paid') {
+          await EquipmentPurchase.findByIdAndUpdate(payment.bookingId, { status: 'paid' });
+          await reduceEquipmentStock(payment.bookingId);
+        }
       }
 
       // 2. Notify User

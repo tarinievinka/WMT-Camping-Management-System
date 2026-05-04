@@ -10,8 +10,9 @@ exports.createPurchase = async (req, res) => {
         for (const item of items) {
             const equipment = await Equipment.findById(item.equipmentId);
             if (!equipment) throw new Error(`Equipment ${item.equipmentId} not found`);
-            // We only check stock for buying, or you might want to check availability for renting
-            if (equipment.quantity < item.quantity) {
+            
+            // Fix: Use stockQuantity instead of quantity
+            if (equipment.stockQuantity < item.quantity) {
                 throw new Error(`Insufficient stock for ${equipment.name}`);
             }
         }
@@ -27,13 +28,8 @@ exports.createPurchase = async (req, res) => {
 
         await purchase.save();
 
-        // Update stock
-        for (const item of items) {
-            await Equipment.findByIdAndUpdate(item.equipmentId, {
-                $inc: { quantity: -item.quantity }
-            });
-        }
-
+        // Note: Stock reduction is now handled in paymentService upon payment success
+        
         res.status(201).json(purchase);
     } catch (err) {
         res.status(400).json({ error: err.message });

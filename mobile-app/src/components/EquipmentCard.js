@@ -35,6 +35,12 @@ const EquipmentCard = ({ item, onPress, onAddToCart }) => {
               <Text style={styles.stockWarningText}>ONLY {item.stockQuantity} LEFT</Text>
             </View>
           )}
+          
+          {isOutOfStock && (
+            <View style={[styles.stockWarningBadge, { backgroundColor: '#ef4444' }]}>
+              <Text style={styles.stockWarningText}>SOLD OUT</Text>
+            </View>
+          )}
         </View>
       </View>
 
