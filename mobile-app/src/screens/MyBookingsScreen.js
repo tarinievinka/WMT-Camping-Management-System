@@ -198,9 +198,8 @@ const MyBookingsScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.cardFooter}>
-          {(item.status?.toLowerCase() === 'confirmed' || 
-            item.status?.toLowerCase() === 'completed' || 
-            item.status?.toLowerCase() === 'paid') && (
+          {((item.status?.toLowerCase() === 'completed') || 
+            (item.type !== 'Guide' && (item.status?.toLowerCase() === 'confirmed' || item.status?.toLowerCase() === 'paid'))) && (
             <TouchableOpacity 
               style={styles.reviewBtn}
               onPress={() => navigation.navigate('AddFeedback', { booking: item })}
