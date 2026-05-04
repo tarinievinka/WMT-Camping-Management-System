@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
+import { Shadows } from '../theme/shadows';
 import apiClient from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -24,6 +25,13 @@ const MyBookingsScreen = ({ navigation }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [activeTab, setActiveTab] = useState('active');
+  
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 3000);
+  };
   
   useEffect(() => {
     fetchBookings();
@@ -59,6 +67,8 @@ const MyBookingsScreen = ({ navigation }) => {
           targetId: item.guideId,
           targetName: item.guideName || 'Guide Booking',
           targetType: 'Guide',
+          guidePhoto: item.guidePhoto,
+          numberOfGuests: item.numberOfGuests,
           date: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No date',
           displayAmount: `LKR ${item.amount}`,
           status: item.status
@@ -88,47 +98,85 @@ const MyBookingsScreen = ({ navigation }) => {
     }
   };
 
-  const handleDeleteBooking = (id, type) => {
-    Alert.alert(
-      'Cancel Booking',
-      'Are you sure you want to cancel this booking?',
-      [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              let res;
-              if (type === 'Campsite') {
-                res = await apiClient.delete(`/reservations/${id}`);
-              } else if (type === 'Guide') {
-                res = await apiClient.delete(`/guide-bookings/cancel/${id}`);
-              } else if (type === 'Equipment') {
-                res = await apiClient.delete(`/purchases/${id}`);
-              }
+  const handleDeleteBooking = (item) => {
+    const bookingDate = new Date(item.startDate || item.checkInDate || item.createdAt);
+    const today = new Date();
+    
+    console.log("[DELETE] Booking Date:", bookingDate);
+    console.log("[DELETE] Today:", today);
+    console.log("[DELETE] Is Future:", bookingDate > today);
 
-              if (res && (res.status === 200 || res.status === 201 || res.data.message)) {
-                Alert.alert('Success', 'Booking cancelled successfully.');
-                fetchBookings();
-              } else {
-                Alert.alert('Error', 'Failed to cancel booking.');
-              }
-            } catch (error) {
-              console.error('Delete error:', error);
-              const errorMsg = error.response?.data?.message || error.response?.data?.error || 'An error occurred while deleting the booking.';
-              Alert.alert('Error', errorMsg);
-            }
-          }
+    // Only allow deletion if the booking is in the future
+    if (bookingDate <= today && item.type !== 'Equipment') {
+      Alert.alert(
+        'Cannot Cancel',
+        'This booking has already started or is in the past. You can only cancel upcoming bookings.'
+      );
+      return;
+    }
+
+    const performDelete = async () => {
+      try {
+        console.log(`[DELETE] Starting API call for ${item.type}: ${item._id}`);
+        let res;
+        if (item.type === 'Campsite') {
+          res = await apiClient.delete(`/reservations/${item._id}`);
+        } else if (item.type === 'Guide') {
+          res = await apiClient.delete(`/guide-bookings/cancel/${item._id}`);
+        } else if (item.type === 'Equipment') {
+          res = await apiClient.delete(`/purchases/${item._id}`);
         }
-      ]
-    );
-  };
 
+        console.log(`[DELETE] API Response:`, res?.status);
+        if (res && (res.status === 200 || res.status === 201 || res.data.message)) {
+          showToast('Your booking has been cancelled successfully.');
+          fetchBookings();
+        } else {
+          showToast('We could not cancel your booking at this time.', 'error');
+        }
+      } catch (error) {
+        console.error('[DELETE] API Error:', error.response?.data || error.message);
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'An error occurred while deleting the booking.';
+        showToast(errorMsg, 'error');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`Are you sure you want to cancel your ${item.type} booking for ${item.name}?`);
+      if (confirmed) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Cancel Booking',
+        `Are you sure you want to cancel your ${item.type} booking for ${item.name}?`,
+        [
+          { text: 'No', style: 'cancel' },
+          { text: 'Yes, Cancel', style: 'destructive', onPress: performDelete }
+        ]
+      );
+    }
+  };
+Line: 144
+
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(item => {
+      const status = item.status?.toLowerCase() || '';
+      const isCompleted = status === 'completed' || status === 'paid' || status === 'rejected' || status === 'cancelled';
+      return activeTab === 'completed' ? isCompleted : !isCompleted;
+    });
+  }, [bookings, activeTab]);
 
   const stats = useMemo(() => {
-    const active = bookings.filter(b => b.status?.toLowerCase() === 'confirmed' || b.status?.toLowerCase() === 'pending').length;
-    const completed = bookings.filter(b => b.status?.toLowerCase() === 'completed' || b.status?.toLowerCase() === 'paid').length;
+    const active = bookings.filter(b => {
+      const s = b.status?.toLowerCase() || '';
+      return s !== 'completed' && s !== 'paid' && s !== 'rejected' && s !== 'cancelled';
+    }).length;
+    const completed = bookings.filter(b => {
+      const s = b.status?.toLowerCase() || '';
+      return s === 'completed' || s === 'paid' || s === 'rejected' || s === 'cancelled';
+    }).length;
     return { active, completed };
   }, [bookings]);
 
@@ -150,17 +198,34 @@ const MyBookingsScreen = ({ navigation }) => {
   };
 
   const renderHeader = () => (
-    <View style={styles.summaryContainer}>
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Active Bookings</Text>
-          <Text style={styles.summaryValue}>{stats.active}</Text>
+    <View style={styles.headerContainer}>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Active</Text>
+            <Text style={styles.summaryValue}>{stats.active}</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Completed</Text>
+            <Text style={styles.summaryValue}>{stats.completed}</Text>
+          </View>
         </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Total Trips</Text>
-          <Text style={styles.summaryValue}>{bookings.length}</Text>
-        </View>
+      </View>
+
+      <View style={styles.tabBar}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+          onPress={() => setActiveTab('active')}
+        >
+          <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>Active</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
+          onPress={() => setActiveTab('completed')}
+        >
+          <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>Completed</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -179,8 +244,26 @@ const MyBookingsScreen = ({ navigation }) => {
             <Text style={styles.bookingType}>{item.type?.toUpperCase()}</Text>
             <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
           </View>
-          <View style={[styles.statusTag, { backgroundColor: statusColor + '15' }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>{(item.status || 'Active').toUpperCase()}</Text>
+          <View style={styles.headerRight}>
+            <View style={[styles.statusTag, { backgroundColor: statusColor + '15' }]}>
+              <Text style={[styles.statusText, { color: statusColor }]}>{(item.status || 'Active').toUpperCase()}</Text>
+            </View>
+            
+            {/* Delete Button (Visible for all non-final bookings) */}
+            {item.status?.toLowerCase() !== 'completed' && 
+             item.status?.toLowerCase() !== 'rejected' && 
+             item.status?.toLowerCase() !== 'cancelled' && (
+              <TouchableOpacity 
+                onPress={() => {
+                  console.log("[DELETE] Clicked booking:", item._id);
+                  handleDeleteBooking(item);
+                }}
+                style={styles.trashIcon}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="trash-outline" size={22} color="#ef4444" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -198,9 +281,8 @@ const MyBookingsScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.cardFooter}>
-          {(item.status?.toLowerCase() === 'confirmed' || 
-            item.status?.toLowerCase() === 'completed' || 
-            item.status?.toLowerCase() === 'paid') && (
+          {((item.status?.toLowerCase() === 'completed') || 
+            (item.type !== 'Guide' && (item.status?.toLowerCase() === 'confirmed' || item.status?.toLowerCase() === 'paid'))) && (
             <TouchableOpacity 
               style={styles.reviewBtn}
               onPress={() => navigation.navigate('AddFeedback', { booking: item })}
@@ -258,7 +340,7 @@ const MyBookingsScreen = ({ navigation }) => {
         </View>
       ) : (
         <FlatList
-          data={bookings}
+          data={filteredBookings}
           renderItem={renderItem}
           keyExtractor={item => item._id}
           contentContainerStyle={styles.listContent}
@@ -282,6 +364,16 @@ const MyBookingsScreen = ({ navigation }) => {
             </View>
           }
         />
+      )}
+      {toast.visible && (
+        <View style={[styles.toastContainer, { backgroundColor: toast.type === 'success' ? '#059669' : '#dc2626' }]}>
+          <Ionicons 
+            name={toast.type === 'success' ? 'checkmark-circle' : 'alert-circle'} 
+            size={20} 
+            color="#fff" 
+          />
+          <Text style={styles.toastText}>{toast.message}</Text>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -432,6 +524,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   cardBody: {
     marginBottom: 18,
   },
@@ -508,6 +604,11 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     marginLeft: 8,
   },
+  trashIcon: {
+    padding: 8,
+    marginLeft: 5,
+    zIndex: 100,
+  },
 
   centered: {
     flex: 1,
@@ -556,7 +657,57 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  }
+  },
+  headerContainer: {
+    backgroundColor: '#f8fafc',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+    gap: 12,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  activeTab: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+    ...Shadows.small,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  toastContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    ...Shadows.medium,
+    zIndex: 9999,
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
 });
 
 export default MyBookingsScreen;

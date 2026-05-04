@@ -84,7 +84,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Discover Sites</Text>
               <Text style={styles.sectionSubtitle}>Real-time availability</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Equipment')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Store', { activeTab: 'campsites' })}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -115,7 +115,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Top Guides</Text>
               <Text style={styles.sectionSubtitle}>Professional wilderness experts</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Equipment')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Store', { activeTab: 'guides' })}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>
@@ -146,7 +146,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Camping Gear</Text>
               <Text style={styles.sectionSubtitle}>Premium rental equipment</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Equipment', { activeTab: 'gear' })}>
+            <TouchableOpacity onPress={() => navigation.navigate('Store', { activeTab: 'gear' })}>
               <Text style={styles.viewAll}>View all <Ionicons name="chevron-forward" size={14} /></Text>
             </TouchableOpacity>
           </View>

@@ -21,6 +21,7 @@ const AddGuideScreen = ({ navigation }) => {
   });
   const [profilePicture, setProfilePicture] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -63,14 +64,43 @@ const AddGuideScreen = ({ navigation }) => {
   const handleCreate = async () => {
     console.log('Handle Create called with:', formData);
     
+    setErrors({});
+    let newErrors = {};
+
     const requiredFields = ['name', 'email', 'specialization', 'dailyRate', 'nic', 'age'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
-      const msg = `Please fill in: ${missingFields.join(', ')}`;
-      console.warn(msg);
+      const msg = `Please fill in all required fields: ${missingFields.join(', ')}`;
       if (Platform.OS === 'web') alert(msg);
-      Alert.alert('Error', msg);
+      else Alert.alert('Error', msg);
+      return;
+    }
+
+    // Email validation
+    if (!formData.email.endsWith('@gmail.com')) {
+      newErrors.email = 'Email must end with @gmail.com';
+    }
+
+    // Phone number validation
+    if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
+
+    // Age validation
+    const ageNum = Number(formData.age);
+    if (isNaN(ageNum) || ageNum < 0) {
+      newErrors.age = 'Age must be a positive number';
+    }
+
+    // Daily Rate validation
+    const rateNum = Number(formData.dailyRate);
+    if (isNaN(rateNum) || rateNum < 0) {
+      newErrors.dailyRate = 'Daily rate must be a positive number';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -155,13 +185,17 @@ const AddGuideScreen = ({ navigation }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email Address *</Text>
           <TextInput
-            style={styles.input}
-            placeholder="guide@example.com"
+            style={[styles.input, errors.email && styles.inputError]}
+            placeholder="guide@gmail.com"
             value={formData.email}
-            onChangeText={(val) => setFormData({ ...formData, email: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, email: val });
+              if (errors.email) setErrors({ ...errors, email: null });
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
           />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         </View>
 
         <View style={styles.row}>
@@ -177,12 +211,16 @@ const AddGuideScreen = ({ navigation }) => {
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.label}>Age *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, errors.age && styles.inputError]}
               placeholder="25"
               value={formData.age}
-              onChangeText={(val) => setFormData({ ...formData, age: val })}
+              onChangeText={(val) => {
+                setFormData({ ...formData, age: val });
+                if (errors.age) setErrors({ ...errors, age: null });
+              }}
               keyboardType="numeric"
             />
+            {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
           </View>
         </View>
 
@@ -199,23 +237,31 @@ const AddGuideScreen = ({ navigation }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Daily Rate (LKR) *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.dailyRate && styles.inputError]}
             placeholder="e.g. 3000"
             value={formData.dailyRate}
-            onChangeText={(val) => setFormData({ ...formData, dailyRate: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, dailyRate: val });
+              if (errors.dailyRate) setErrors({ ...errors, dailyRate: null });
+            }}
             keyboardType="numeric"
           />
+          {errors.dailyRate && <Text style={styles.errorText}>{errors.dailyRate}</Text>}
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.phone && styles.inputError]}
             placeholder="e.g. 0771234567"
             value={formData.phone}
-            onChangeText={(val) => setFormData({ ...formData, phone: val })}
+            onChangeText={(val) => {
+              setFormData({ ...formData, phone: val });
+              if (errors.phone) setErrors({ ...errors, phone: null });
+            }}
             keyboardType="phone-pad"
           />
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
         </View>
 
         <View style={styles.inputGroup}>
@@ -332,6 +378,15 @@ const styles = StyleSheet.create({
   textArea: {
     height: 120,
     textAlignVertical: 'top',
+  },
+  inputError: {
+    borderColor: Colors.danger || '#ef4444',
+  },
+  errorText: {
+    color: Colors.danger || '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
   footer: {
     padding: 20,

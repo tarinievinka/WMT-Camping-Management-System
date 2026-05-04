@@ -123,6 +123,12 @@ const FeedbackListScreen = ({ navigation, refreshSignal }) => {
               <Ionicons name="create-outline" size={18} color={Colors.primary} />
             </TouchableOpacity>
 
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => handleDelete(item._id)}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
+            </TouchableOpacity>
           </View>
         )}
       </View>

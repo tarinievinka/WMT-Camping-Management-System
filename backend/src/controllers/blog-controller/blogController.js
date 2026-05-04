@@ -36,8 +36,13 @@ exports.getAllBlogs = async (req, res) => {
             if (blogObj.image && (!blogObj.images || blogObj.images.length === 0)) {
                 blogObj.images = [blogObj.image];
             }
+            // Ensure image is set if images exist
+            if (!blogObj.image && blogObj.images && blogObj.images.length > 0) {
+                blogObj.image = blogObj.images[0];
+            }
             return blogObj;
         });
+
         res.status(200).json(formattedBlogs);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -64,6 +69,11 @@ exports.getBlogById = async (req, res) => {
         if (blogObj.image && (!blogObj.images || blogObj.images.length === 0)) {
             blogObj.images = [blogObj.image];
         }
+        // Ensure image is set if images exist
+        if (!blogObj.image && blogObj.images && blogObj.images.length > 0) {
+            blogObj.image = blogObj.images[0];
+        }
+
 
         res.status(200).json(blogObj);
     } catch (err) {
@@ -74,7 +84,42 @@ exports.getBlogById = async (req, res) => {
 // Create blog
 exports.createBlog = async (req, res) => {
     try {
-        const { title, content, images, image, tags, category } = req.body;
+        let { title, content, images, image, tags, category } = req.body;
+        
+        // Handle uploaded files
+        let uploadedImages = [];
+        if (req.files && req.files.length > 0) {
+            uploadedImages = req.files.map(file => `/uploads/${file.filename}`);
+        }
+
+        // Handle images from body (could be URLs or existing images)
+        let bodyImages = [];
+        const imagesData = req.body.urlImages || req.body.images;
+        if (imagesData) {
+            try {
+                bodyImages = typeof imagesData === 'string' ? JSON.parse(imagesData) : imagesData;
+            } catch (e) {
+                bodyImages = [imagesData];
+            }
+        }
+
+
+        const finalImages = [...uploadedImages, ...bodyImages];
+        console.log('[DEBUG] Final Images for Create:', finalImages);
+        
+        // Handle tags (could be JSON string if using FormData)
+
+        let finalTags = tags || [];
+        if (typeof tags === 'string' && tags.startsWith('[')) {
+            try {
+                finalTags = JSON.parse(tags);
+            } catch (e) {
+                finalTags = tags.split(',').map(t => t.trim());
+            }
+        } else if (typeof tags === 'string') {
+            finalTags = tags.split(',').map(t => t.trim()).filter(t => t !== "");
+        }
+
         const blog = new Blog({
             title,
             content,
@@ -82,16 +127,18 @@ exports.createBlog = async (req, res) => {
             authorName: req.user.role === 'admin' ? 'Admin' : (req.user.name || req.user.username || 'Anonymous'),
             authorRole: req.user.role || 'user',
             category: category || 'General',
-            images: images && images.length > 0 ? images : (image ? [image] : []),
-            image: (images && images.length > 0) ? images[0] : (image || ''),
-            tags: tags || []
+            images: finalImages,
+            image: finalImages.length > 0 ? finalImages[0] : (image || ''),
+            tags: finalTags
         });
         await blog.save();
         res.status(201).json(blog);
     } catch (err) {
+        console.error('Create Blog Error:', err);
         res.status(400).json({ error: err.message });
     }
 };
+
 
 // Update blog
 exports.updateBlog = async (req, res) => {
@@ -101,22 +148,59 @@ exports.updateBlog = async (req, res) => {
 
         // Check ownership (Strict: Only author can update)
         const authorId = blog.author._id ? blog.author._id.toString() : blog.author.toString();
-        if (authorId !== req.user.id) {
+        if (authorId !== req.user.id && req.user.role !== 'admin') {
             return res.status(401).json({ error: 'Not authorized' });
         }
 
+        let updateData = { ...req.body };
 
-        // If images are provided, update the legacy 'image' field too
-        if (req.body.images && req.body.images.length > 0) {
-            req.body.image = req.body.images[0];
+        // Handle uploaded files
+        let uploadedImages = [];
+        if (req.files && req.files.length > 0) {
+            uploadedImages = req.files.map(file => `/uploads/${file.filename}`);
         }
 
-        blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Handle images from body
+        let bodyImages = [];
+        const imagesData = updateData.urlImages || updateData.images;
+        if (imagesData) {
+            try {
+                bodyImages = typeof imagesData === 'string' ? JSON.parse(imagesData) : imagesData;
+            } catch (e) {
+                bodyImages = [imagesData];
+            }
+        }
+
+
+        const finalImages = [...uploadedImages, ...bodyImages];
+        console.log('[DEBUG] Final Images for Update:', finalImages);
+        if (finalImages.length > 0) {
+
+            updateData.images = finalImages;
+            updateData.image = finalImages[0];
+        }
+
+        // Handle tags
+        if (updateData.tags) {
+            if (typeof updateData.tags === 'string' && updateData.tags.startsWith('[')) {
+                try {
+                    updateData.tags = JSON.parse(updateData.tags);
+                } catch (e) {
+                    updateData.tags = updateData.tags.split(',').map(t => t.trim());
+                }
+            } else if (typeof updateData.tags === 'string') {
+                updateData.tags = updateData.tags.split(',').map(t => t.trim()).filter(t => t !== "");
+            }
+        }
+
+        blog = await Blog.findByIdAndUpdate(req.params.id, updateData, { new: true });
         res.status(200).json(blog);
     } catch (err) {
+        console.error('Update Blog Error:', err);
         res.status(400).json({ error: err.message });
     }
 };
+
 
 // Delete blog
 exports.deleteBlog = async (req, res) => {

@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 const connectDB = require('./src/config/db');
 
-// Routes Imports
+// Routes Importsnpx
 const paymentRoute = require('./src/routes/payment-route/paymentRoute');
 const feedbackRoute = require('./src/routes/feedback & ticket-route/feedbackRoute');
 const equipmentRouter = require('./src/routes/Equipment-route/EquipmentRoute');
@@ -29,7 +29,11 @@ console.log('[DEBUG] Starting server on port:', port);
 
 // Middleware
 app.use(cors({
+<<<<<<< HEAD
   origin: true, // Allow all origins during development
+=======
+  origin: '*', // Allow all origins for development to avoid mobile connectivity issues
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
   credentials: true
 }));
 
@@ -74,8 +78,8 @@ app.use('/api/purchases', purchaseRoute);
 const start = async () => {
   try {
     await connectDB();
-    const server = app.listen(port, () => {
-      console.log(`Server running at http://localhost:${port}`);
+    const server = app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on all interfaces at port ${port}`);
     });
 
     server.on('error', (err) => {
@@ -92,17 +96,14 @@ const start = async () => {
   }
 };
 
-
-
-
-
-
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[SERVER_ERROR]', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 
 start();
-
-
-
-
-
-

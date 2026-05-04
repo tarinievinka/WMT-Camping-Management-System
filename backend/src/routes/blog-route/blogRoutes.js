@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const blogController = require('../../controllers/blog-controller/blogController');
 const { protect } = require('../../middleware/authMiddleware');
+<<<<<<< HEAD
 const upload = require('../../middleware/uploadMiddleware');
+=======
+const upload = require('../../config/upload');
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
 
 // Public routes
 router.get('/', blogController.getAllBlogs);
@@ -20,8 +24,8 @@ router.post('/upload-image', protect, upload.single('image'), (req, res) => {
 });
 
 // Protected routes
-router.post('/', protect, blogController.createBlog);
-router.put('/:id', protect, blogController.updateBlog);
+router.post('/', protect, upload.array('images', 5), blogController.createBlog);
+router.put('/:id', protect, upload.array('images', 5), blogController.updateBlog);
 router.delete('/:id', protect, blogController.deleteBlog);
 router.post('/:id/like', protect, blogController.likeBlog);
 router.post('/:id/comment', protect, blogController.commentBlog);

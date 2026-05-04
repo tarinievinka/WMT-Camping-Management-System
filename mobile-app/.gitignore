@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 # dependencies
+=======
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9
 node_modules/
 .env
 
@@ -38,3 +41,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+<<<<<<< HEAD
+=======
+
+>>>>>>> 62f5f3323d328e9d8b5095180a339c2fe359b4b9

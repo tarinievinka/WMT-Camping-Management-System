@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
   ScrollView,
   Image,
   TextInput,
@@ -28,7 +28,7 @@ const PaymentScreen = ({ route, navigation }) => {
   const { user } = useAuth();
   const { clearCart } = useCart();
   const { item, type, mode, startDate: rawStartDate, endDate: rawEndDate, totalAmount, guests, bookingId } = route.params;
-  
+
   const formatDate = (date) => {
     if (!date) return 'N/A';
     try {
@@ -55,27 +55,34 @@ const PaymentScreen = ({ route, navigation }) => {
   const [errors, setErrors] = useState({});
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
-      return;
-    }
+    console.log('[DEBUG] pickImage button pressed');
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+        return;
+      }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.7,
-    });
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        quality: 0.1, // Set to minimum to test if size is the issue
+      });
 
-    if (!result.canceled) {
-      setReceiptImage(result.assets[0]);
+      console.log('[DEBUG] ImagePicker result:', result.canceled ? 'cancelled' : 'success');
+      if (!result.canceled) {
+        setReceiptImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('[DEBUG] ImagePicker Error:', error);
+      Alert.alert('Error', 'Could not open image library');
     }
   };
 
   const handleGPayPayment = async () => {
     setGpayStep('processing');
     setGPayLoading(true);
-    
+
     // Simulate contact with Google Pay servers
     setTimeout(async () => {
       try {
@@ -89,10 +96,10 @@ const PaymentScreen = ({ route, navigation }) => {
         };
 
         await apiClient.post('/payment/add', paymentData);
-        
+
         setGpayStep('success');
         setGPayLoading(false);
-        
+
         // Show success for 1.5 seconds then navigate
         setTimeout(() => {
           setShowGPayModal(false);
@@ -136,7 +143,7 @@ const PaymentScreen = ({ route, navigation }) => {
       const now = new Date();
       const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const selectedMonth = new Date(expiryDate.getFullYear(), expiryDate.getMonth(), 1);
-      
+
       if (selectedMonth < currentMonth) {
         newErrors.expiry = 'The card has already expired.';
       }
@@ -156,10 +163,12 @@ const PaymentScreen = ({ route, navigation }) => {
         const formData = new FormData();
         formData.append('bookingId', bookingId || item._id);
         formData.append('bookingType', type === 'guide' ? 'GuideBooking' : type === 'equipment' ? 'EquipmentBooking' : 'CampsiteBooking');
-        formData.append('amount', totalAmount);
+        formData.append('amount', String(totalAmount));
         formData.append('paymentMethod', 'bank-deposit');
-        formData.append('userId', user?._id);
-        
+        if (user?._id) {
+          formData.append('userId', user._id);
+        }
+
         if (receiptImage) {
           if (Platform.OS === 'web') {
             // For Web, we need to fetch the blob from the URI
@@ -167,25 +176,42 @@ const PaymentScreen = ({ route, navigation }) => {
             const blob = await response.blob();
             formData.append('receipt', blob, receiptImage.fileName || `receipt_${Date.now()}.jpg`);
           } else {
-            // For Mobile (Native)
+            // For Mobile (Native) - Use logic consistent with AddEquipmentScreen
             const uri = receiptImage.uri;
-            const name = uri.split('/').pop() || 'receipt.jpg';
-            const match = /\.(\w+)$/.exec(name);
-            const fileType = match ? `image/${match[1]}` : `image/jpeg`;
-            
-            formData.append('receipt', { 
-              uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''), 
-              name, 
-              type: fileType 
+            const fileName = uri.split('/').pop() || 'receipt.jpg';
+            const fileMatch = /\.(\w+)$/.exec(fileName);
+            const mimeType = fileMatch ? `image/${fileMatch[1].toLowerCase()}` : 'image/jpeg';
+
+            formData.append('receipt', {
+              uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+              name: fileName,
+              type: mimeType
             });
           }
         }
 
-        await apiClient.post('/payment/add', formData);
+        console.log('[DEBUG] Sending deposit payment via apiClient...');
+        
+        // Use apiClient for consistency and better error handling
+        const response = await apiClient.post('/payment/add', formData, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'multipart/form-data',
+          },
+          transformRequest: (data, headers) => {
+            // In React Native, we MUST NOT let Axios transform the FormData
+            return data;
+          },
+        });
+
+        if (response.status !== 201 && response.status !== 200) {
+          throw new Error('Upload failed with status ' + response.status);
+        }
 
         setLoading(false);
         if (mode === 'bulk') clearCart();
         navigation.navigate('PaymentSuccess', { type, pending: true });
+
       } else if (paymentMethod === 'card') {
         const paymentData = {
           bookingId: bookingId || item._id,
@@ -209,7 +235,8 @@ const PaymentScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Payment Error:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Something went wrong during the payment process.';
+      Alert.alert('Network Detail', error.message || 'Unknown network failure');
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Something went wrong during the payment process. Check your Wi-Fi and Firewall.';
       setErrors({ form: errorMsg });
     } finally {
       setLoading(false);
@@ -226,7 +253,7 @@ const PaymentScreen = ({ route, navigation }) => {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={{ flex: 1, ...Platform.select({ web: { maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' } }) }}
         contentContainerStyle={[styles.content, { flexGrow: 1 }]}
       >
@@ -234,8 +261,8 @@ const PaymentScreen = ({ route, navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
           <View style={styles.summaryCard}>
-            <Image 
-              source={{ uri: getImageUrl(item.image || item.imageUrl || item.profilePhoto || item.profileImage) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=400&q=60' }} 
+            <Image
+              source={{ uri: getImageUrl(item.image || item.imageUrl || item.profilePhoto || item.profileImage) || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=400&q=60' }}
               style={styles.summaryImage}
               resizeMode="cover"
             />
@@ -247,7 +274,9 @@ const PaymentScreen = ({ route, navigation }) => {
               {mode !== 'buy' && (
                 <Text style={styles.itemDates}>{startDate} to {endDate}</Text>
               )}
-              <Text style={styles.itemGuests}>{guests} {type === 'equipment' ? 'Units' : 'Guests'}</Text>
+              <Text style={styles.itemGuests}>
+                {guests} {type === 'equipment' ? 'Units' : (guests === 1 ? 'Guest' : 'Guests')}
+              </Text>
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.totalLabel}>Total</Text>
@@ -259,9 +288,9 @@ const PaymentScreen = ({ route, navigation }) => {
         {/* Payment Methods Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Payment Method</Text>
-          
+
           {/* Card Option */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.methodItem, paymentMethod === 'card' && styles.methodItemSelected]}
             onPress={() => setPaymentMethod('card')}
           >
@@ -275,7 +304,7 @@ const PaymentScreen = ({ route, navigation }) => {
           </TouchableOpacity>
 
           {/* Google Pay Option */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.methodItem, paymentMethod === 'gpay' && styles.methodItemSelected]}
             onPress={() => setPaymentMethod('gpay')}
           >
@@ -289,7 +318,7 @@ const PaymentScreen = ({ route, navigation }) => {
           </TouchableOpacity>
 
           {/* Deposit Option */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.methodItem, paymentMethod === 'deposit' && styles.methodItemSelected]}
             onPress={() => setPaymentMethod('deposit')}
           >
@@ -308,7 +337,7 @@ const PaymentScreen = ({ route, navigation }) => {
           <View style={styles.cardForm}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Card Number</Text>
-              <TextInput 
+              <TextInput
                 style={styles.input}
                 placeholder="XXXX XXXX XXXX XXXX"
                 keyboardType="numeric"
@@ -345,8 +374,8 @@ const PaymentScreen = ({ route, navigation }) => {
                   </View>
                 ) : (
                   <>
-                    <TouchableOpacity 
-                      style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]} 
+                    <TouchableOpacity
+                      style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
                       onPress={() => setShowExpiry(true)}
                     >
                       <Text style={{ fontSize: 16, color: Colors.text }}>
@@ -371,7 +400,7 @@ const PaymentScreen = ({ route, navigation }) => {
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.label}>CVV</Text>
-                <TextInput 
+                <TextInput
                   style={styles.input}
                   placeholder="XXX"
                   keyboardType="numeric"
@@ -392,43 +421,43 @@ const PaymentScreen = ({ route, navigation }) => {
           </View>
         )}
 
-         {/* Deposit Info (Show if deposit selected) */}
-         {paymentMethod === 'deposit' && (
-           <View style={styles.depositInfo}>
-             <Text style={styles.depositText}>Please transfer the total amount to:</Text>
-             <View style={styles.bankDetails}>
-               <Text style={styles.bankLabel}>Bank:</Text>
-               <Text style={styles.bankValue}>Camping Trust Bank</Text>
-               <Text style={styles.bankLabel}>Account:</Text>
-               <Text style={styles.bankValue}>004-928374-123</Text>
-               <Text style={styles.bankLabel}>Reference:</Text>
-               <Text style={styles.bankValue}>CAMP-{Math.floor(Math.random() * 10000)}</Text>
-             </View>
-             
-             <View style={styles.uploadSection}>
-               <Text style={styles.uploadTitle}>Upload Payment Receipt</Text>
-               <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-                 {receiptImage ? (
-                   <Image source={{ uri: receiptImage.uri }} style={styles.previewImage} />
-                 ) : (
-                   <View style={styles.uploadPlaceholder}>
-                     <Ionicons name="cloud-upload-outline" size={32} color={Colors.primary} />
-                     <Text style={styles.uploadText}>Select Receipt Image</Text>
-                   </View>
-                 )}
-               </TouchableOpacity>
-               {receiptImage && (
-                 <TouchableOpacity onPress={() => setReceiptImage(null)} style={styles.removeBtn}>
-                   <Text style={styles.removeText}>Remove & Re-upload</Text>
-                 </TouchableOpacity>
-               )}
-             </View>
+        {/* Deposit Info (Show if deposit selected) */}
+        {paymentMethod === 'deposit' && (
+          <View style={styles.depositInfo}>
+            <Text style={styles.depositText}>Please transfer the total amount to:</Text>
+            <View style={styles.bankDetails}>
+              <Text style={styles.bankLabel}>Bank:</Text>
+              <Text style={styles.bankValue}>Camping Trust Bank</Text>
+              <Text style={styles.bankLabel}>Account:</Text>
+              <Text style={styles.bankValue}>004-928374-123</Text>
+              <Text style={styles.bankLabel}>Reference:</Text>
+              <Text style={styles.bankValue}>CAMP-{Math.floor(Math.random() * 10000)}</Text>
+            </View>
 
-             <Text style={styles.depositNote}>* Your booking will remain "Pending" until the admin approves your slip.</Text>
-           </View>
-         )}
+            <View style={styles.uploadSection}>
+              <Text style={styles.uploadTitle}>Upload Payment Receipt</Text>
+              <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+                {receiptImage ? (
+                  <Image source={{ uri: receiptImage.uri }} style={styles.previewImage} />
+                ) : (
+                  <View style={styles.uploadPlaceholder}>
+                    <Ionicons name="cloud-upload-outline" size={32} color={Colors.primary} />
+                    <Text style={styles.uploadText}>Select Receipt Image</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              {receiptImage && (
+                <TouchableOpacity onPress={() => setReceiptImage(null)} style={styles.removeBtn}>
+                  <Text style={styles.removeText}>Remove & Re-upload</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-        <TouchableOpacity 
+            <Text style={styles.depositNote}>* Your booking will remain "Pending" until the admin approves your slip.</Text>
+          </View>
+        )}
+
+        <TouchableOpacity
           style={[styles.payButton, loading && styles.disabledButton]}
           onPress={handlePayment}
           disabled={loading}
@@ -451,8 +480,8 @@ const PaymentScreen = ({ route, navigation }) => {
           <View style={styles.modalOverlay}>
             <View style={styles.gpaySheet}>
               <View style={styles.gpayHeader}>
-                <Image 
-                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png' }} 
+                <Image
+                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png' }}
                   style={styles.gpayLogo}
                   resizeMode="contain"
                 />
@@ -468,7 +497,7 @@ const PaymentScreen = ({ route, navigation }) => {
                   <View style={styles.gpayContent}>
                     <Text style={styles.gpayTotal}>LKR {totalAmount}</Text>
                     <Text style={styles.gpayTo}>to Smart Camping System</Text>
-                    
+
                     <View style={styles.gpayUser}>
                       <View style={styles.gpayAvatar}>
                         <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
@@ -489,7 +518,7 @@ const PaymentScreen = ({ route, navigation }) => {
                     </View>
                   </View>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.gpayButton}
                     onPress={handleGPayPayment}
                   >
@@ -515,7 +544,7 @@ const PaymentScreen = ({ route, navigation }) => {
                   <Text style={styles.statusSubtext}>Redirecting to your booking...</Text>
                 </View>
               )}
-              
+
               <Text style={styles.gpayFooter}>Verified by Google</Text>
             </View>
           </View>
